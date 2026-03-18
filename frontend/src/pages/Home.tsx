@@ -6,7 +6,6 @@ import {
   Building2,
   Calculator,
   Database,
-  DollarSign,
   Scale,
   TrendingUp,
   Users,
@@ -379,19 +378,9 @@ function Home() {
                 <span className="font-medium text-primary text-sm sm:text-base">Department of Labor</span>
               </div>
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="font-medium text-primary text-sm sm:text-base">
-                  {insightsLoading ? 'Loading...' : insights?.total_offers?.toLocaleString() || '0'} salary records
-                </span>
+                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="font-medium text-primary text-sm sm:text-base">Community submissions</span>
               </div>
-              {hasCommunityData ? (
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="font-medium text-primary text-sm sm:text-base">
-                    {insightsLoading ? 'Loading...' : insights?.community_offers?.toLocaleString() || '0'} community submissions
-                  </span>
-                </div>
-              ) : null}
             </div>
           </div>
         </div>

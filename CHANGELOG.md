@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.13] - 2026-03-18
+
+### Changed
+- Updated the homepage data-source strip to list only the actual source categories instead of mixing in the salary-record count.
+- Added community submissions explicitly alongside Department of Labor in the homepage source copy.
+
 ## [0.3.12] - 2026-03-18
 
 ### Changed
