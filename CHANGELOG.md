@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.10] - 2026-03-18
+
+### Changed
+- Reworked the README intro so the Ghosted art itself is the main heading and the badge row sits beneath it.
+- Replaced the favicon with a Ghosted-specific monogram that matches the product palette.
+- Simplified the browser tab title to `Ghosted` while keeping metadata branding aligned.
+
 ## [0.3.9] - 2026-03-18
 
 ### Changed

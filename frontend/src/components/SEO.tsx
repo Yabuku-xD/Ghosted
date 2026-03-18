@@ -10,7 +10,7 @@ interface SEOProps {
 }
 
 const defaultSEO = {
-  title: 'Ghosted - Job Intelligence for International Talent',
+  title: 'Ghosted',
   description: 'Real salary data from 23,000+ companies. Visa sponsorship tracking. H-1B lottery odds. Everything international professionals need to make informed career decisions.',
   keywords: 'H-1B, visa sponsorship, salary data, job search, international talent, lottery calculator, company ratings',
   image: '/og-image.png',
@@ -27,7 +27,8 @@ function SEO({
   type = 'website',
 }: SEOProps) {
   const seo = {
-    title: title ? `${title} | Ghosted` : defaultSEO.title,
+    browserTitle: defaultSEO.title,
+    metaTitle: title ? `${title} | Ghosted` : defaultSEO.title,
     description: description || defaultSEO.description,
     keywords: keywords || defaultSEO.keywords,
     image: image || defaultSEO.image,
@@ -37,7 +38,7 @@ function SEO({
 
   useEffect(() => {
     // Update document title
-    document.title = seo.title;
+    document.title = seo.browserTitle;
 
     // Update or create meta tags
     const updateMeta = (name: string, content: string, property = false) => {
@@ -57,19 +58,19 @@ function SEO({
     };
 
     // Standard meta tags
-    updateMeta('title', seo.title);
+    updateMeta('title', seo.metaTitle);
     updateMeta('description', seo.description);
     updateMeta('keywords', seo.keywords);
 
     // Open Graph
-    updateMeta('og:title', seo.title, true);
+    updateMeta('og:title', seo.metaTitle, true);
     updateMeta('og:description', seo.description, true);
     updateMeta('og:image', seo.image, true);
     updateMeta('og:url', seo.url, true);
     updateMeta('og:type', seo.type, true);
 
     // Twitter
-    updateMeta('twitter:title', seo.title, true);
+    updateMeta('twitter:title', seo.metaTitle, true);
     updateMeta('twitter:description', seo.description, true);
     updateMeta('twitter:image', seo.image, true);
 
