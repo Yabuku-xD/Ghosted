@@ -81,9 +81,9 @@ function Home() {
     },
     {
       icon: ShieldCheck,
-      title: 'Sponsorship Tracker',
-      description: 'Spot who sponsors consistently and how broad the company’s historical record really is.',
-      link: '/predictions',
+      title: 'Local Tracker',
+      description: 'Save applications in your browser instantly, without creating an account or waiting on auth.',
+      link: '/tracker',
       color: 'bg-warning',
     },
   ];
@@ -109,7 +109,8 @@ function Home() {
 
               <p className="text-base sm:text-lg text-secondary mb-6 sm:mb-8 leading-relaxed max-w-xl">
                 Explore sponsor history, salary records, and confidence signals in one place.
-                The app now shows exactly how much data backs each company, and where that data came from.
+                The app now shows exactly how much data backs each company, where that data came from,
+                and lets you track targets locally without creating an account.
               </p>
 
               <div className="btn-group">
@@ -312,12 +313,12 @@ function Home() {
                 Ready to find your next opportunity?
               </h2>
               <p className="text-secondary mb-6 sm:mb-8 max-w-2xl mx-auto text-base sm:text-lg px-4">
-                Use government records for coverage, community submissions for nuance, and your own tracker to stay organized.
+                Use government records for coverage, community submissions for nuance, and a local tracker that stays on your device.
               </p>
               <div className="btn-group justify-center">
-                <Link to="/register" className="btn btn-primary w-full sm:w-auto">
-                  <Users className="w-5 h-5" />
-                  Get Started Free
+                <Link to="/tracker" className="btn btn-primary w-full sm:w-auto">
+                  <Briefcase className="w-5 h-5" />
+                  Open Tracker
                 </Link>
                 <Link to="/companies" className="btn btn-secondary w-full sm:w-auto">
                   Browse Companies

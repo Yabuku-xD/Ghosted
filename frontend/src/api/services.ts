@@ -1,6 +1,5 @@
 import { apiClient } from './client';
 import type {
-  User,
   Company,
   CompanyBenefit,
   CompanyComparison,
@@ -10,7 +9,6 @@ import type {
   Offer,
   OfferListParams,
   OfferStatistics,
-  JobApplication,
   SalaryPredictionInput,
   PredictionResult,
   LotteryInput,
@@ -18,26 +16,6 @@ import type {
   SponsorshipInput,
   SponsorshipResult,
 } from '../types';
-
-// Auth API
-export const authApi = {
-  login: (username: string, password: string) =>
-    apiClient.post('/auth/login/', { username, password }),
-  register: (username: string, email: string, password: string) =>
-    apiClient.post('/auth/register/', { username, email, password }),
-  refresh: (refresh: string) =>
-    apiClient.post('/auth/refresh/', { refresh }),
-  me: () => apiClient.get<User>('/auth/me/'),
-  forgotPassword: (email: string) =>
-    apiClient.post('/auth/forgot-password/', { email }),
-  resetPassword: (token: string, password: string) =>
-    apiClient.post('/auth/reset-password/', { token, new_password: password }),
-  getCurrentUser: () => apiClient.get<User>('/auth/me/').then(r => r.data),
-  updateProfile: (data: Partial<User>) =>
-    apiClient.patch<User>('/auth/me/', data).then(r => r.data),
-  changePassword: (currentPassword: string, newPassword: string) =>
-    apiClient.post('/auth/change-password/', { current_password: currentPassword, new_password: newPassword }),
-};
 
 // Paginated response type
 interface PaginatedResponse<T> {
@@ -56,6 +34,7 @@ export const companiesApi = {
     apiClient.get<PaginatedResponse<Company>>('/companies/', {
       params: {
         search: query,
+        page_size: 6,
         ordering: '-total_h1b_filings',
       },
     }).then(r => r.data),
@@ -95,15 +74,4 @@ export const lotteryApi = {
 export const sponsorshipApi = {
   calculate: (data: SponsorshipInput) =>
     apiClient.post<SponsorshipResult>('/sponsorship-likelihood/calculate/', data).then(r => r.data),
-};
-
-// Applications API
-export const applicationsApi = {
-  list: () => apiClient.get<{ results: JobApplication[] }>('/applications/').then(r => r.data.results),
-  get: (id: string) => apiClient.get<JobApplication>(`/applications/${id}/`).then(r => r.data),
-  create: (data: Partial<JobApplication>) =>
-    apiClient.post<JobApplication>('/applications/', data).then(r => r.data),
-  update: (id: string, data: Partial<JobApplication>) =>
-    apiClient.patch<JobApplication>(`/applications/${id}/`, data).then(r => r.data),
-  delete: (id: string) => apiClient.delete(`/applications/${id}/`),
 };

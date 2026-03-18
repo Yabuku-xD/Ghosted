@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Building2, TrendingUp, Calculator, User, LogOut, Menu, X, Briefcase, Scale } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Building2, TrendingUp, Calculator, Menu, X, Briefcase, Scale } from 'lucide-react';
 import { useState } from 'react';
 import SkipLink from './ui/SkipLink';
 
@@ -11,7 +10,6 @@ interface LayoutProps {
 }
 
 function Layout({ children, title, description }: LayoutProps) {
-  const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -20,6 +18,7 @@ function Layout({ children, title, description }: LayoutProps) {
     { to: '/offers', label: 'Offers', icon: TrendingUp },
     { to: '/compare', label: 'Compare', icon: Scale },
     { to: '/predictions', label: 'Predictions', icon: Calculator },
+    { to: '/tracker', label: 'Tracker', icon: Briefcase },
   ];
 
   const hasLogoDevKey = Boolean(import.meta.env.VITE_LOGO_DEV_PUBLISHABLE_KEY);
@@ -63,47 +62,18 @@ function Layout({ children, title, description }: LayoutProps) {
               ))}
             </div>
 
-            {/* Auth Buttons */}
+            {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-2 lg:gap-3">
-              {user ? (
-                <>
-                  <Link
-                    to="/dashboard"
-                    aria-current={isActive('/dashboard') ? 'page' : undefined}
-                    className={`flex items-center gap-2 px-3 lg:px-4 py-2 font-mono text-xs lg:text-sm uppercase tracking-wider transition-all ${
-                      isActive('/dashboard')
-                        ? 'bg-secondary border-2 border-border shadow-solid-sm'
-                        : 'hover:bg-secondary'
-                    }`}
-                  >
-                    <Briefcase className="w-4 h-4" aria-hidden="true" />
-                    Dashboard
-                  </Link>
-                  <button
-                    onClick={logout}
-                    className="flex items-center gap-2 px-3 lg:px-4 py-2 font-mono text-xs lg:text-sm uppercase text-accent hover:bg-danger-light transition-colors"
-                    aria-label="Log out of your account"
-                  >
-                    <LogOut className="w-4 h-4" aria-hidden="true" />
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="font-mono text-xs lg:text-sm uppercase tracking-wider px-3 lg:px-4 py-2 hover:bg-secondary transition-colors"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="btn btn-primary text-xs lg:text-sm"
-                  >
-                    Get Started
-                  </Link>
-                </>
-              )}
+              <Link
+                to="/tracker"
+                aria-current={isActive('/tracker') ? 'page' : undefined}
+                className={`btn text-xs lg:text-sm ${
+                  isActive('/tracker') ? 'btn-primary' : 'btn-secondary'
+                }`}
+              >
+                <Briefcase className="w-4 h-4" aria-hidden="true" />
+                Open Tracker
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -145,47 +115,15 @@ function Layout({ children, title, description }: LayoutProps) {
                 </Link>
               ))}
 
-              <div className="border-t-2 border-border pt-4 mt-4 space-y-2">
-                {user ? (
-                  <>
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 font-mono text-sm uppercase tracking-wider hover:bg-secondary"
-                    >
-                      <User className="w-5 h-5" aria-hidden="true" />
-                      Dashboard
-                    </Link>
-                    <button
-                      onClick={() => {
-                        logout();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="flex items-center gap-3 px-4 py-3 font-mono text-sm uppercase tracking-wider text-accent w-full text-left hover:bg-danger-light"
-                    >
-                      <LogOut className="w-5 h-5" aria-hidden="true" />
-                      Logout
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      to="/login"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 font-mono text-sm uppercase tracking-wider hover:bg-secondary"
-                    >
-                      <User className="w-5 h-5" aria-hidden="true" />
-                      Sign In
-                    </Link>
-                    <Link
-                      to="/register"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="btn btn-primary btn-full"
-                    >
-                      Get Started
-                    </Link>
-                  </>
-                )}
+              <div className="border-t-2 border-border pt-4 mt-4">
+                <Link
+                  to="/tracker"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="btn btn-primary btn-full"
+                >
+                  <Briefcase className="w-4 h-4" aria-hidden="true" />
+                  Open Tracker
+                </Link>
               </div>
             </div>
           </div>

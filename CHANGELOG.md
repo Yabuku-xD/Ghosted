@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-03-17
+
+### Added
+- A no-login local application tracker that stores saved applications in the browser and supports JSON export.
+
+### Changed
+- Removed login, register, password reset, and profile flows from the frontend product surface.
+- Replaced the authenticated dashboard flow with a public `/tracker` experience and redirected old `/dashboard` links.
+- Updated homepage and navigation CTAs to reflect the tracker-first, no-account product direction.
+- Reduced frontend startup overhead by removing auth boot logic, disabling aggressive React Query refetch defaults, shrinking search suggestion payloads, and removing React StrictMode from the local app shell.
+
+### Notes
+- Tracker data now stays in the local browser instead of syncing to the backend.
+- Verified the homepage, `/tracker`, and `/dashboard` redirect in the browser, plus local tracker creation without sign-in.
+
 ## [0.2.1] - 2026-03-17
 
 ### Fixed

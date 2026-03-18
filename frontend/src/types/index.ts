@@ -203,7 +203,7 @@ export interface OfferStatistics {
 
 export interface JobApplication {
   id: number;
-  user: number;
+  user?: number;
   company: number;
   company_name: string;
   position_title: string;

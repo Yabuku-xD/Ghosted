@@ -4,7 +4,7 @@ Ghosted is a visa-aware job intelligence platform for international candidates. 
 
 ## Version
 
-Current tracked release: `v0.2.0`
+Current tracked release: `v0.3.0`
 
 ## Stack
 
@@ -19,7 +19,8 @@ Current tracked release: `v0.2.0`
 - Domain and logo enrichment with graceful fallback rendering
 - Live hiring signals from public ATS boards and side-by-side company comparison
 - Salary prediction and lottery risk tools
-- Authenticated dashboard with job application tracking
+- No-login local application tracker with JSON export
+- Lighter frontend boot path with reduced refetching and smaller search payloads
 - H-1B data import pipeline and company enrichment commands
 
 ## Repository Layout
