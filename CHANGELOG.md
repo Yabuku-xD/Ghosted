@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.15] - 2026-03-18
+
+### Changed
+- Regenerated the README hero banner with the Press Start 2P workflow and retuned it to Ghosted's site palette instead of Hermes' yellow-heavy colors.
+- Added the banner generator script and bundled Press Start 2P font so the hero can be recreated from code.
+
 ## [0.3.14] - 2026-03-18
 
 ### Changed

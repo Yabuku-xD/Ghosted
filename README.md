@@ -17,7 +17,7 @@ Visa-aware job intelligence platform with H-1B data, salary insights, company co
 
 Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is built around four public workflows: company discovery, salary intelligence, company comparison, and prediction tools for compensation and sponsorship odds.
 
-Current tracked release: `v0.3.14`
+Current tracked release: `v0.3.15`
 
 ![Ghosted homepage](assets/home.png)
 
