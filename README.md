@@ -1,14 +1,15 @@
 # Ghosted
 
-Visa-aware job intelligence for international candidates.
+Visa-aware job intelligence platform with H-1B data, salary insights, company comparison, and prediction tools.
 
 Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is built around four public workflows: company discovery, salary intelligence, company comparison, and prediction tools for compensation and sponsorship odds.
 
-Current tracked release: `v0.3.6`
+Current tracked release: `v0.3.7`
 
 ## Table of Contents
 
 - [Background](#background)
+- [Preview](#preview)
 - [Install](#install)
 - [Usage](#usage)
 - [Configuration](#configuration)
@@ -37,6 +38,10 @@ Core product capabilities:
 - Side-by-side company comparison
 - Salary prediction and sponsorship-odds tools
 
+## Preview
+
+![Ghosted homepage](assets/home.png)
+
 ## Install
 
 ### Dependencies
@@ -57,11 +62,7 @@ For manual development instead of Docker, also install:
 docker compose up --build
 ```
 
-The local services are available at:
-
-- Frontend: [http://localhost:5173](http://localhost:5173)
-- Backend API: [http://localhost:8000/api](http://localhost:8000/api)
-- Django Admin: [http://localhost:8000/admin](http://localhost:8000/admin)
+This starts the frontend, backend API, database, cache, and supporting local services defined in [`docker-compose.yml`](docker-compose.yml).
 
 ### Manual Development
 

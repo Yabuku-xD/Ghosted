@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.7] - 2026-03-18
+
+### Changed
+- Updated the repository-facing project description to match Ghosted's public product focus instead of the older generic monorepo wording.
+- Added a homepage screenshot preview to `README.md` using `assets/home.png`.
+- Removed explicit `localhost` service URLs from the public README and kept the Docker setup wording generic.
+
 ## [0.3.6] - 2026-03-18
 
 ### Changed
