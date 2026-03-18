@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 import { companiesApi } from '../api/services';
-import { Badge, CompanyLogo, EmptyState } from '../components/ui';
+import { Badge, CompanyLogo, EmptyState, Select } from '../components/ui';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import type { Company } from '../types';
 
@@ -62,6 +62,9 @@ function Companies() {
   const hasNext = !!data?.next;
   const hasPrevious = !!data?.previous;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalCountLabel = isLoading && !data
+    ? 'Loading companies...'
+    : `${totalCount.toLocaleString()} matching companies`;
 
   const getScoreBadge = (score: number) => {
     if (score >= 80) return { variant: 'accent' as const, label: 'Excellent' };
@@ -123,7 +126,7 @@ function Companies() {
             </div>
             <div className="flex flex-col items-start gap-3 sm:items-end">
               <div className="font-mono text-sm text-secondary text-left sm:text-right">
-                {totalCount.toLocaleString()} matching companies
+                {totalCountLabel}
                 {isFetching && !isLoading ? ' • updating' : ''}
               </div>
               <Link to="/compare" className="btn btn-secondary text-sm">
@@ -133,26 +136,26 @@ function Companies() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
-            <div className="card-static p-4 bg-white">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-6">
+            <div className="card-static p-4 bg-white min-h-[116px]">
               <div className="font-mono text-xs uppercase text-secondary mb-2">Global Search</div>
-              <div className="text-primary font-semibold">
+              <div className="text-primary font-semibold leading-snug">
                 Query all {insights?.total_companies?.toLocaleString() || '0'} indexed companies
               </div>
             </div>
-            <div className="card-static p-4 bg-white">
+            <div className="card-static p-4 bg-white min-h-[116px]">
               <div className="font-mono text-xs uppercase text-secondary mb-2">Coverage</div>
-              <div className="text-primary font-semibold">Current dataset coverage: {coverageWindowLabel}</div>
+              <div className="text-primary font-semibold leading-snug">Current dataset coverage: {coverageWindowLabel}</div>
             </div>
-            <div className="card-static p-4 bg-white">
+            <div className="card-static p-4 bg-white min-h-[116px]">
               <div className="font-mono text-xs uppercase text-secondary mb-2">Salary Data</div>
-              <div className="text-primary font-semibold">
+              <div className="text-primary font-semibold leading-snug">
                 {insights?.companies_with_salary_data?.toLocaleString() || '0'} companies with offer records
               </div>
             </div>
-            <div className="card-static p-4 bg-white">
+            <div className="card-static p-4 bg-white min-h-[116px]">
               <div className="font-mono text-xs uppercase text-secondary mb-2">Live Jobs</div>
-              <div className="text-primary font-semibold">
+              <div className="text-primary font-semibold leading-snug">
                 {insights?.companies_with_jobs?.toLocaleString() || '0'} companies with active job postings
               </div>
             </div>
@@ -170,35 +173,35 @@ function Companies() {
               />
             </div>
 
-            <div className="relative">
-              <ShieldCheck className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted" />
-              <select
-                value={minScore}
-                onChange={(e) => setMinScore(e.target.value)}
-                className="select pl-10 sm:pl-12 text-sm sm:text-base"
-              >
-                <option value="">All Visa Scores</option>
-                <option value="80">Excellent (80+)</option>
-                <option value="60">Good (60+)</option>
-                <option value="40">Fair (40+)</option>
-              </select>
-            </div>
+            <Select
+              value={minScore}
+              onChange={setMinScore}
+              icon={<ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-muted" />}
+              ariaLabel="Visa score filter"
+              buttonClassName="text-sm sm:text-base"
+              options={[
+                { value: '', label: 'All Visa Scores' },
+                { value: '80', label: 'Excellent (80+)' },
+                { value: '60', label: 'Good (60+)' },
+                { value: '40', label: 'Fair (40+)' },
+              ]}
+            />
 
-            <div className="relative">
-              <Filter className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted" />
-              <select
-                value={ordering}
-                onChange={(e) => setOrdering(e.target.value)}
-                className="select pl-10 sm:pl-12 text-sm sm:text-base"
-              >
-                <option value="name">Sort by Name (A-Z)</option>
-                <option value="-visa_fair_score">Sort by Visa Score</option>
-                <option value="-total_h1b_filings">Sort by H-1B Volume</option>
-                <option value="-offer_count">Sort by Salary Records</option>
-                <option value="-active_job_count">Sort by Live Jobs</option>
-                <option value="-last_filing_year">Sort by Freshness</option>
-              </select>
-            </div>
+            <Select
+              value={ordering}
+              onChange={setOrdering}
+              icon={<Filter className="w-4 h-4 sm:w-5 sm:h-5 text-muted" />}
+              ariaLabel="Company sort order"
+              buttonClassName="text-sm sm:text-base"
+              options={[
+                { value: 'name', label: 'Sort by Name (A-Z)' },
+                { value: '-visa_fair_score', label: 'Sort by Visa Score' },
+                { value: '-total_h1b_filings', label: 'Sort by H-1B Volume' },
+                { value: '-offer_count', label: 'Sort by Salary Records' },
+                { value: '-active_job_count', label: 'Sort by Live Jobs' },
+                { value: '-last_filing_year', label: 'Sort by Freshness' },
+              ]}
+            />
 
             <label className="flex items-center gap-3 cursor-pointer bg-white border-2 border-border px-3 sm:px-4 py-3 hover:bg-secondary transition-colors">
               <input
@@ -350,11 +353,11 @@ function Companies() {
             </div>
 
             {totalPages > 1 ? (
-              <div className="flex items-center justify-center gap-4 mt-8 pt-8 border-t-2 border-border">
+              <div className="flex flex-col items-center justify-center gap-3 mt-8 pt-8 border-t-2 border-border sm:flex-row sm:gap-4">
                 <button
                   onClick={() => setPage((current) => Math.max(1, current - 1))}
                   disabled={!hasPrevious}
-                  className="btn btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn btn-secondary flex w-full items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Previous
@@ -370,7 +373,7 @@ function Companies() {
                 <button
                   onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                   disabled={!hasNext}
-                  className="btn btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn btn-secondary flex w-full items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />

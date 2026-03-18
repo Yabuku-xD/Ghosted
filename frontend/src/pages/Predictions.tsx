@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Calculator, TrendingUp, Award } from 'lucide-react';
 import SalaryPredictor from '../components/SalaryPredictor';
-import SponsorshipTracker from '../components/SponsorshipTracker';
+import SponsorshipOdds from '../components/SponsorshipOdds';
 import { Tabs, TabList, Tab, TabPanel } from '../components/ui';
 
 function Predictions() {
@@ -32,7 +32,7 @@ function Predictions() {
                 Salary Predictor
               </Tab>
               <Tab id="lottery" icon={<Award className="w-4 h-4" />}>
-                Sponsorship Tracker
+                Sponsorship Odds
               </Tab>
             </TabList>
           </div>
@@ -82,7 +82,7 @@ function Predictions() {
           <TabPanel id="lottery">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
               <div className="lg:col-span-2">
-                <SponsorshipTracker />
+                <SponsorshipOdds />
               </div>
               <div className="lg:col-span-1 space-y-4 sm:space-y-6">
                 <div className="card-static p-4 sm:p-6">

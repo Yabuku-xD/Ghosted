@@ -190,17 +190,17 @@ function CompanyDetail() {
               </div>
             </div>
 
-            <div className="flex items-center sm:block gap-4 sm:text-right">
-              <div className="sm:block">
-                <div className="text-xs font-mono uppercase text-secondary mb-1 hidden sm:block">Visa Score</div>
-                <div className={`text-3xl sm:text-4xl md:text-5xl font-bold font-display ${getScoreColor(score)}`}>
-                  {score}
-                </div>
+            <div className="company-score-card">
+              <div className="text-xs font-mono uppercase tracking-widest text-secondary">Visa Score</div>
+              <div className={`company-score-value ${getScoreColor(score)}`}>
+                {score.toFixed(1)}
               </div>
-              <div className="flex flex-col items-start sm:items-end gap-2">
+              <div className="flex flex-col items-center gap-2">
                 <Badge variant={badge.variant}>{badge.label}</Badge>
                 <Badge variant={confidenceBadge.variant} size="sm">{confidenceBadge.label}</Badge>
-                <Link to={`/compare?left=${company.slug}`} className="btn btn-secondary text-xs sm:text-sm">
+              </div>
+              <div className="w-full pt-1">
+                <Link to={`/compare?left=${company.slug}`} className="btn btn-secondary w-full justify-center text-xs sm:text-sm">
                   <Scale className="w-4 h-4" />
                   Compare
                 </Link>
@@ -224,7 +224,7 @@ function CompanyDetail() {
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6">
                   <div className={`text-4xl sm:text-5xl font-bold font-display ${getScoreColor(score)}`}>
-                    {score}
+                    {score.toFixed(1)}
                   </div>
                   <div>
                     <Badge variant={badge.variant}>{badge.label}</Badge>
@@ -363,7 +363,7 @@ function CompanyDetail() {
                 <h2 className="headline-sm mb-4 sm:mb-6">What This Means For Applicants</h2>
                 <div className="space-y-3">
                   {(company.actionable_insights || []).map((insight) => (
-                    <div key={insight} className="bg-secondary border-2 border-border p-3 text-sm text-primary">
+                    <div key={insight} className="bg-secondary border-2 border-border px-4 py-3 text-sm text-primary leading-relaxed">
                       {insight}
                     </div>
                   ))}
@@ -388,14 +388,14 @@ function CompanyDetail() {
                         rel="noopener noreferrer"
                         className="block bg-secondary border-2 border-border p-4 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
                       >
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <div className="font-semibold text-primary">{job.title}</div>
-                            <div className="text-sm text-secondary">
+                        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                          <div className="min-w-0">
+                            <div className="font-semibold text-primary leading-snug">{job.title}</div>
+                            <div className="text-sm text-secondary mt-1 leading-relaxed">
                               {[job.team, job.location].filter(Boolean).join(' • ') || 'Location pending'}
                             </div>
                           </div>
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2 md:justify-end">
                             <Badge variant="outline" size="sm">{job.remote_policy || 'unknown'}</Badge>
                             <Badge variant="ghost" size="sm">{job.source}</Badge>
                           </div>

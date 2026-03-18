@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Suspense, lazy } from 'react'
 import { ToastProvider } from './components/ui/Toast'
@@ -15,7 +15,6 @@ const CompareCompanies = lazy(() => import('./pages/CompareCompanies'))
 const Offers = lazy(() => import('./pages/Offers'))
 const Predictions = lazy(() => import('./pages/Predictions'))
 const LotteryCalculator = lazy(() => import('./pages/LotteryCalculator'))
-const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Privacy = lazy(() => import('./pages/Privacy'))
 const Terms = lazy(() => import('./pages/Terms'))
 const NotFound = lazy(() => import('./pages/NotFound'))
@@ -56,8 +55,6 @@ function App() {
                 <Route path="/offers" element={<Layout><Offers /></Layout>} />
                 <Route path="/predictions" element={<Layout><Predictions /></Layout>} />
                 <Route path="/lottery-calculator" element={<Layout><LotteryCalculator /></Layout>} />
-                <Route path="/tracker" element={<Layout><Dashboard /></Layout>} />
-                <Route path="/dashboard" element={<Navigate to="/tracker" replace />} />
                 <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
                 <Route path="/terms" element={<Layout><Terms /></Layout>} />
                 <Route path="*" element={<NotFound />} />

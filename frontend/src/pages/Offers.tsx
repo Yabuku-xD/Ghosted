@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 import { offersApi } from '../api/services';
-import { Badge, CompanyLogo, EmptyState } from '../components/ui';
+import { Badge, CompanyLogo, EmptyState, Select } from '../components/ui';
 import { StatBoxSkeleton, TableRowSkeleton } from '../components/ui/Skeleton';
 import type { Offer } from '../types';
 
@@ -69,6 +69,9 @@ function Offers() {
   const hasNext = !!data?.next;
   const hasPrevious = !!data?.previous;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalCountLabel = isLoading && !data
+    ? 'Loading offers...'
+    : `${totalCount.toLocaleString()} matching offers`;
 
   const visaTypes = [
     { value: '', label: 'All Visa Types' },
@@ -114,24 +117,24 @@ function Offers() {
   const communityCount = statistics?.by_source.find((entry) => entry.data_source === 'community_submission')?.count || 0;
 
   return (
-    <div className="bg-bg-primary min-h-screen">
+    <div className="min-h-screen bg-bg-primary">
       <div className="bg-secondary border-b-3 border-border">
         <div className="container py-8 sm:py-12">
-          <div className="header-layout mb-6">
+          <div className="mb-6 header-layout">
             <div>
-              <div className="section-marker mb-2">
+              <div className="mb-2 section-marker">
                 <span>Database</span>
               </div>
               <h1 className="headline-lg">Offer Database</h1>
             </div>
-            <div className="font-mono text-sm text-secondary text-left sm:text-right">
-              {totalCount.toLocaleString()} matching offers
+            <div className="font-mono text-sm text-left text-secondary sm:text-right">
+              {totalCountLabel}
               {isFetching && !isLoading ? ' • updating' : ''}
             </div>
           </div>
 
-          <div className="card-static p-4 mb-6 bg-white">
-            <div className="font-mono text-xs uppercase tracking-wider text-secondary mb-2">Search Scope</div>
+          <div className="p-4 mb-6 bg-white card-static">
+            <div className="mb-2 font-mono text-xs tracking-wider uppercase text-secondary">Search Scope</div>
             <p className="text-sm text-primary">
               Filters now search across the full salary dataset instead of only the current page, and every row shows whether it came from government-derived data or a community submission.
             </p>
@@ -139,69 +142,65 @@ function Offers() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3 min-[1700px]:grid-cols-5">
             <div className="relative">
-              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted" />
+              <Search className="absolute w-4 h-4 -translate-y-1/2 left-3 sm:left-4 top-1/2 sm:w-5 sm:h-5 text-muted" />
               <input
                 type="text"
-                placeholder="Search job title or company..."
+                placeholder="Job title/Company..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="input pl-10 sm:pl-12 text-sm sm:text-base"
+                className="pl-10 text-sm input sm:pl-12 sm:text-base"
               />
             </div>
 
             <div className="relative">
-              <MapPin className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted" />
+              <MapPin className="absolute w-4 h-4 -translate-y-1/2 left-3 sm:left-4 top-1/2 sm:w-5 sm:h-5 text-muted" />
               <input
                 type="text"
                 placeholder="Location..."
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="input pl-10 sm:pl-12 text-sm sm:text-base"
+                className="pl-10 text-sm input sm:pl-12 sm:text-base"
               />
             </div>
 
             <div className="relative">
-              <DollarSign className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted" />
+              <DollarSign className="absolute w-4 h-4 -translate-y-1/2 left-3 sm:left-4 top-1/2 sm:w-5 sm:h-5 text-muted" />
               <input
                 type="number"
                 placeholder="Min salary..."
                 value={minSalary}
                 onChange={(e) => setMinSalary(e.target.value)}
-                className="input pl-10 sm:pl-12 text-sm sm:text-base"
+                className="pl-10 text-sm input sm:pl-12 sm:text-base"
               />
             </div>
 
-            <div className="relative">
-              <Filter className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted" />
-              <select
-                value={visaType}
-                onChange={(e) => setVisaType(e.target.value)}
-                className="select pl-10 sm:pl-12 text-sm sm:text-base"
-              >
-                {visaTypes.map((type) => (
-                  <option key={type.value} value={type.value}>{type.label}</option>
-                ))}
-              </select>
-            </div>
+            <Select
+              value={visaType}
+              onChange={setVisaType}
+              icon={<Filter className="w-4 h-4 sm:w-5 sm:h-5 text-muted" />}
+              ariaLabel="Visa type filter"
+              buttonClassName="text-sm sm:text-base"
+              options={visaTypes}
+            />
 
-            <div className="relative">
-              <Database className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted" />
-              <select
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
-                className="select pl-10 sm:pl-12 text-sm sm:text-base"
-              >
-                <option value="">All Sources</option>
-                <option value="government">Government-derived only</option>
-                <option value="community">Community only</option>
-              </select>
-            </div>
+            <Select
+              value={source}
+              onChange={setSource}
+              icon={<Database className="w-4 h-4 sm:w-5 sm:h-5 text-muted" />}
+              ariaLabel="Offer source filter"
+              buttonClassName="text-sm sm:text-base"
+              options={[
+                { value: '', label: 'All Sources' },
+                { value: 'government', label: 'Government-derived only' },
+                { value: 'community', label: 'Community only' },
+              ]}
+            />
           </div>
         </div>
       </div>
 
       <div className="container py-6 sm:py-8">
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8 min-[1700px]:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 mb-6 sm:gap-4 sm:mb-8 xl:grid-cols-4">
           {statsLoading ? (
             <>
               <StatBoxSkeleton />
@@ -252,23 +251,23 @@ function Offers() {
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="mobile-table-card">
                   <div className="mobile-table-card-header">
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <div className="skeleton h-5 w-2/3" />
-                      <div className="skeleton h-4 w-1/2" />
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="w-2/3 h-5 skeleton" />
+                      <div className="w-1/2 h-4 skeleton" />
                     </div>
-                    <div className="skeleton h-6 w-20" />
+                    <div className="w-20 h-6 skeleton" />
                   </div>
                   <div className="mobile-table-card-row">
                     <span className="mobile-table-card-label">Location</span>
-                    <div className="skeleton h-4 w-24" />
+                    <div className="w-24 h-4 skeleton" />
                   </div>
                   <div className="mobile-table-card-row">
                     <span className="mobile-table-card-label">Experience</span>
-                    <div className="skeleton h-4 w-28" />
+                    <div className="h-4 skeleton w-28" />
                   </div>
                   <div className="mobile-table-card-row">
                     <span className="mobile-table-card-label">Salary</span>
-                    <div className="skeleton h-5 w-20" />
+                    <div className="w-20 h-5 skeleton" />
                   </div>
                 </div>
               ))}
@@ -277,7 +276,7 @@ function Offers() {
             <div className="card-static hidden min-[1700px]:block">
               <div className="table-responsive">
                 <div className="table-container">
-                  <table className="table table-fixed min-w-full">
+                  <table className="table min-w-full table-fixed">
                     <colgroup>
                       <col className="w-[20%]" />
                       <col className="w-[38%]" />
@@ -291,7 +290,7 @@ function Offers() {
                         <th className="px-4 xl:px-5">Company</th>
                         <th className="px-4 xl:px-5">Location</th>
                         <th className="px-4 xl:px-5">Source</th>
-                        <th className="px-4 xl:px-5 text-right">Salary</th>
+                        <th className="px-4 text-right xl:px-5">Salary</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -318,7 +317,7 @@ function Offers() {
                 return (
                   <div key={offer.id} className="mobile-table-card">
                     <div className="mobile-table-card-header">
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center min-w-0 gap-3">
                         <CompanyLogo
                           companyName={offer.company_name || 'Unknown'}
                           logoUrl={offer.company_logo_url}
@@ -326,21 +325,21 @@ function Offers() {
                           size="sm"
                         />
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-primary text-sm truncate">{offer.position_title}</span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-semibold truncate text-primary">{offer.position_title}</span>
                           </div>
-                          <div className="font-mono text-xs text-secondary truncate">{offer.company_name}</div>
+                          <div className="font-mono text-xs truncate text-secondary">{offer.company_name}</div>
                         </div>
                       </div>
                       <Badge variant={badge.variant} size="sm">{badge.label}</Badge>
                     </div>
                     <div className="mobile-table-card-row">
                       <span className="mobile-table-card-label">Location</span>
-                      <span className="mobile-table-card-value text-sm">{offer.location || 'N/A'}</span>
+                      <span className="text-sm mobile-table-card-value">{offer.location || 'N/A'}</span>
                     </div>
                     <div className="mobile-table-card-row">
                       <span className="mobile-table-card-label">Experience</span>
-                      <span className="mobile-table-card-value text-sm">{formatExperienceLevel(offer)}</span>
+                      <span className="text-sm mobile-table-card-value">{formatExperienceLevel(offer)}</span>
                     </div>
                     <div className="mobile-table-card-row">
                       <span className="mobile-table-card-label">Visa</span>
@@ -350,9 +349,9 @@ function Offers() {
                       <span className="mobile-table-card-label">Source</span>
                       <Badge variant="ghost" size="sm">{formatSource(offer)}</Badge>
                     </div>
-                    <div className="mobile-table-card-row border-b-0">
+                    <div className="border-b-0 mobile-table-card-row">
                       <span className="mobile-table-card-label">Salary</span>
-                      <span className="font-mono font-bold text-accent text-base">
+                      <span className="font-mono text-base font-bold text-accent">
                         {formatSalary(offer.base_salary || 0)}
                       </span>
                     </div>
@@ -364,7 +363,7 @@ function Offers() {
             <div className="card-static hidden min-[1700px]:block">
               <div className="table-responsive">
                 <div className="table-container">
-                  <table className="table table-fixed min-w-full">
+                  <table className="table min-w-full table-fixed">
                     <colgroup>
                       <col className="w-[19%]" />
                       <col className="w-[26%]" />
@@ -382,44 +381,44 @@ function Offers() {
                       <th className="px-4 xl:px-5">Experience</th>
                       <th className="px-4 xl:px-5">Source</th>
                       <th className="px-4 xl:px-5">Visa</th>
-                      <th className="px-4 xl:px-5 text-right">Salary</th>
+                      <th className="px-4 text-right xl:px-5">Salary</th>
                     </tr>
                   </thead>
                   <tbody>
                     {offers.map((offer: Offer) => (
                       <tr key={offer.id}>
-                        <td className="align-top px-4 xl:px-5">
-                          <div className="font-semibold text-primary break-words">
+                        <td className="px-4 align-top xl:px-5">
+                          <div className="font-semibold break-words text-primary">
                             {offer.position_title}
                           </div>
                         </td>
-                        <td className="align-top px-4 xl:px-5">
-                          <div className="flex items-center gap-2 xl:gap-3 min-w-0">
+                        <td className="px-4 align-top xl:px-5">
+                          <div className="flex items-center min-w-0 gap-2 xl:gap-3">
                             <CompanyLogo
                               companyName={offer.company_name || 'Unknown'}
                               logoUrl={offer.company_logo_url}
                               companyDomain={offer.company_domain}
                               size="sm"
                             />
-                            <span className="min-w-0 flex-1 truncate text-primary">
+                            <span className="flex-1 min-w-0 truncate text-primary">
                               {offer.company_name}
                             </span>
                           </div>
                         </td>
-                        <td className="align-top px-4 xl:px-5">
-                          <span className="text-secondary break-words">{offer.location || 'N/A'}</span>
+                        <td className="px-4 align-top xl:px-5">
+                          <span className="break-words text-secondary">{offer.location || 'N/A'}</span>
                         </td>
-                        <td className="align-top px-4 xl:px-5">
-                          <span className="text-secondary break-words">{formatExperienceLevel(offer)}</span>
+                        <td className="px-4 align-top xl:px-5">
+                          <span className="break-words text-secondary">{formatExperienceLevel(offer)}</span>
                         </td>
-                        <td className="align-top px-4 xl:px-5">
+                        <td className="px-4 align-top xl:px-5">
                           <Badge variant="ghost" size="sm">{formatSource(offer)}</Badge>
                         </td>
-                        <td className="align-top px-4 xl:px-5">
+                        <td className="px-4 align-top xl:px-5">
                           <Badge variant="outline" size="sm">{offer.visa_type_display || offer.visa_type || 'N/A'}</Badge>
                         </td>
-                        <td className="align-top px-4 xl:px-5 text-right whitespace-nowrap">
-                          <div className="font-mono font-bold text-accent text-sm xl:text-base">
+                        <td className="px-4 text-right align-top xl:px-5 whitespace-nowrap">
+                          <div className="font-mono text-sm font-bold text-accent xl:text-base">
                             {formatSalary(offer.base_salary || 0)}
                           </div>
                         </td>
@@ -432,11 +431,11 @@ function Offers() {
             </div>
 
             {totalPages > 1 ? (
-              <div className="flex items-center justify-center gap-4 mt-8 pt-8 border-t-2 border-border">
+              <div className="flex flex-col items-center justify-center gap-3 pt-8 mt-8 border-t-2 border-border sm:flex-row sm:gap-4">
                 <button
                   onClick={() => setPage((current) => Math.max(1, current - 1))}
                   disabled={!hasPrevious}
-                  className="btn btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Previous
@@ -452,7 +451,7 @@ function Offers() {
                 <button
                   onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                   disabled={!hasNext}
-                  className="btn btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />

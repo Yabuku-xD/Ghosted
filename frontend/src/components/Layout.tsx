@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Building2, TrendingUp, Calculator, Menu, X, Briefcase, Scale } from 'lucide-react';
+import { Building2, TrendingUp, Calculator, Menu, X, Scale } from 'lucide-react';
 import { useState } from 'react';
 import SkipLink from './ui/SkipLink';
 
@@ -18,7 +18,6 @@ function Layout({ children, title, description }: LayoutProps) {
     { to: '/offers', label: 'Offers', icon: TrendingUp },
     { to: '/compare', label: 'Compare', icon: Scale },
     { to: '/predictions', label: 'Predictions', icon: Calculator },
-    { to: '/tracker', label: 'Tracker', icon: Briefcase },
   ];
 
   const hasLogoDevKey = Boolean(import.meta.env.VITE_LOGO_DEV_PUBLISHABLE_KEY);
@@ -62,20 +61,6 @@ function Layout({ children, title, description }: LayoutProps) {
               ))}
             </div>
 
-            {/* Desktop CTA */}
-            <div className="hidden md:flex items-center gap-2 lg:gap-3">
-              <Link
-                to="/tracker"
-                aria-current={isActive('/tracker') ? 'page' : undefined}
-                className={`btn text-xs lg:text-sm ${
-                  isActive('/tracker') ? 'btn-primary' : 'btn-secondary'
-                }`}
-              >
-                <Briefcase className="w-4 h-4" aria-hidden="true" />
-                Open Tracker
-              </Link>
-            </div>
-
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -115,16 +100,6 @@ function Layout({ children, title, description }: LayoutProps) {
                 </Link>
               ))}
 
-              <div className="border-t-2 border-border pt-4 mt-4">
-                <Link
-                  to="/tracker"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="btn btn-primary btn-full"
-                >
-                  <Briefcase className="w-4 h-4" aria-hidden="true" />
-                  Open Tracker
-                </Link>
-              </div>
             </div>
           </div>
         )}

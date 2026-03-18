@@ -3,12 +3,11 @@ import { Link } from 'react-router-dom';
 import {
   ArrowRight,
   BarChart3,
-  Briefcase,
   Building2,
   Calculator,
   Database,
   DollarSign,
-  ShieldCheck,
+  Scale,
   TrendingUp,
   Users,
 } from 'lucide-react';
@@ -17,22 +16,26 @@ import { companiesApi } from '../api/services';
 import { CompanyLogo } from '../components/ui';
 
 function Home() {
-  const { data: insights } = useQuery({
+  const { data: insights, isLoading: insightsLoading } = useQuery({
     queryKey: ['company-insights'],
     queryFn: () => companiesApi.getInsights(),
   });
 
-  const { data: topSponsors } = useQuery({
+  const { data: topSponsors, isLoading: topSponsorsLoading } = useQuery({
     queryKey: ['top-sponsors'],
     queryFn: () => companiesApi.topSponsors(),
   });
 
-  const { data: topHiring } = useQuery({
+  const { data: topHiring, isLoading: topHiringLoading } = useQuery({
     queryKey: ['top-hiring'],
     queryFn: () => companiesApi.topHiring(),
   });
 
   const coverageLabel = (() => {
+    if (insightsLoading) {
+      return 'Loading...';
+    }
+
     if (!insights?.coverage_years.last) {
       return 'Coverage pending';
     }
@@ -45,9 +48,24 @@ function Home() {
   })();
 
   const stats = [
-    { value: insights?.total_companies?.toLocaleString() || '0', label: 'Companies', icon: Building2 },
-    { value: insights?.total_h1b_records?.toLocaleString() || '0', label: 'Gov Records', icon: Database },
-    { value: coverageLabel, label: 'Coverage', icon: BarChart3 },
+    {
+      value: insightsLoading ? 'Loading...' : insights?.total_companies?.toLocaleString() || '0',
+      label: 'Companies',
+      detail: 'Indexed across the searchable directory',
+      icon: Building2,
+    },
+    {
+      value: insightsLoading ? 'Loading...' : insights?.total_h1b_records?.toLocaleString() || '0',
+      label: 'Gov Records',
+      detail: 'Historical filings loaded into the platform',
+      icon: Database,
+    },
+    {
+      value: coverageLabel,
+      label: 'Coverage',
+      detail: 'Current fiscal-year range in the dataset',
+      icon: BarChart3,
+    },
   ];
 
   const features = [
@@ -63,7 +81,7 @@ function Home() {
       title: 'Salary Intelligence',
       description: 'Compare government-derived salary records with community submissions and trust signals.',
       link: '/offers',
-      color: 'bg-primary',
+      color: 'bg-info',
     },
     {
       icon: Calculator,
@@ -73,17 +91,10 @@ function Home() {
       color: 'bg-success',
     },
     {
-      icon: Briefcase,
+      icon: Scale,
       title: 'Compare Companies',
       description: 'See sponsorship strength, salary coverage, and live jobs side by side before you apply.',
       link: '/compare',
-      color: 'bg-primary',
-    },
-    {
-      icon: ShieldCheck,
-      title: 'Local Tracker',
-      description: 'Save applications in your browser instantly, without creating an account or waiting on auth.',
-      link: '/tracker',
       color: 'bg-warning',
     },
   ];
@@ -110,7 +121,7 @@ function Home() {
               <p className="text-base sm:text-lg text-secondary mb-6 sm:mb-8 leading-relaxed max-w-xl">
                 Explore sponsor history, salary records, and confidence signals in one place.
                 The app now shows exactly how much data backs each company, where that data came from,
-                and lets you track targets locally without creating an account.
+                and how sponsorship, salary, and hiring signals line up before you apply.
               </p>
 
               <div className="btn-group">
@@ -130,14 +141,15 @@ function Home() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 sm:gap-8 mt-8 sm:mt-12 pt-6 sm:pt-8 border-t-3 border-border">
+              <div className="home-stat-grid mt-8 sm:mt-12 pt-6 sm:pt-8 border-t-3 border-border">
                 {stats.map((stat) => (
-                  <div key={stat.label} className="text-center sm:text-left">
-                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold font-display text-accent flex items-center justify-center sm:justify-start gap-1 sm:gap-2">
-                      <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
-                      {stat.value}
+                  <div key={stat.label} className="home-stat-card">
+                    <div className="home-stat-card-label">
+                      <stat.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      {stat.label}
                     </div>
-                    <div className="font-mono text-xs sm:text-sm text-secondary uppercase mt-1">{stat.label}</div>
+                    <div className="home-stat-card-value">{stat.value}</div>
+                    <div className="home-stat-card-detail">{stat.detail}</div>
                   </div>
                 ))}
               </div>
@@ -153,7 +165,11 @@ function Home() {
                 </div>
 
                 <div className="space-y-0">
-                  {featuredCompanies.length > 0 ? featuredCompanies.map((company) => (
+                  {topSponsorsLoading ? (
+                    <div className="py-6 text-sm text-secondary">
+                      Loading sponsor rankings...
+                    </div>
+                  ) : featuredCompanies.length > 0 ? featuredCompanies.map((company) => (
                     <Link
                       key={company.id}
                       to={`/companies/${company.slug}`}
@@ -213,7 +229,7 @@ function Home() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
             {features.map((feature, index) => (
               <Link
                 key={feature.title}
@@ -270,7 +286,9 @@ function Home() {
                     </div>
                     <ArrowRight className="w-4 h-4 text-secondary" />
                   </Link>
-                )) : (
+                )) : topHiringLoading ? (
+                  <p className="text-sm text-secondary">Loading live hiring signals...</p>
+                ) : (
                   <p className="text-sm text-secondary">Run the Greenhouse import to surface live hiring signals here.</p>
                 )}
               </div>
@@ -284,19 +302,19 @@ function Home() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="stat-box-responsive">
                   <div className="stat-label">Domains</div>
-                  <div className="stat-value-responsive">{insights?.companies_with_domains?.toLocaleString() || '0'}</div>
+                  <div className="stat-value-responsive">{insightsLoading ? 'Loading...' : insights?.companies_with_domains?.toLocaleString() || '0'}</div>
                 </div>
                 <div className="stat-box-responsive">
                   <div className="stat-label">Logo-ready</div>
-                  <div className="stat-value-responsive">{insights?.companies_with_logos?.toLocaleString() || '0'}</div>
+                  <div className="stat-value-responsive">{insightsLoading ? 'Loading...' : insights?.companies_with_logos?.toLocaleString() || '0'}</div>
                 </div>
                 <div className="stat-box-responsive">
                   <div className="stat-label">Live Jobs</div>
-                  <div className="stat-value-responsive">{insights?.total_jobs?.toLocaleString() || '0'}</div>
+                  <div className="stat-value-responsive">{insightsLoading ? 'Loading...' : insights?.total_jobs?.toLocaleString() || '0'}</div>
                 </div>
                 <div className="stat-box-responsive">
                   <div className="stat-label">Benefits</div>
-                  <div className="stat-value-responsive">{insights?.total_benefits?.toLocaleString() || '0'}</div>
+                  <div className="stat-value-responsive">{insightsLoading ? 'Loading...' : insights?.total_benefits?.toLocaleString() || '0'}</div>
                 </div>
               </div>
             </div>
@@ -308,20 +326,20 @@ function Home() {
         <div className="container">
           <div className="card p-6 sm:p-8 md:p-12 text-center relative overflow-hidden bg-white">
             <div className="relative z-10">
-              <Briefcase className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 text-accent" />
+              <Scale className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 text-accent" />
               <h2 className="headline-lg mb-3 sm:mb-4">
                 Ready to find your next opportunity?
               </h2>
               <p className="text-secondary mb-6 sm:mb-8 max-w-2xl mx-auto text-base sm:text-lg px-4">
-                Use government records for coverage, community submissions for nuance, and a local tracker that stays on your device.
+                Use company data, salary history, and compare views together to shortlist better targets faster.
               </p>
               <div className="btn-group justify-center">
-                <Link to="/tracker" className="btn btn-primary w-full sm:w-auto">
-                  <Briefcase className="w-5 h-5" />
-                  Open Tracker
-                </Link>
-                <Link to="/companies" className="btn btn-secondary w-full sm:w-auto">
+                <Link to="/companies" className="btn btn-primary w-full sm:w-auto">
+                  <Building2 className="w-5 h-5" />
                   Browse Companies
+                </Link>
+                <Link to="/compare" className="btn btn-secondary w-full sm:w-auto">
+                  Compare Companies
                 </Link>
               </div>
             </div>
@@ -344,13 +362,13 @@ function Home() {
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="font-medium text-primary text-sm sm:text-base">
-                  {insights?.total_offers?.toLocaleString() || '0'} salary records
+                  {insightsLoading ? 'Loading...' : insights?.total_offers?.toLocaleString() || '0'} salary records
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="font-medium text-primary text-sm sm:text-base">
-                  {insights?.community_offers?.toLocaleString() || '0'} community submissions
+                  {insightsLoading ? 'Loading...' : insights?.community_offers?.toLocaleString() || '0'} community submissions
                 </span>
               </div>
             </div>

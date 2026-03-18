@@ -16,12 +16,12 @@ const sponsorshipSchema = z.object({
 
 type SponsorshipFormData = z.infer<typeof sponsorshipSchema>;
 
-interface SponsorshipTrackerProps {
+interface SponsorshipOddsProps {
   companyId?: number;
   companyName?: string;
 }
 
-function SponsorshipTracker({ companyId, companyName }: SponsorshipTrackerProps) {
+function SponsorshipOdds({ companyId, companyName }: SponsorshipOddsProps) {
   const toast = useToast();
 
   const {
@@ -87,12 +87,12 @@ function SponsorshipTracker({ companyId, companyName }: SponsorshipTrackerProps)
       <CardBody className="p-4 sm:p-6 border-b-2 border-border-light">
         <h2 className="headline-sm flex items-center gap-2">
           <Award className="w-5 h-5 text-accent" />
-          Sponsorship Tracker
+          Sponsorship Odds
         </h2>
         <p className="text-secondary text-sm mt-2">
           {companyName
             ? `Check sponsorship likelihood at ${companyName}`
-            : 'Check sponsorship likelihood for your role'}
+            : 'Estimate sponsorship likelihood for your role'}
         </p>
       </CardBody>
 
@@ -205,4 +205,4 @@ function SponsorshipTracker({ companyId, companyName }: SponsorshipTrackerProps)
   );
 }
 
-export default SponsorshipTracker;
+export default SponsorshipOdds;

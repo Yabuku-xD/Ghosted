@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2026-03-17
+
+### Fixed
+- Removed the public tracker/dashboard surface so the app now stays focused on the four primary product areas.
+- Tightened homepage, companies, offers, and company-detail presentation to better match the intended alignment from the latest UI pass.
+- Replaced the remaining native-looking filter controls with the custom dropdown treatment across the affected browsing pages.
+- Fixed mobile pagination overflow on company and offer listings by stacking controls cleanly on narrow screens.
+
+### Changed
+- Renamed the sponsorship calculator component surface from tracker-style naming to sponsorship odds naming in the frontend flow.
+- Updated repository docs to reflect the four-area public experience and the latest release version.
+
 ## [0.3.0] - 2026-03-17
 
 ### Added

@@ -260,6 +260,37 @@
     background-repeat: no-repeat;
   }
 
+  .select-button {
+    @apply input flex items-center justify-between gap-3 text-left pr-4;
+  }
+
+  .select-button-content {
+    @apply flex min-w-0 items-center gap-3;
+  }
+
+  .select-button-icon {
+    @apply flex h-5 w-5 flex-shrink-0 items-center justify-center;
+  }
+
+  .select-button-chevron {
+    @apply h-4 w-4 flex-shrink-0 text-[#1a1a1a] transition-transform duration-150;
+  }
+
+  .select-menu {
+    @apply absolute left-0 right-0 top-[calc(100%+0.5rem)] z-40 overflow-hidden
+           bg-white border-2 border-[#1a1a1a] shadow-[4px_4px_0_0_#1a1a1a];
+  }
+
+  .select-option {
+    @apply flex w-full items-center justify-between gap-3 px-4 py-3
+           text-left text-sm sm:text-base text-[#1a1a1a]
+           transition-colors duration-150 hover:bg-[#f5f5f0];
+  }
+
+  .select-option-active {
+    @apply bg-[#f5f5f0] text-[#c73e1d] font-semibold;
+  }
+
   .textarea {
     @apply input resize-y min-h-[6rem];
   }
@@ -654,9 +685,12 @@
   .bg-primary { background-color: var(--color-bg-primary); }
   .bg-secondary { background-color: var(--color-bg-secondary); }
   .bg-tertiary { background-color: var(--color-bg-tertiary); }
+  .bg-success { background-color: var(--color-success); }
+  .bg-warning { background-color: var(--color-warning); }
   .bg-success-light { background-color: var(--color-success-light); }
   .bg-warning-light { background-color: var(--color-warning-light); }
   .bg-danger-light { background-color: var(--color-danger-light); }
+  .bg-info { background-color: var(--color-info); }
 
   /* Hover underline */
   .hover-underline:hover {
@@ -750,6 +784,36 @@
   /* Touch-friendly tap targets */
   .tap-target {
     @apply min-h-[44px] min-w-[44px];
+  }
+
+  .home-stat-grid {
+    @apply grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4;
+  }
+
+  .home-stat-card {
+    @apply bg-white border-2 border-[#1a1a1a] p-4 min-h-[132px]
+           flex flex-col justify-between text-left;
+  }
+
+  .home-stat-card-label {
+    @apply flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#6b6b6b];
+  }
+
+  .home-stat-card-value {
+    @apply mt-3 text-2xl sm:text-3xl font-bold font-display text-[#c73e1d] break-words;
+  }
+
+  .home-stat-card-detail {
+    @apply mt-3 text-xs sm:text-sm leading-relaxed text-[#6b6b6b];
+  }
+
+  .company-score-card {
+    @apply w-full sm:w-[220px] bg-white border-3 border-[#1a1a1a] px-4 py-5
+           flex flex-col items-center gap-3 text-center;
+  }
+
+  .company-score-value {
+    @apply text-5xl sm:text-6xl leading-none font-bold font-display;
   }
 }
 

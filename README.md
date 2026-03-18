@@ -1,10 +1,10 @@
 # Ghosted
 
-Ghosted is a visa-aware job intelligence platform for international candidates. It combines public H-1B/LCA data with company insights, salary intelligence, and application tracking in a Dockerized full-stack app.
+Ghosted is a visa-aware job intelligence platform for international candidates. It combines public H-1B/LCA data with company insights, salary intelligence, and live hiring signals in a Dockerized full-stack app.
 
 ## Version
 
-Current tracked release: `v0.3.0`
+Current tracked release: `v0.3.1`
 
 ## Stack
 
@@ -19,7 +19,7 @@ Current tracked release: `v0.3.0`
 - Domain and logo enrichment with graceful fallback rendering
 - Live hiring signals from public ATS boards and side-by-side company comparison
 - Salary prediction and lottery risk tools
-- No-login local application tracker with JSON export
+- Public, no-login browsing flow centered on four core areas: Companies, Offers, Compare, and Predictions
 - Lighter frontend boot path with reduced refetching and smaller search payloads
 - H-1B data import pipeline and company enrichment commands
 
