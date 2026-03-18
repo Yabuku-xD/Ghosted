@@ -4,7 +4,7 @@ Ghosted is a visa-aware job intelligence platform for international candidates. 
 
 ## Version
 
-Current tracked release: `v0.1.0`
+Current tracked release: `v0.2.0`
 
 ## Stack
 
@@ -16,6 +16,8 @@ Current tracked release: `v0.1.0`
 
 - Sponsorship-focused company discovery with visa-fair scoring
 - Offer browsing with trust metadata and responsive pagination
+- Domain and logo enrichment with graceful fallback rendering
+- Live hiring signals from public ATS boards and side-by-side company comparison
 - Salary prediction and lottery risk tools
 - Authenticated dashboard with job application tracking
 - H-1B data import pipeline and company enrichment commands
@@ -68,6 +70,17 @@ npm run dev
 ## Data Setup
 
 Raw H-1B source files are intentionally not committed. Put them in [`backend/data/`](backend/data/) and follow the instructions in [`backend/data/README.md`](backend/data/README.md) when you want to seed local data.
+
+Useful enrichment commands:
+
+```bash
+cd backend
+python manage.py import_h1b_directory ./data --skip-existing --recalculate-scores
+python manage.py enrich_company_branding --limit 10000
+python manage.py import_greenhouse_jobs --limit 10
+```
+
+For full company logos, add a Logo.dev publishable key to `frontend/.env` as `VITE_LOGO_DEV_PUBLISHABLE_KEY`. Without it, the UI falls back to favicon-based branding when a company domain is known.
 
 ## Useful Docs
 

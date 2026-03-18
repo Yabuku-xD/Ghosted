@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Building2, TrendingUp, Calculator, User, LogOut, Menu, X, Briefcase } from 'lucide-react';
+import { Building2, TrendingUp, Calculator, User, LogOut, Menu, X, Briefcase, Scale } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
 import SkipLink from './ui/SkipLink';
@@ -18,8 +18,11 @@ function Layout({ children, title, description }: LayoutProps) {
   const navLinks = [
     { to: '/companies', label: 'Companies', icon: Building2 },
     { to: '/offers', label: 'Offers', icon: TrendingUp },
+    { to: '/compare', label: 'Compare', icon: Scale },
     { to: '/predictions', label: 'Predictions', icon: Calculator },
   ];
+
+  const hasLogoDevKey = Boolean(import.meta.env.VITE_LOGO_DEV_PUBLISHABLE_KEY);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -220,6 +223,7 @@ function Layout({ children, title, description }: LayoutProps) {
                 <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
                   <li><Link to="/companies" className="text-secondary hover:text-accent transition-colors">Companies</Link></li>
                   <li><Link to="/offers" className="text-secondary hover:text-accent transition-colors">Salary Data</Link></li>
+                  <li><Link to="/compare" className="text-secondary hover:text-accent transition-colors">Compare</Link></li>
                   <li><Link to="/predictions" className="text-secondary hover:text-accent transition-colors">Predictions</Link></li>
                   <li><Link to="/lottery-calculator" className="text-secondary hover:text-accent transition-colors">Lottery Calculator</Link></li>
                 </ul>
@@ -241,9 +245,21 @@ function Layout({ children, title, description }: LayoutProps) {
             <p className="font-mono text-xs sm:text-sm text-secondary text-center sm:text-left">
               © {new Date().getFullYear()} Ghosted. All rights reserved.
             </p>
-            <p className="font-mono text-xs text-secondary text-center sm:text-left">
-              Data from Department of Labor & USCIS
-            </p>
+            <div className="flex flex-col items-center gap-2 sm:items-end">
+              <p className="font-mono text-xs text-secondary text-center sm:text-left">
+                Data from Department of Labor & USCIS
+              </p>
+              {hasLogoDevKey ? (
+                <a
+                  href="https://logo.dev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-[10px] uppercase tracking-wider text-secondary hover:text-accent transition-colors"
+                >
+                  Logos provided by Logo.dev
+                </a>
+              ) : null}
+            </div>
           </div>
         </div>
       </footer>

@@ -27,6 +27,11 @@ function Home() {
     queryFn: () => companiesApi.topSponsors(),
   });
 
+  const { data: topHiring } = useQuery({
+    queryKey: ['top-hiring'],
+    queryFn: () => companiesApi.topHiring(),
+  });
+
   const coverageLabel = (() => {
     if (!insights?.coverage_years.last) {
       return 'Coverage pending';
@@ -68,6 +73,13 @@ function Home() {
       color: 'bg-success',
     },
     {
+      icon: Briefcase,
+      title: 'Compare Companies',
+      description: 'See sponsorship strength, salary coverage, and live jobs side by side before you apply.',
+      link: '/compare',
+      color: 'bg-primary',
+    },
+    {
       icon: ShieldCheck,
       title: 'Sponsorship Tracker',
       description: 'Spot who sponsors consistently and how broad the company’s historical record really is.',
@@ -77,6 +89,7 @@ function Home() {
   ];
 
   const featuredCompanies = topSponsors?.slice(0, 3) || [];
+  const featuredHiring = topHiring?.slice(0, 3) || [];
 
   return (
     <div className="bg-bg-primary">
@@ -149,6 +162,7 @@ function Home() {
                         <CompanyLogo
                           companyName={company.name}
                           logoUrl={company.logo_url}
+                          companyDomain={company.company_domain}
                           website={company.website}
                           size="sm"
                         />
@@ -198,7 +212,7 @@ function Home() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
             {features.map((feature, index) => (
               <Link
                 key={feature.title}
@@ -219,6 +233,72 @@ function Home() {
                 </div>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b-3 border-border">
+        <div className="container py-12 sm:py-16">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="card-static p-5 sm:p-6 bg-white">
+              <div className="section-marker mb-3">
+                <span>Hiring Signals</span>
+              </div>
+              <h2 className="headline-sm mb-4">Companies hiring now</h2>
+              <div className="space-y-0">
+                {featuredHiring.length > 0 ? featuredHiring.map((company) => (
+                  <Link
+                    key={company.id}
+                    to={`/companies/${company.slug}`}
+                    className="flex items-center justify-between py-3 border-b-2 border-border-light last:border-b-0 hover:bg-secondary/60 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <CompanyLogo
+                        companyName={company.name}
+                        logoUrl={company.logo_url}
+                        companyDomain={company.company_domain}
+                        website={company.website}
+                        size="sm"
+                      />
+                      <div className="min-w-0">
+                        <div className="font-semibold text-primary truncate">{company.name}</div>
+                        <div className="font-mono text-xs text-secondary">
+                          {(company.active_job_count || 0).toLocaleString()} live jobs
+                        </div>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-secondary" />
+                  </Link>
+                )) : (
+                  <p className="text-sm text-secondary">Run the Greenhouse import to surface live hiring signals here.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="card-static p-5 sm:p-6 bg-white">
+              <div className="section-marker mb-3">
+                <span>Enrichment</span>
+              </div>
+              <h2 className="headline-sm mb-4">Branding and coverage progress</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="stat-box-responsive">
+                  <div className="stat-label">Domains</div>
+                  <div className="stat-value-responsive">{insights?.companies_with_domains?.toLocaleString() || '0'}</div>
+                </div>
+                <div className="stat-box-responsive">
+                  <div className="stat-label">Logo-ready</div>
+                  <div className="stat-value-responsive">{insights?.companies_with_logos?.toLocaleString() || '0'}</div>
+                </div>
+                <div className="stat-box-responsive">
+                  <div className="stat-label">Live Jobs</div>
+                  <div className="stat-value-responsive">{insights?.total_jobs?.toLocaleString() || '0'}</div>
+                </div>
+                <div className="stat-box-responsive">
+                  <div className="stat-label">Benefits</div>
+                  <div className="stat-value-responsive">{insights?.total_benefits?.toLocaleString() || '0'}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

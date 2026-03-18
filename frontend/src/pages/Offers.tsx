@@ -322,6 +322,7 @@ function Offers() {
                         <CompanyLogo
                           companyName={offer.company_name || 'Unknown'}
                           logoUrl={offer.company_logo_url}
+                          companyDomain={offer.company_domain}
                           size="sm"
                         />
                         <div className="min-w-0">
@@ -397,6 +398,7 @@ function Offers() {
                             <CompanyLogo
                               companyName={offer.company_name || 'Unknown'}
                               logoUrl={offer.company_logo_url}
+                              companyDomain={offer.company_domain}
                               size="sm"
                             />
                             <span className="min-w-0 flex-1 truncate text-primary">

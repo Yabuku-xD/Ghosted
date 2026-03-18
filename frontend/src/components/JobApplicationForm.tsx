@@ -183,6 +183,7 @@ function JobApplicationForm({ onClose, onSubmit }: JobApplicationFormProps) {
                     <CompanyLogo
                       companyName={selectedCompany.name}
                       logoUrl={selectedCompany.logo_url}
+                      companyDomain={selectedCompany.company_domain}
                       website={selectedCompany.website}
                       size="sm"
                     />
@@ -214,6 +215,7 @@ function JobApplicationForm({ onClose, onSubmit }: JobApplicationFormProps) {
                           <CompanyLogo
                             companyName={company.name}
                             logoUrl={company.logo_url}
+                            companyDomain={company.company_domain}
                             website={company.website}
                             size="sm"
                           />

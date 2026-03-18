@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-03-17
+
+### Added
+- Company enrichment support for domains, logo metadata, careers links, live jobs, and benefits coverage.
+- A new compare flow for side-by-side company evaluation on sponsorship strength, salary coverage, and active jobs.
+- Import commands for branding enrichment and public Greenhouse job ingestion.
+- Frontend logo fallback logic that can use explicit logos, Logo.dev, favicon-based branding, or initials.
+
+### Changed
+- Company detail pages now surface careers links, live jobs, similar companies, trust details, and actionable applicant guidance.
+- Company and offer APIs now expose richer domain and branding metadata for UI rendering.
+- Home and companies pages now highlight hiring activity, enrichment progress, and comparison entry points.
+- Local environment examples and Docker Compose now document the optional Logo.dev publishable key.
+
+### Notes
+- This release is intended as the first richer data/enrichment milestone after the initial MVP.
+- Full Logo.dev-powered coverage still requires a `VITE_LOGO_DEV_PUBLISHABLE_KEY` in the frontend environment.
+
 ## [0.1.0] - 2026-03-17
 
 ### Added

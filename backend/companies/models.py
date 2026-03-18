@@ -2,6 +2,13 @@ from django.db import models
 
 
 class Company(models.Model):
+    DATA_CONFIDENCE_CHOICES = [
+        ('limited', 'Limited'),
+        ('emerging', 'Emerging'),
+        ('good', 'Good'),
+        ('high', 'High'),
+    ]
+
     COMPANY_SIZE_CHOICES = [
         ('startup', 'Startup (1-50)'),
         ('small', 'Small (51-200)'),
@@ -24,11 +31,28 @@ class Company(models.Model):
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
     website = models.URLField(blank=True)
+    company_domain = models.CharField(max_length=255, blank=True, db_index=True)
+    domain_source = models.CharField(max_length=50, blank=True)
+    domain_confidence = models.CharField(
+        max_length=20,
+        choices=DATA_CONFIDENCE_CHOICES,
+        blank=True,
+    )
     logo_url = models.URLField(blank=True, help_text="URL to company logo image")
+    logo_provider = models.CharField(max_length=50, blank=True)
+    logo_confidence = models.CharField(
+        max_length=20,
+        choices=DATA_CONFIDENCE_CHOICES,
+        blank=True,
+    )
+    logo_last_checked_at = models.DateTimeField(null=True, blank=True)
     linkedin_url = models.URLField(blank=True)
+    careers_url = models.URLField(blank=True)
     headquarters = models.CharField(max_length=100, blank=True)
     company_size = models.CharField(max_length=20, choices=COMPANY_SIZE_CHOICES, blank=True)
     industry = models.CharField(max_length=20, choices=INDUSTRY_CHOICES, blank=True)
+    year_founded = models.PositiveIntegerField(null=True, blank=True)
+    employee_count_estimate = models.PositiveIntegerField(null=True, blank=True)
     
     # Visa-fair scoring fields
     visa_fair_score = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
@@ -84,3 +108,101 @@ class CompanyReview(models.Model):
     
     def __str__(self):
         return f"Review of {self.company.name}"
+
+
+class CompanyBenefit(models.Model):
+    CATEGORY_CHOICES = [
+        ('health', 'Health'),
+        ('retirement', 'Retirement'),
+        ('equity', 'Equity'),
+        ('time_off', 'Time Off'),
+        ('family', 'Family'),
+        ('immigration', 'Immigration'),
+        ('learning', 'Learning'),
+        ('other', 'Other'),
+    ]
+
+    SOURCE_CHOICES = [
+        ('community', 'Community'),
+        ('company', 'Company'),
+        ('manual_research', 'Manual Research'),
+    ]
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='benefits')
+    title = models.CharField(max_length=120)
+    description = models.TextField(blank=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
+    value = models.CharField(max_length=120, blank=True)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='community')
+    source_url = models.URLField(blank=True)
+    confidence = models.CharField(
+        max_length=20,
+        choices=Company.DATA_CONFIDENCE_CHOICES,
+        default='emerging',
+    )
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-is_verified', 'category', 'title']
+        unique_together = ['company', 'title', 'category']
+
+    def __str__(self):
+        return f"{self.title} ({self.company.name})"
+
+
+class JobPosting(models.Model):
+    SOURCE_CHOICES = [
+        ('greenhouse', 'Greenhouse'),
+        ('lever', 'Lever'),
+        ('manual', 'Manual'),
+    ]
+
+    REMOTE_POLICY_CHOICES = [
+        ('remote', 'Remote'),
+        ('hybrid', 'Hybrid'),
+        ('onsite', 'On-site'),
+        ('unknown', 'Unknown'),
+    ]
+
+    VISA_SIGNAL_CHOICES = [
+        ('historically_sponsors', 'Historically Sponsors'),
+        ('likely', 'Likely'),
+        ('unknown', 'Unknown'),
+    ]
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='job_postings')
+    title = models.CharField(max_length=200)
+    team = models.CharField(max_length=120, blank=True)
+    location = models.CharField(max_length=150, blank=True)
+    remote_policy = models.CharField(max_length=20, choices=REMOTE_POLICY_CHOICES, default='unknown')
+    employment_type = models.CharField(max_length=50, blank=True)
+    url = models.URLField()
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='greenhouse')
+    source_board = models.CharField(max_length=100, blank=True)
+    external_job_id = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    salary_min = models.PositiveIntegerField(null=True, blank=True)
+    salary_max = models.PositiveIntegerField(null=True, blank=True)
+    currency = models.CharField(max_length=10, default='USD')
+    posted_at = models.DateTimeField(null=True, blank=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+    visa_sponsorship_signal = models.CharField(
+        max_length=30,
+        choices=VISA_SIGNAL_CHOICES,
+        default='unknown',
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-posted_at', 'title']
+        unique_together = ['company', 'source', 'external_job_id']
+        indexes = [
+            models.Index(fields=['source', 'source_board']),
+            models.Index(fields=['is_active']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} at {self.company.name}"

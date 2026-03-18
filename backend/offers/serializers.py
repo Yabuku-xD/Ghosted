@@ -6,6 +6,7 @@ class OfferSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
     company_slug = serializers.CharField(source='company.slug', read_only=True)
     company_logo_url = serializers.CharField(source='company.logo_url', read_only=True)
+    company_domain = serializers.CharField(source='company.company_domain', read_only=True)
     visa_type_display = serializers.CharField(source='get_visa_type_display', read_only=True)
     experience_level_display = serializers.CharField(source='get_experience_level_display', read_only=True)
     data_source = serializers.SerializerMethodField()
@@ -17,7 +18,7 @@ class OfferSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Offer
-        fields = ['id', 'company', 'company_name', 'company_slug', 'company_logo_url',
+        fields = ['id', 'company', 'company_name', 'company_slug', 'company_logo_url', 'company_domain',
                   'position_title', 'location',
                   'is_remote', 'base_salary', 'signing_bonus', 'annual_bonus_pct',
                   'stock_grant', 'stock_grant_years', 'other_compensation',
@@ -42,7 +43,7 @@ class OfferCreateSerializer(serializers.ModelSerializer):
 class OfferSummarySerializer(OfferSerializer):
     class Meta:
         model = Offer
-        fields = ['id', 'company', 'company_name', 'company_slug', 'company_logo_url',
+        fields = ['id', 'company', 'company_name', 'company_slug', 'company_logo_url', 'company_domain',
                   'position_title', 'location', 'base_salary', 'total_compensation',
                   'experience_level', 'experience_level_display', 'visa_type',
                   'visa_type_display', 'submitted_at', 'data_source']

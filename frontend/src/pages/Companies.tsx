@@ -10,6 +10,7 @@ import {
   Filter,
   Search,
   ShieldCheck,
+  Scale,
 } from 'lucide-react';
 
 import { companiesApi } from '../api/services';
@@ -24,6 +25,7 @@ function Companies() {
   const [minScore, setMinScore] = useState('');
   const [sponsorsOnly, setSponsorsOnly] = useState(false);
   const [hasOffers, setHasOffers] = useState(false);
+  const [hasJobs, setHasJobs] = useState(false);
   const [ordering, setOrdering] = useState('name');
   const [page, setPage] = useState(1);
 
@@ -31,7 +33,7 @@ function Companies() {
 
   useEffect(() => {
     setPage(1);
-  }, [deferredSearch, minScore, sponsorsOnly, hasOffers, ordering]);
+  }, [deferredSearch, minScore, sponsorsOnly, hasOffers, hasJobs, ordering]);
 
   const queryParams = useMemo(() => ({
     page,
@@ -40,8 +42,9 @@ function Companies() {
     min_score: minScore ? parseInt(minScore, 10) : undefined,
     sponsors_only: sponsorsOnly || undefined,
     has_offers: hasOffers || undefined,
+    has_jobs: hasJobs || undefined,
     ordering,
-  }), [deferredSearch, hasOffers, minScore, ordering, page, sponsorsOnly]);
+  }), [deferredSearch, hasJobs, hasOffers, minScore, ordering, page, sponsorsOnly]);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['companies', queryParams],
@@ -118,9 +121,15 @@ function Companies() {
               </div>
               <h1 className="headline-lg">Companies</h1>
             </div>
-            <div className="font-mono text-sm text-secondary text-left sm:text-right">
-              {totalCount.toLocaleString()} matching companies
-              {isFetching && !isLoading ? ' • updating' : ''}
+            <div className="flex flex-col items-start gap-3 sm:items-end">
+              <div className="font-mono text-sm text-secondary text-left sm:text-right">
+                {totalCount.toLocaleString()} matching companies
+                {isFetching && !isLoading ? ' • updating' : ''}
+              </div>
+              <Link to="/compare" className="btn btn-secondary text-sm">
+                <Scale className="w-4 h-4" />
+                Compare Companies
+              </Link>
             </div>
           </div>
 
@@ -139,6 +148,12 @@ function Companies() {
               <div className="font-mono text-xs uppercase text-secondary mb-2">Salary Data</div>
               <div className="text-primary font-semibold">
                 {insights?.companies_with_salary_data?.toLocaleString() || '0'} companies with offer records
+              </div>
+            </div>
+            <div className="card-static p-4 bg-white">
+              <div className="font-mono text-xs uppercase text-secondary mb-2">Live Jobs</div>
+              <div className="text-primary font-semibold">
+                {insights?.companies_with_jobs?.toLocaleString() || '0'} companies with active job postings
               </div>
             </div>
           </div>
@@ -180,6 +195,7 @@ function Companies() {
                 <option value="-visa_fair_score">Sort by Visa Score</option>
                 <option value="-total_h1b_filings">Sort by H-1B Volume</option>
                 <option value="-offer_count">Sort by Salary Records</option>
+                <option value="-active_job_count">Sort by Live Jobs</option>
                 <option value="-last_filing_year">Sort by Freshness</option>
               </select>
             </div>
@@ -202,6 +218,16 @@ function Companies() {
                 className="checkbox"
               />
               <span className="font-mono text-xs sm:text-sm uppercase text-primary">Has Salary Data</span>
+            </label>
+
+            <label className="flex items-center gap-3 cursor-pointer bg-white border-2 border-border px-3 sm:px-4 py-3 hover:bg-secondary transition-colors">
+              <input
+                type="checkbox"
+                checked={hasJobs}
+                onChange={(e) => setHasJobs(e.target.checked)}
+                className="checkbox"
+              />
+              <span className="font-mono text-xs sm:text-sm uppercase text-primary">Has Live Jobs</span>
             </label>
           </div>
         </div>
@@ -239,6 +265,7 @@ function Companies() {
                       <CompanyLogo
                         companyName={company.name}
                         logoUrl={company.logo_url}
+                        companyDomain={company.company_domain}
                         website={company.website}
                         size="md"
                       />
@@ -286,6 +313,18 @@ function Companies() {
                         <div className="font-mono text-xs uppercase text-secondary mb-1">Salary Records</div>
                         <div className="text-sm font-semibold text-primary">
                           {(company.offer_count || 0).toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-mono text-xs uppercase text-secondary mb-1">Live Jobs</div>
+                        <div className="text-sm font-semibold text-primary">
+                          {(company.active_job_count || 0).toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-mono text-xs uppercase text-secondary mb-1">Benefits</div>
+                        <div className="text-sm font-semibold text-primary">
+                          {(company.benefit_count || 0).toLocaleString()}
                         </div>
                       </div>
                     </div>

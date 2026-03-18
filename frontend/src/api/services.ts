@@ -2,8 +2,11 @@ import { apiClient } from './client';
 import type {
   User,
   Company,
+  CompanyBenefit,
+  CompanyComparison,
   CompanyInsights,
   CompanyListParams,
+  JobPosting,
   Offer,
   OfferListParams,
   OfferStatistics,
@@ -58,6 +61,12 @@ export const companiesApi = {
     }).then(r => r.data),
   getInsights: () => apiClient.get<CompanyInsights>('/companies/insights/').then(r => r.data),
   topSponsors: () => apiClient.get<Company[]>('/companies/top_sponsors/').then(r => r.data),
+  topHiring: () => apiClient.get<Company[]>('/companies/top_hiring/').then(r => r.data),
+  getJobs: (slug: string) => apiClient.get<JobPosting[]>(`/companies/${slug}/jobs/`).then(r => r.data),
+  getBenefits: (slug: string) => apiClient.get<CompanyBenefit[]>(`/companies/${slug}/benefits/`).then(r => r.data),
+  getSimilar: (slug: string) => apiClient.get<Company[]>(`/companies/${slug}/similar/`).then(r => r.data),
+  compare: (left: string, right: string) =>
+    apiClient.get<CompanyComparison>('/companies/compare/', { params: { left, right } }).then(r => r.data),
 };
 
 // Offers API

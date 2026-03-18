@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Award,
+  Briefcase,
   Building2,
   CheckCircle,
   Clock3,
@@ -12,11 +13,12 @@ import {
   Globe,
   MapPin,
   MessageSquare,
+  Scale,
   TrendingUp,
 } from 'lucide-react';
 import { companiesApi, offersApi } from '../api/services';
 import { Badge, Card, CardBody, Progress, EmptyState, Spinner, CompanyLogo } from '../components/ui';
-import type { Offer } from '../types';
+import type { CompanyBenefit, JobPosting, Offer } from '../types';
 
 function CompanyDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -31,6 +33,24 @@ function CompanyDetail() {
     queryKey: ['company-offers', company?.id],
     queryFn: () => offersApi.list({ page: 1, company: company!.id }).then((response) => response.results),
     enabled: !!company?.id,
+  });
+
+  const { data: jobs } = useQuery({
+    queryKey: ['company-jobs', slug],
+    queryFn: () => companiesApi.getJobs(slug!),
+    enabled: !!slug,
+  });
+
+  const { data: benefits } = useQuery({
+    queryKey: ['company-benefits', slug],
+    queryFn: () => companiesApi.getBenefits(slug!),
+    enabled: !!slug,
+  });
+
+  const { data: similarCompanies } = useQuery({
+    queryKey: ['similar-companies', slug],
+    queryFn: () => companiesApi.getSimilar(slug!),
+    enabled: !!slug,
   });
 
   const getScoreColor = (score: number) => {
@@ -123,6 +143,7 @@ function CompanyDetail() {
             <CompanyLogo
               companyName={company.name}
               logoUrl={company.logo_url}
+              companyDomain={company.company_domain}
               website={company.website}
               size="lg"
             />
@@ -154,6 +175,18 @@ function CompanyDetail() {
                     <ExternalLink className="w-2 h-2 sm:w-3 sm:h-3" />
                   </a>
                 )}
+                {company.careers_url && (
+                  <a
+                    href={company.careers_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-accent hover-underline"
+                  >
+                    <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Careers
+                    <ExternalLink className="w-2 h-2 sm:w-3 sm:h-3" />
+                  </a>
+                )}
               </div>
             </div>
 
@@ -167,6 +200,10 @@ function CompanyDetail() {
               <div className="flex flex-col items-start sm:items-end gap-2">
                 <Badge variant={badge.variant}>{badge.label}</Badge>
                 <Badge variant={confidenceBadge.variant} size="sm">{confidenceBadge.label}</Badge>
+                <Link to={`/compare?left=${company.slug}`} className="btn btn-secondary text-xs sm:text-sm">
+                  <Scale className="w-4 h-4" />
+                  Compare
+                </Link>
               </div>
             </div>
           </div>
@@ -258,6 +295,7 @@ function CompanyDetail() {
                             <CompanyLogo
                               companyName={company.name}
                               logoUrl={company.logo_url}
+                              companyDomain={company.company_domain}
                               website={company.website}
                               size="sm"
                             />
@@ -319,6 +357,97 @@ function CompanyDetail() {
                 </CardBody>
               </Card>
             )}
+
+            <Card static>
+              <CardBody className="p-4 sm:p-6">
+                <h2 className="headline-sm mb-4 sm:mb-6">What This Means For Applicants</h2>
+                <div className="space-y-3">
+                  {(company.actionable_insights || []).map((insight) => (
+                    <div key={insight} className="bg-secondary border-2 border-border p-3 text-sm text-primary">
+                      {insight}
+                    </div>
+                  ))}
+                </div>
+              </CardBody>
+            </Card>
+
+            <Card static>
+              <CardBody className="p-4 sm:p-6">
+                <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6">
+                  <h2 className="headline-sm">Live Jobs</h2>
+                  <Badge variant="outline">{(jobs || []).length.toLocaleString()} tracked</Badge>
+                </div>
+
+                {jobs && jobs.length > 0 ? (
+                  <div className="space-y-3">
+                    {jobs.slice(0, 6).map((job: JobPosting) => (
+                      <a
+                        key={job.id}
+                        href={job.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block bg-secondary border-2 border-border p-4 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <div className="font-semibold text-primary">{job.title}</div>
+                            <div className="text-sm text-secondary">
+                              {[job.team, job.location].filter(Boolean).join(' • ') || 'Location pending'}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="outline" size="sm">{job.remote_policy || 'unknown'}</Badge>
+                            <Badge variant="ghost" size="sm">{job.source}</Badge>
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={Briefcase}
+                    title="No live jobs tracked yet"
+                    description="This company will show public ATS jobs once a supported board is imported."
+                  />
+                )}
+              </CardBody>
+            </Card>
+
+            <Card static>
+              <CardBody className="p-4 sm:p-6">
+                <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6">
+                  <h2 className="headline-sm">Benefits Coverage</h2>
+                  <Badge variant="outline">{(benefits || []).length.toLocaleString()} items</Badge>
+                </div>
+
+                {benefits && benefits.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {benefits.slice(0, 6).map((benefit: CompanyBenefit) => (
+                      <div key={benefit.id} className="bg-secondary border-2 border-border p-4">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className="font-semibold text-primary">{benefit.title}</span>
+                          <Badge variant={benefit.is_verified ? 'accent' : 'ghost'} size="sm">
+                            {benefit.category_display || benefit.category}
+                          </Badge>
+                        </div>
+                        {benefit.value ? (
+                          <div className="font-mono text-xs uppercase text-accent mb-2">{benefit.value}</div>
+                        ) : null}
+                        {benefit.description ? (
+                          <p className="text-sm text-secondary">{benefit.description}</p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={MessageSquare}
+                    title="No benefit coverage yet"
+                    description="Benefits support is ready; once data is imported or contributed, it will appear here."
+                  />
+                )}
+              </CardBody>
+            </Card>
           </div>
 
           {/* Right Column */}
@@ -400,6 +529,33 @@ function CompanyDetail() {
                       {formatDate(company.latest_h1b_decision_date)}
                     </span>
                   </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-secondary text-sm">
+                      <Globe className="w-4 h-4" />
+                      Domain
+                    </div>
+                    <span className="font-semibold text-primary text-sm text-right">
+                      {company.company_domain || 'Pending'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-secondary text-sm">
+                      <Briefcase className="w-4 h-4" />
+                      Active Jobs
+                    </div>
+                    <span className="font-semibold text-primary text-sm">
+                      {(company.active_job_count || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-secondary text-sm">
+                      <Building2 className="w-4 h-4" />
+                      Benefits
+                    </div>
+                    <span className="font-semibold text-primary text-sm">
+                      {(company.benefit_count || 0).toLocaleString()}
+                    </span>
+                  </div>
                   <div className="pt-2">
                     <Badge variant={confidenceBadge.variant}>{confidenceBadge.label}</Badge>
                   </div>
@@ -413,6 +569,37 @@ function CompanyDetail() {
                 </div>
               </CardBody>
             </Card>
+
+            {similarCompanies && similarCompanies.length > 0 ? (
+              <Card static>
+                <CardBody className="p-4 sm:p-6">
+                  <h3 className="font-semibold mb-4 text-primary">Similar Companies</h3>
+                  <div className="space-y-3">
+                    {similarCompanies.slice(0, 4).map((similar) => (
+                      <Link
+                        key={similar.id}
+                        to={`/companies/${similar.slug}`}
+                        className="flex items-center gap-3 border-2 border-border p-3 hover:bg-secondary transition-colors"
+                      >
+                        <CompanyLogo
+                          companyName={similar.name}
+                          logoUrl={similar.logo_url}
+                          companyDomain={similar.company_domain}
+                          website={similar.website}
+                          size="sm"
+                        />
+                        <div className="min-w-0">
+                          <div className="font-semibold text-primary truncate">{similar.name}</div>
+                          <div className="text-xs text-secondary truncate">
+                            {similar.industry_display || similar.industry || 'Industry pending'}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </CardBody>
+              </Card>
+            ) : null}
           </div>
         </div>
       </div>

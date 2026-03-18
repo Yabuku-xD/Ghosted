@@ -54,6 +54,7 @@ services:
       - "5173:5173"
     environment:
       - VITE_API_URL=http://localhost:8000/api
+      - VITE_LOGO_DEV_PUBLISHABLE_KEY=${VITE_LOGO_DEV_PUBLISHABLE_KEY:-}
     depends_on:
       - backend
 
