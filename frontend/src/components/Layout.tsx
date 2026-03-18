@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Building2, TrendingUp, Calculator, Menu, X, Scale } from 'lucide-react';
+import { Building2, TrendingUp, Calculator, Menu, X, Scale, BriefcaseBusiness } from 'lucide-react';
 import { useState } from 'react';
 import SkipLink from './ui/SkipLink';
 
@@ -15,6 +15,7 @@ function Layout({ children, title, description }: LayoutProps) {
 
   const navLinks = [
     { to: '/companies', label: 'Companies', icon: Building2 },
+    { to: '/jobs', label: 'Jobs', icon: BriefcaseBusiness },
     { to: '/offers', label: 'Offers', icon: TrendingUp },
     { to: '/compare', label: 'Compare', icon: Scale },
     { to: '/predictions', label: 'Predictions', icon: Calculator },
@@ -135,6 +136,7 @@ function Layout({ children, title, description }: LayoutProps) {
               <nav aria-label="Product links">
                 <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
                   <li><Link to="/companies" className="text-secondary hover:text-accent transition-colors">Companies</Link></li>
+                  <li><Link to="/jobs" className="text-secondary hover:text-accent transition-colors">Jobs</Link></li>
                   <li><Link to="/offers" className="text-secondary hover:text-accent transition-colors">Salary Data</Link></li>
                   <li><Link to="/compare" className="text-secondary hover:text-accent transition-colors">Compare</Link></li>
                   <li><Link to="/predictions" className="text-secondary hover:text-accent transition-colors">Predictions</Link></li>

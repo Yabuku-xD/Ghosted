@@ -1,5 +1,12 @@
 from django.db import models
 
+JOB_PROVIDER_CHOICES = [
+    ('greenhouse', 'Greenhouse'),
+    ('lever', 'Lever'),
+    ('ashby', 'Ashby'),
+    ('manual', 'Manual'),
+]
+
 
 class Company(models.Model):
     DATA_CONFIDENCE_CHOICES = [
@@ -48,6 +55,12 @@ class Company(models.Model):
     logo_last_checked_at = models.DateTimeField(null=True, blank=True)
     linkedin_url = models.URLField(blank=True)
     careers_url = models.URLField(blank=True)
+    jobs_provider = models.CharField(max_length=20, choices=JOB_PROVIDER_CHOICES, blank=True, db_index=True)
+    jobs_board_token = models.CharField(max_length=120, blank=True, db_index=True)
+    jobs_sync_enabled = models.BooleanField(default=True)
+    jobs_last_synced_at = models.DateTimeField(null=True, blank=True)
+    jobs_last_discovered_at = models.DateTimeField(null=True, blank=True)
+    jobs_sync_error = models.CharField(max_length=255, blank=True)
     headquarters = models.CharField(max_length=100, blank=True)
     company_size = models.CharField(max_length=20, choices=COMPANY_SIZE_CHOICES, blank=True)
     industry = models.CharField(max_length=20, choices=INDUSTRY_CHOICES, blank=True)
@@ -153,11 +166,7 @@ class CompanyBenefit(models.Model):
 
 
 class JobPosting(models.Model):
-    SOURCE_CHOICES = [
-        ('greenhouse', 'Greenhouse'),
-        ('lever', 'Lever'),
-        ('manual', 'Manual'),
-    ]
+    SOURCE_CHOICES = JOB_PROVIDER_CHOICES
 
     REMOTE_POLICY_CHOICES = [
         ('remote', 'Remote'),
@@ -202,6 +211,8 @@ class JobPosting(models.Model):
         indexes = [
             models.Index(fields=['source', 'source_board']),
             models.Index(fields=['is_active']),
+            models.Index(fields=['posted_at']),
+            models.Index(fields=['remote_policy']),
         ]
 
     def __str__(self):

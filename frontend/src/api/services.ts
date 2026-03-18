@@ -6,6 +6,8 @@ import type {
   CompanyInsights,
   CompanyListParams,
   JobPosting,
+  JobListParams,
+  JobStatistics,
   Offer,
   OfferListParams,
   OfferStatistics,
@@ -46,6 +48,14 @@ export const companiesApi = {
   getSimilar: (slug: string) => apiClient.get<Company[]>(`/companies/${slug}/similar/`).then(r => r.data),
   compare: (left: string, right: string) =>
     apiClient.get<CompanyComparison>('/companies/compare/', { params: { left, right } }).then(r => r.data),
+};
+
+// Jobs API
+export const jobsApi = {
+  list: (params?: JobListParams) =>
+    apiClient.get<PaginatedResponse<JobPosting>>('/jobs/', { params }).then(r => r.data),
+  statistics: (params?: Omit<JobListParams, 'page' | 'page_size' | 'ordering'>) =>
+    apiClient.get<JobStatistics>('/jobs/statistics/', { params }).then(r => r.data),
 };
 
 // Offers API

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-03-18
+
+### Added
+- Added a first-class `Jobs` product surface with a dedicated `/jobs` route, responsive filters, server-side pagination, visa-aware ranking, company context, and source-linked apply actions.
+- Added a public jobs API with searchable listing, ranking metadata, company salary-evidence context, and aggregate statistics for the jobs page.
+- Added provider-aware ATS sync infrastructure for supported public boards, including reusable jobs services, Celery tasks, and a new `sync_job_postings` management command.
+- Added scheduled job discovery, sync, and stale-job cleanup via Celery Beat in the deployment stack.
+
+### Changed
+- Integrated jobs into the main navigation, homepage calls to action, and company detail pages so hiring data is no longer only a secondary enrichment snippet.
+- Updated the README to document the new jobs workflow, automated scheduler, and job-sync command.
+
+### Fixed
+- Tightened job-board discovery so ambiguous short board tokens are no longer auto-matched to the wrong employer during automated sync.
+
 ## [0.3.17] - 2026-03-18
 
 ### Changed

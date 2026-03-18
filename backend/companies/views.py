@@ -1,10 +1,13 @@
+from datetime import timedelta
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Count, Max, Min, Q
+from django.db.models import Case, Count, IntegerField, Max, Min, Q, Value, When
 from django.db.models.functions import Lower
+from django.utils import timezone
 from .models import Company, CompanyBenefit, CompanyReview, JobPosting
 from .serializers import (
     CompanyBenefitSerializer,
@@ -325,3 +328,141 @@ class CompanyViewSet(viewsets.ModelViewSet):
 class CompanyReviewViewSet(viewsets.ModelViewSet):
     queryset = CompanyReview.objects.all()
     serializer_class = CompanyReviewSerializer
+
+
+class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
+    class JobPagination(PageNumberPagination):
+        page_size = 15
+        page_size_query_param = 'page_size'
+        max_page_size = 15
+
+    serializer_class = JobPostingSerializer
+    pagination_class = JobPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['source', 'remote_policy', 'visa_sponsorship_signal', 'company']
+
+    def get_queryset(self):
+        queryset = JobPosting.objects.filter(is_active=True).select_related('company').annotate(
+            company_name_lower=Lower('company__name'),
+            company_offer_count=Count('company__offers', filter=Q(company__offers__is_verified=True), distinct=True),
+        )
+
+        params = self.request.query_params
+        search_term = params.get('search', '').strip()
+        location = params.get('location', '').strip()
+        company_slug = params.get('company_slug', '').strip()
+        ordering = params.get('ordering', '-job_score').strip()
+        posted_within_days = params.get('posted_within_days')
+
+        if search_term:
+            queryset = queryset.filter(
+                Q(title__icontains=search_term)
+                | Q(team__icontains=search_term)
+                | Q(company__name__icontains=search_term)
+                | Q(description__icontains=search_term)
+            )
+
+        if location:
+            queryset = queryset.filter(location__icontains=location)
+
+        if company_slug:
+            queryset = queryset.filter(company__slug=company_slug)
+
+        if is_truthy(params.get('has_salary')):
+            queryset = queryset.filter(Q(salary_min__isnull=False) | Q(salary_max__isnull=False))
+
+        if posted_within_days and posted_within_days.isdigit():
+            queryset = queryset.filter(posted_at__gte=timezone.now() - timedelta(days=int(posted_within_days)))
+
+        if params.get('source'):
+            queryset = queryset.filter(source=params['source'])
+
+        if params.get('remote_policy'):
+            queryset = queryset.filter(remote_policy=params['remote_policy'])
+
+        if params.get('visa_sponsorship_signal'):
+            queryset = queryset.filter(visa_sponsorship_signal=params['visa_sponsorship_signal'])
+
+        search_score = Value(0, output_field=IntegerField())
+        if search_term:
+            search_score = Case(
+                When(title__icontains=search_term, then=Value(40)),
+                When(company__name__icontains=search_term, then=Value(28)),
+                When(team__icontains=search_term, then=Value(18)),
+                When(description__icontains=search_term, then=Value(12)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+
+        location_score = Value(0, output_field=IntegerField())
+        if location:
+            location_score = Case(
+                When(location__icontains=location, then=Value(16)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+
+        freshness_score = Case(
+            When(posted_at__gte=timezone.now() - timedelta(days=7), then=Value(14)),
+            When(posted_at__gte=timezone.now() - timedelta(days=30), then=Value(8)),
+            When(posted_at__isnull=False, then=Value(4)),
+            default=Value(1),
+            output_field=IntegerField(),
+        )
+        sponsorship_score = Case(
+            When(company__total_h1b_filings__gte=500, then=Value(24)),
+            When(company__total_h1b_filings__gte=100, then=Value(18)),
+            When(company__total_h1b_filings__gte=25, then=Value(12)),
+            When(company__visa_fair_score__gte=80, then=Value(10)),
+            When(company__visa_fair_score__gte=60, then=Value(7)),
+            default=Value(2),
+            output_field=IntegerField(),
+        )
+        salary_score = Case(
+            When(Q(salary_min__isnull=False) | Q(salary_max__isnull=False), then=Value(10)),
+            When(company_offer_count__gte=20, then=Value(7)),
+            When(company_offer_count__gte=5, then=Value(4)),
+            default=Value(0),
+            output_field=IntegerField(),
+        )
+        remote_score = Case(
+            When(remote_policy='remote', then=Value(6)),
+            When(remote_policy='hybrid', then=Value(3)),
+            default=Value(0),
+            output_field=IntegerField(),
+        )
+
+        queryset = queryset.annotate(
+            job_score=search_score + location_score + freshness_score + sponsorship_score + salary_score + remote_score
+        )
+
+        ordering_map = {
+            '-job_score': ('-job_score', '-posted_at', 'company_name_lower', 'title'),
+            'job_score': ('job_score', '-posted_at', 'company_name_lower', 'title'),
+            '-posted_at': ('-posted_at', '-job_score', 'company_name_lower', 'title'),
+            'posted_at': ('posted_at', '-job_score', 'company_name_lower', 'title'),
+            'company': ('company_name_lower', 'title'),
+            '-company': ('-company_name_lower', 'title'),
+            'title': ('title', 'company_name_lower'),
+            '-title': ('-title', 'company_name_lower'),
+        }
+
+        return queryset.order_by(*ordering_map.get(ordering, ordering_map['-job_score']))
+
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        queryset = self.get_queryset()
+        stats = queryset.aggregate(
+            total_jobs=Count('id', distinct=True),
+            company_count=Count('company', distinct=True),
+            remote_jobs=Count('id', filter=Q(remote_policy='remote'), distinct=True),
+            salary_visible_jobs=Count('id', filter=Q(salary_min__isnull=False) | Q(salary_max__isnull=False), distinct=True),
+            latest_job_posting_at=Max('posted_at'),
+        )
+        by_source = list(
+            queryset.values('source').annotate(count=Count('id', distinct=True)).order_by('-count', 'source')
+        )
+        return Response({
+            **stats,
+            'by_source': by_source,
+        })

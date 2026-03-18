@@ -406,7 +406,12 @@ function CompanyDetail() {
                     Public ATS roles appear here when this employer has a supported board we currently track.
                   </p>
                 </div>
-                <Badge variant="outline">{(jobs || []).length.toLocaleString()} tracked</Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">{(jobs || []).length.toLocaleString()} tracked</Badge>
+                  <Link to={`/jobs?company_slug=${company.slug}`} className="btn btn-secondary text-xs sm:text-sm">
+                    View All Jobs
+                  </Link>
+                </div>
               </div>
 
               {jobs && jobs.length > 0 ? (

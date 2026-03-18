@@ -162,6 +162,7 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'description', 'website', 'company_domain',
                   'domain_source', 'domain_confidence', 'logo_url', 'logo_provider',
                   'logo_confidence', 'logo_last_checked_at', 'linkedin_url', 'careers_url',
+                  'jobs_provider', 'jobs_board_token', 'jobs_last_synced_at',
                   'headquarters', 'company_size', 'company_size_display', 'industry',
                   'industry_display', 'visa_fair_score',
                   'h1b_approval_rate', 'avg_salary_percentile', 'sponsorship_consistency_score',
@@ -226,7 +227,7 @@ class CompanyListSerializer(CompanySerializer):
     class Meta:
         model = Company
         fields = ['id', 'name', 'slug', 'logo_url', 'logo_provider', 'logo_confidence',
-                  'website', 'company_domain', 'careers_url',
+                  'website', 'company_domain', 'careers_url', 'jobs_provider',
                   'visa_fair_score', 'h1b_approval_rate',
                   'industry', 'industry_display', 'headquarters', 'company_size',
                   'company_size_display', 'total_h1b_filings', 'first_filing_year',
@@ -239,6 +240,54 @@ class CompanyListSerializer(CompanySerializer):
 class JobPostingSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
     company_slug = serializers.CharField(source='company.slug', read_only=True)
+    company_logo_url = serializers.CharField(source='company.logo_url', read_only=True)
+    company_domain = serializers.CharField(source='company.company_domain', read_only=True)
+    company_visa_fair_score = serializers.SerializerMethodField()
+    company_h1b_approval_rate = serializers.SerializerMethodField()
+    company_offer_count = serializers.SerializerMethodField()
+    job_score = serializers.SerializerMethodField()
+    match_reasons = serializers.SerializerMethodField()
+
+    def get_company_visa_fair_score(self, obj):
+        return float(obj.company.visa_fair_score) if obj.company.visa_fair_score is not None else None
+
+    def get_company_h1b_approval_rate(self, obj):
+        return float(obj.company.h1b_approval_rate) if obj.company.h1b_approval_rate is not None else None
+
+    def get_company_offer_count(self, obj):
+        annotated = getattr(obj, 'company_offer_count', None)
+        if annotated is not None:
+            return annotated
+        return obj.company.offers.count()
+
+    def get_job_score(self, obj):
+        score = getattr(obj, 'job_score', None)
+        return int(score) if score is not None else None
+
+    def get_match_reasons(self, obj):
+        reasons = []
+        request = self.context.get('request')
+        search_term = request.query_params.get('search', '').strip().lower() if request else ''
+        location = request.query_params.get('location', '').strip().lower() if request else ''
+
+        if search_term and search_term in (obj.title or '').lower():
+            reasons.append('Title matches your search')
+        if location and location in (obj.location or '').lower():
+            reasons.append('Location matches your filter')
+        if obj.remote_policy == 'remote':
+            reasons.append('Remote-friendly role')
+        if obj.salary_min or obj.salary_max:
+            reasons.append('Compensation published on the job posting')
+        elif self.get_company_offer_count(obj) > 0:
+            reasons.append(f'{self.get_company_offer_count(obj)} salary records available for this company')
+        if obj.visa_sponsorship_signal == 'historically_sponsors':
+            reasons.append('Employer has a meaningful historical sponsorship footprint')
+        elif obj.visa_sponsorship_signal == 'likely':
+            reasons.append('Employer shows positive visa-support signals')
+        if obj.posted_at:
+            reasons.append('Recently refreshed from the source board')
+
+        return reasons[:4]
 
     class Meta:
         model = JobPosting
@@ -247,6 +296,11 @@ class JobPostingSerializer(serializers.ModelSerializer):
             'company',
             'company_name',
             'company_slug',
+            'company_logo_url',
+            'company_domain',
+            'company_visa_fair_score',
+            'company_h1b_approval_rate',
+            'company_offer_count',
             'title',
             'team',
             'location',
@@ -259,8 +313,11 @@ class JobPostingSerializer(serializers.ModelSerializer):
             'salary_max',
             'currency',
             'posted_at',
+            'last_seen_at',
             'visa_sponsorship_signal',
             'is_active',
+            'job_score',
+            'match_reasons',
         ]
 
 

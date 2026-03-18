@@ -13,11 +13,11 @@
   <a href="https://www.djangoproject.com/"><img src="https://img.shields.io/badge/Backend-Django%20%2B%20DRF-2D6A4F?style=for-the-badge" alt="Backend Django and DRF" /></a>
 </p>
 
-Visa-aware job intelligence platform with H-1B data, salary insights, company comparison, and prediction tools.
+Visa-aware job intelligence platform with H-1B data, live jobs, salary insights, company comparison, and prediction tools.
 
-Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is built around four public workflows: company discovery, salary intelligence, company comparison, and prediction tools for compensation and sponsorship odds.
+Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is now built around five public workflows: company discovery, live jobs, salary intelligence, company comparison, and prediction tools for compensation and sponsorship odds.
 
-Current tracked release: `v0.3.17`
+Current tracked release: `v0.4.0`
 
 ![Ghosted homepage](assets/home.png)
 
@@ -46,9 +46,10 @@ The stack currently includes:
 Core product capabilities:
 
 - Sponsorship-focused company discovery with visa-fair scoring
+- Live jobs browsing with source-linked outbound apply flows
 - Offer browsing with trust metadata and responsive pagination
 - Domain and logo enrichment with graceful fallback rendering
-- Live hiring signals from supported public ATS boards
+- Automated ATS sync from supported public job boards
 - Side-by-side company comparison
 - Salary prediction and sponsorship-odds tools
 
@@ -72,7 +73,7 @@ For manual development instead of Docker, also install:
 docker compose up --build
 ```
 
-This starts the frontend, backend API, database, cache, and supporting local services defined in [`docker-compose.yml`](docker-compose.yml).
+This starts the frontend, backend API, database, cache, Celery worker, Celery Beat scheduler, and the supporting local services defined in [`docker-compose.yml`](docker-compose.yml).
 
 ### Manual Development
 
@@ -95,9 +96,10 @@ npm run dev
 
 ## Usage
 
-Once the app is running, the public product surface centers on four areas:
+Once the app is running, the public product surface centers on five areas:
 
 - `Companies`: browse sponsorship-friendly employers, visa scores, trust signals, and company detail pages
+- `Jobs`: search live ATS roles with visa-aware ranking, freshness, and salary evidence signals
 - `Offers`: explore salary records with source metadata, filters, and pagination
 - `Compare`: evaluate two companies side by side on sponsorship strength, salary coverage, and live jobs
 - `Predictions`: estimate salary expectations and sponsorship odds from the currently available market data
@@ -132,14 +134,16 @@ Run import and enrichment commands from `backend/`:
 ```bash
 python manage.py import_h1b_directory ./data --skip-existing --recalculate-scores
 python manage.py enrich_company_branding --limit 10000
-python manage.py import_greenhouse_jobs --limit 10
+python manage.py sync_job_postings --limit 100
 ```
 
 These commands are useful when you want to:
 
 - load multiple DOL disclosure files
 - enrich company domains and branding metadata
-- import live jobs from supported public ATS boards
+- discover and refresh jobs from supported public ATS boards
+
+After deployment, recurring job discovery and refresh are scheduled through Celery Beat so the jobs surface can keep itself fresh without manual reruns.
 
 ## Repository Layout
 

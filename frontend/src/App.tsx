@@ -12,6 +12,7 @@ const Home = lazy(() => import('./pages/Home'))
 const Companies = lazy(() => import('./pages/Companies'))
 const CompanyDetail = lazy(() => import('./pages/CompanyDetail'))
 const CompareCompanies = lazy(() => import('./pages/CompareCompanies'))
+const Jobs = lazy(() => import('./pages/Jobs'))
 const Offers = lazy(() => import('./pages/Offers'))
 const Predictions = lazy(() => import('./pages/Predictions'))
 const LotteryCalculator = lazy(() => import('./pages/LotteryCalculator'))
@@ -51,6 +52,7 @@ function App() {
                 <Route path="/" element={<Layout><Home /></Layout>} />
                 <Route path="/companies" element={<Layout><Companies /></Layout>} />
                 <Route path="/companies/:slug" element={<Layout><CompanyDetail /></Layout>} />
+                <Route path="/jobs" element={<Layout><Jobs /></Layout>} />
                 <Route path="/compare" element={<Layout><CompareCompanies /></Layout>} />
                 <Route path="/offers" element={<Layout><Offers /></Layout>} />
                 <Route path="/predictions" element={<Layout><Predictions /></Layout>} />

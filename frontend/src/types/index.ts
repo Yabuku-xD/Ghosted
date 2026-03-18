@@ -125,6 +125,11 @@ export interface JobPosting {
   company: number;
   company_name: string;
   company_slug: string;
+  company_logo_url?: string;
+  company_domain?: string;
+  company_visa_fair_score?: number | null;
+  company_h1b_approval_rate?: number | null;
+  company_offer_count?: number;
   title: string;
   team?: string;
   location?: string;
@@ -137,8 +142,38 @@ export interface JobPosting {
   salary_max?: number | null;
   currency?: string;
   posted_at?: string | null;
+  last_seen_at?: string | null;
   visa_sponsorship_signal?: string;
   is_active: boolean;
+  job_score?: number | null;
+  match_reasons?: string[];
+}
+
+export interface JobListParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  location?: string;
+  company?: number;
+  company_slug?: string;
+  source?: string;
+  remote_policy?: string;
+  visa_sponsorship_signal?: string;
+  has_salary?: boolean;
+  posted_within_days?: number;
+  ordering?: string;
+}
+
+export interface JobStatistics {
+  total_jobs: number;
+  company_count: number;
+  remote_jobs: number;
+  salary_visible_jobs: number;
+  latest_job_posting_at?: string | null;
+  by_source: Array<{
+    source: string;
+    count: number;
+  }>;
 }
 
 export interface CompanyBenefit {

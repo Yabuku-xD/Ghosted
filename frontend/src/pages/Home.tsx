@@ -157,8 +157,8 @@ function Home() {
                   Explore Companies
                   <ArrowRight className="w-5 h-5" />
                 </Link>
-                <Link to="/offers" className="btn btn-secondary w-full sm:w-auto">
-                  Explore Salary Data
+                <Link to="/jobs" className="btn btn-secondary w-full sm:w-auto">
+                  Browse Live Jobs
                 </Link>
               </div>
 
@@ -294,7 +294,7 @@ function Home() {
                 {featuredHiring.length > 0 ? featuredHiring.map((company) => (
                   <Link
                     key={company.id}
-                    to={`/companies/${company.slug}`}
+                    to={`/jobs?company_slug=${company.slug}`}
                     className="flex items-center justify-between py-3 border-b-2 border-border-light last:border-b-0 hover:bg-secondary/60 transition-colors"
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -317,9 +317,13 @@ function Home() {
                 )) : topHiringLoading ? (
                   <p className="text-sm text-secondary">Loading live hiring signals...</p>
                 ) : (
-                  <p className="text-sm text-secondary">Run the Greenhouse import to surface live hiring signals here.</p>
+                  <p className="text-sm text-secondary">Automated ATS sync will surface live hiring signals here once supported boards are discovered.</p>
                 )}
               </div>
+              <Link to="/jobs" className="btn btn-secondary btn-full mt-4">
+                Browse Live Jobs
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
 
             <div className="card-static p-5 sm:p-6 bg-white">
@@ -356,8 +360,8 @@ function Home() {
                   <Building2 className="w-5 h-5" />
                   Browse Companies
                 </Link>
-                <Link to="/compare" className="btn btn-secondary w-full sm:w-auto">
-                  Compare Companies
+                <Link to="/jobs" className="btn btn-secondary w-full sm:w-auto">
+                  Browse Jobs
                 </Link>
               </div>
             </div>

@@ -76,5 +76,23 @@ services:
       - db
       - redis
 
+  celery-beat:
+    build: ./backend
+    command: celery -A ghosted.celery beat --loglevel=info
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key
+      - DB_NAME=ghosted
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
 volumes:
   postgres_data:

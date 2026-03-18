@@ -4,6 +4,7 @@ Django settings for ghosted project.
 
 from pathlib import Path
 import os
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -142,3 +143,20 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 
 CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://redis:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://redis:6379/0')
+CELERY_BEAT_SCHEDULE = {
+    'discover-job-sources-nightly': {
+        'task': 'companies.tasks.discover_job_sources_task',
+        'schedule': crontab(minute=15, hour=2),
+        'args': (250,),
+    },
+    'sync-job-postings-hourly': {
+        'task': 'companies.tasks.sync_job_postings_task',
+        'schedule': crontab(minute=5),
+        'args': (250,),
+    },
+    'deactivate-stale-jobs-nightly': {
+        'task': 'companies.tasks.deactivate_stale_jobs_task',
+        'schedule': crontab(minute=45, hour=2),
+        'args': (3,),
+    },
+}
