@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.6] - 2026-03-18
+
+### Changed
+- Rebuilt `README.md` around the Standard Readme structure with clearer background, install, usage, configuration, data-import, and contributing sections.
+- Updated the documented local workflow so setup and product entry points are easier to scan for new contributors.
+
 ## [0.3.5] - 2026-03-18
 
 ### Fixed

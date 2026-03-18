@@ -1,41 +1,55 @@
 # Ghosted
 
-Ghosted is a visa-aware job intelligence platform for international candidates. It combines public H-1B/LCA data with company insights, salary intelligence, and live hiring signals in a Dockerized full-stack app.
+Visa-aware job intelligence for international candidates.
 
-## Version
+Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is built around four public workflows: company discovery, salary intelligence, company comparison, and prediction tools for compensation and sponsorship odds.
 
-Current tracked release: `v0.3.5`
+Current tracked release: `v0.3.6`
 
-## Stack
+## Table of Contents
+
+- [Background](#background)
+- [Install](#install)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Data Imports](#data-imports)
+- [Repository Layout](#repository-layout)
+- [Docs](#docs)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Background
+
+Ghosted exists to answer a practical question for international candidates: which companies are likely to sponsor, how strong is the salary signal, and where are there active hiring opportunities right now?
+
+The stack currently includes:
 
 - Backend: Django, Django REST Framework, Celery, PostgreSQL, Redis
 - Frontend: React, TypeScript, Vite, Tailwind CSS, React Query
 - Infra: Docker Compose
 
-## Product Highlights
+Core product capabilities:
 
 - Sponsorship-focused company discovery with visa-fair scoring
 - Offer browsing with trust metadata and responsive pagination
 - Domain and logo enrichment with graceful fallback rendering
-- Live hiring signals from public ATS boards and side-by-side company comparison
-- Salary prediction and lottery risk tools
-- Public, no-login browsing flow centered on four core areas: Companies, Offers, Compare, and Predictions
-- Lighter frontend boot path with reduced refetching and smaller search payloads
-- H-1B data import pipeline and company enrichment commands
+- Live hiring signals from supported public ATS boards
+- Side-by-side company comparison
+- Salary prediction and sponsorship-odds tools
 
-## Repository Layout
+## Install
 
-```text
-ghosted/
-├── backend/                  # Django apps, API, import commands, services
-├── frontend/                 # React application
-├── docs/                     # Plans, status notes, verification assets
-├── CHANGELOG.md              # Release notes
-├── LICENSE                   # MIT license
-└── docker-compose.yml        # Local multi-service setup
-```
+### Dependencies
 
-## Running Locally
+For the default local setup, install:
+
+- Docker Desktop with Docker Compose
+
+For manual development instead of Docker, also install:
+
+- Python 3.12+
+- Node.js 20+
+- npm
 
 ### Docker
 
@@ -43,7 +57,7 @@ ghosted/
 docker compose up --build
 ```
 
-Services:
+The local services are available at:
 
 - Frontend: [http://localhost:5173](http://localhost:5173)
 - Backend API: [http://localhost:8000/api](http://localhost:8000/api)
@@ -68,27 +82,80 @@ npm install
 npm run dev
 ```
 
-## Data Setup
+## Usage
 
-Raw H-1B source files are intentionally not committed. Put them in [`backend/data/`](backend/data/) and follow the instructions in [`backend/data/README.md`](backend/data/README.md) when you want to seed local data.
+Once the app is running, the public product surface centers on four areas:
 
-Useful enrichment commands:
+- `Companies`: browse sponsorship-friendly employers, visa scores, trust signals, and company detail pages
+- `Offers`: explore salary records with source metadata, filters, and pagination
+- `Compare`: evaluate two companies side by side on sponsorship strength, salary coverage, and live jobs
+- `Predictions`: estimate salary expectations and sponsorship odds from the currently available market data
+
+Useful local verification commands:
 
 ```bash
-cd backend
+docker compose exec frontend npm run build
+docker compose exec backend python manage.py check
+```
+
+## Configuration
+
+### Local Data
+
+Raw source files are intentionally not committed. Put them in [`backend/data/`](backend/data/) and follow [`backend/data/README.md`](backend/data/README.md) when you want to seed or refresh local data.
+
+### Branding And Logos
+
+For fuller company-logo coverage, add a Logo.dev publishable key to `frontend/.env`:
+
+```bash
+VITE_LOGO_DEV_PUBLISHABLE_KEY=your_key_here
+```
+
+Without that key, the UI falls back to favicon-based branding when a known company domain is available.
+
+## Data Imports
+
+Run import and enrichment commands from `backend/`:
+
+```bash
 python manage.py import_h1b_directory ./data --skip-existing --recalculate-scores
 python manage.py enrich_company_branding --limit 10000
 python manage.py import_greenhouse_jobs --limit 10
 ```
 
-For full company logos, add a Logo.dev publishable key to `frontend/.env` as `VITE_LOGO_DEV_PUBLISHABLE_KEY`. Without it, the UI falls back to favicon-based branding when a company domain is known.
+These commands are useful when you want to:
 
-## Useful Docs
+- load multiple DOL disclosure files
+- enrich company domains and branding metadata
+- import live jobs from supported public ATS boards
+
+## Repository Layout
+
+```text
+ghosted/
+├── backend/                  # Django apps, API, import commands, services
+├── frontend/                 # React application
+├── docs/                     # Plans, status notes, verification assets
+├── CHANGELOG.md              # Release notes
+├── LICENSE                   # MIT license
+└── docker-compose.yml        # Local multi-service setup
+```
+
+## Docs
 
 - [Changelog](CHANGELOG.md)
 - [Plans](docs/plans/)
 - [Status Notes](docs/status/)
 - [Verification Assets](docs/verification/)
+
+## Contributing
+
+Issues and focused pull requests are welcome. When proposing a change:
+
+- keep the README and changelog aligned with the actual code changes
+- include the relevant verification steps or results
+- avoid documenting features that are not implemented yet
 
 ## License
 
