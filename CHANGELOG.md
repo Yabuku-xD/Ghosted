@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.11] - 2026-03-18
+
+### Changed
+- Replaced the README heading image with terminal-style Ghosted ASCII art so the main heading now comes directly from text-based diagram output.
+- Removed the old SVG heading banner from the README flow after switching to the ASCII heading treatment.
+
 ## [0.3.10] - 2026-03-18
 
 ### Changed
