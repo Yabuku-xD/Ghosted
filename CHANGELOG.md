@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.3] - 2026-03-18
+
+### Changed
+- Reworked the homepage and companies summary metrics into lighter editorial strips instead of repeating the same boxed stat card treatment.
+- Restyled company-detail applicant guidance, live jobs, and benefits sections to read more like narrative product surfaces and less like empty placeholder panels.
+
+### Fixed
+- Verified the refreshed home, companies, and company-detail layouts on desktop and narrow mobile widths with no horizontal overflow.
+
 ## [0.3.2] - 2026-03-17
 
 ### Changed

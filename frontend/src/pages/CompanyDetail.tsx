@@ -125,6 +125,12 @@ function CompanyDetail() {
       ? `FY${company.last_filing_year}`
       : `FY${company.first_filing_year}-FY${company.last_filing_year}`
     : 'Coverage pending';
+  const applicantInsights = (company.actionable_insights && company.actionable_insights.length > 0)
+    ? company.actionable_insights
+    : [
+      'Historical sponsorship data is still limited here, so treat the current score as directional.',
+      'More salary and hiring coverage will make future recommendations stronger for this employer.',
+    ];
 
   return (
     <div className="bg-bg-primary min-h-screen">
@@ -358,96 +364,130 @@ function CompanyDetail() {
               </Card>
             )}
 
-            <Card static>
-              <CardBody className="p-4 sm:p-6">
-                <h2 className="headline-sm mb-4 sm:mb-6">What This Means For Applicants</h2>
-                <div className="space-y-3">
-                  {(company.actionable_insights || []).map((insight) => (
-                    <div key={insight} className="bg-secondary border-2 border-border px-4 py-3 text-sm text-primary leading-relaxed">
-                      {insight}
+            <section className="company-story-section">
+              <div className="company-story-header">
+                <div>
+                  <div className="section-marker mb-2">
+                    <span>Applicant Readout</span>
+                  </div>
+                  <h2 className="headline-sm">What This Means For Applicants</h2>
+                </div>
+                <p className="company-story-kicker">
+                  A quicker read on what the current filing, pay, and enrichment data actually suggests.
+                </p>
+              </div>
+
+              <div className="company-insight-stream">
+                {applicantInsights.map((insight, index) => (
+                  <div key={insight} className="company-insight-item">
+                    <div className="company-insight-index">{String(index + 1).padStart(2, '0')}</div>
+                    <p className="company-insight-copy">{insight}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="company-story-section company-story-section-light">
+              <div className="company-section-head">
+                <div>
+                  <div className="section-marker mb-2">
+                    <span>Hiring Signal</span>
+                  </div>
+                  <h2 className="headline-sm">Live Jobs</h2>
+                  <p className="company-section-copy">
+                    Public ATS roles appear here when this employer has a supported board we currently track.
+                  </p>
+                </div>
+                <Badge variant="outline">{(jobs || []).length.toLocaleString()} tracked</Badge>
+              </div>
+
+              {jobs && jobs.length > 0 ? (
+                <div className="company-open-list">
+                  {jobs.slice(0, 6).map((job: JobPosting) => (
+                    <a
+                      key={job.id}
+                      href={job.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="company-open-row"
+                    >
+                      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-primary leading-snug">{job.title}</div>
+                          <div className="text-sm text-secondary mt-1 leading-relaxed">
+                            {[job.team, job.location].filter(Boolean).join(' • ') || 'Location pending'}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                          <Badge variant="outline" size="sm">{job.remote_policy || 'unknown'}</Badge>
+                          <Badge variant="ghost" size="sm">{job.source}</Badge>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <div className="company-empty-band">
+                  <div className="company-empty-band-icon">
+                    <Briefcase className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="company-empty-band-title">No live jobs tracked yet</h3>
+                    <p className="company-empty-band-description">
+                      This company will show public ATS roles once a supported board is imported.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section className="company-story-section company-story-section-light">
+              <div className="company-section-head">
+                <div>
+                  <div className="section-marker mb-2">
+                    <span>Benefits Signal</span>
+                  </div>
+                  <h2 className="headline-sm">Benefits Coverage</h2>
+                  <p className="company-section-copy">
+                    Once benefits data is imported or contributed, this section becomes a quick quality-of-life snapshot.
+                  </p>
+                </div>
+                <Badge variant="outline">{(benefits || []).length.toLocaleString()} items</Badge>
+              </div>
+
+              {benefits && benefits.length > 0 ? (
+                <div className="company-benefit-grid">
+                  {benefits.slice(0, 6).map((benefit: CompanyBenefit) => (
+                    <div key={benefit.id} className="company-benefit-card">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className="font-semibold text-primary">{benefit.title}</span>
+                        <Badge variant={benefit.is_verified ? 'accent' : 'ghost'} size="sm">
+                          {benefit.category_display || benefit.category}
+                        </Badge>
+                      </div>
+                      {benefit.value ? (
+                        <div className="font-mono text-xs uppercase text-accent mb-2">{benefit.value}</div>
+                      ) : null}
+                      {benefit.description ? (
+                        <p className="text-sm text-secondary leading-relaxed">{benefit.description}</p>
+                      ) : null}
                     </div>
                   ))}
                 </div>
-              </CardBody>
-            </Card>
-
-            <Card static>
-              <CardBody className="p-4 sm:p-6">
-                <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6">
-                  <h2 className="headline-sm">Live Jobs</h2>
-                  <Badge variant="outline">{(jobs || []).length.toLocaleString()} tracked</Badge>
-                </div>
-
-                {jobs && jobs.length > 0 ? (
-                  <div className="space-y-3">
-                    {jobs.slice(0, 6).map((job: JobPosting) => (
-                      <a
-                        key={job.id}
-                        href={job.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block bg-secondary border-2 border-border p-4 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
-                      >
-                        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
-                          <div className="min-w-0">
-                            <div className="font-semibold text-primary leading-snug">{job.title}</div>
-                            <div className="text-sm text-secondary mt-1 leading-relaxed">
-                              {[job.team, job.location].filter(Boolean).join(' • ') || 'Location pending'}
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                            <Badge variant="outline" size="sm">{job.remote_policy || 'unknown'}</Badge>
-                            <Badge variant="ghost" size="sm">{job.source}</Badge>
-                          </div>
-                        </div>
-                      </a>
-                    ))}
+              ) : (
+                <div className="company-empty-band company-empty-band-soft">
+                  <div className="company-empty-band-icon">
+                    <MessageSquare className="w-6 h-6" />
                   </div>
-                ) : (
-                  <EmptyState
-                    icon={Briefcase}
-                    title="No live jobs tracked yet"
-                    description="This company will show public ATS jobs once a supported board is imported."
-                  />
-                )}
-              </CardBody>
-            </Card>
-
-            <Card static>
-              <CardBody className="p-4 sm:p-6">
-                <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6">
-                  <h2 className="headline-sm">Benefits Coverage</h2>
-                  <Badge variant="outline">{(benefits || []).length.toLocaleString()} items</Badge>
-                </div>
-
-                {benefits && benefits.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {benefits.slice(0, 6).map((benefit: CompanyBenefit) => (
-                      <div key={benefit.id} className="bg-secondary border-2 border-border p-4">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span className="font-semibold text-primary">{benefit.title}</span>
-                          <Badge variant={benefit.is_verified ? 'accent' : 'ghost'} size="sm">
-                            {benefit.category_display || benefit.category}
-                          </Badge>
-                        </div>
-                        {benefit.value ? (
-                          <div className="font-mono text-xs uppercase text-accent mb-2">{benefit.value}</div>
-                        ) : null}
-                        {benefit.description ? (
-                          <p className="text-sm text-secondary">{benefit.description}</p>
-                        ) : null}
-                      </div>
-                    ))}
+                  <div>
+                    <h3 className="company-empty-band-title">No benefit coverage yet</h3>
+                    <p className="company-empty-band-description">
+                      Benefits support is ready; once data is imported or contributed, it will appear here.
+                    </p>
                   </div>
-                ) : (
-                  <EmptyState
-                    icon={MessageSquare}
-                    title="No benefit coverage yet"
-                    description="Benefits support is ready; once data is imported or contributed, it will appear here."
-                  />
-                )}
-              </CardBody>
-            </Card>
+                </div>
+              )}
+            </section>
           </div>
 
           {/* Right Column */}

@@ -52,7 +52,7 @@ function Companies() {
     placeholderData: keepPreviousData,
   });
 
-  const { data: insights } = useQuery({
+  const { data: insights, isLoading: insightsLoading } = useQuery({
     queryKey: ['company-insights'],
     queryFn: () => companiesApi.getInsights(),
   });
@@ -113,6 +113,41 @@ function Companies() {
     return `FY${insights.coverage_years.first} to FY${insights.coverage_years.last}`;
   })();
 
+  const summaryItems = [
+    {
+      label: 'Global Search',
+      value: insightsLoading ? 'Loading...' : insights?.total_companies?.toLocaleString() || '0',
+      detail: 'indexed companies ready to search across the directory',
+      icon: Search,
+      toneClassName: 'directory-summary-item-accent',
+      iconClassName: 'text-accent bg-accent-light',
+    },
+    {
+      label: 'Coverage',
+      value: insightsLoading ? 'Loading...' : coverageWindowLabel,
+      detail: 'current fiscal-year window available in the dataset',
+      icon: Database,
+      toneClassName: 'directory-summary-item-info',
+      iconClassName: 'text-info bg-[rgba(29,78,137,0.1)]',
+    },
+    {
+      label: 'Salary Data',
+      value: insightsLoading ? 'Loading...' : insights?.companies_with_salary_data?.toLocaleString() || '0',
+      detail: 'companies backed by at least one salary record',
+      icon: Scale,
+      toneClassName: 'directory-summary-item-success',
+      iconClassName: 'text-success bg-success-light',
+    },
+    {
+      label: 'Live Jobs',
+      value: insightsLoading ? 'Loading...' : insights?.companies_with_jobs?.toLocaleString() || '0',
+      detail: 'companies with active public job postings right now',
+      icon: Building2,
+      toneClassName: 'directory-summary-item-warning',
+      iconClassName: 'text-warning bg-warning-light',
+    },
+  ];
+
   return (
     <div className="bg-bg-primary min-h-screen">
       <div className="bg-secondary border-b-3 border-border">
@@ -136,29 +171,19 @@ function Companies() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-6">
-            <div className="card-static p-4 bg-white min-h-[116px]">
-              <div className="font-mono text-xs uppercase text-secondary mb-2">Global Search</div>
-              <div className="text-primary font-semibold leading-snug">
-                Query all {insights?.total_companies?.toLocaleString() || '0'} indexed companies
+          <div className="directory-summary-strip mb-6">
+            {summaryItems.map((item) => (
+              <div key={item.label} className={`directory-summary-item ${item.toneClassName}`}>
+                <div className={`directory-summary-icon ${item.iconClassName}`}>
+                  <item.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="directory-summary-label">{item.label}</div>
+                  <div className="directory-summary-value">{item.value}</div>
+                  <p className="directory-summary-detail">{item.detail}</p>
+                </div>
               </div>
-            </div>
-            <div className="card-static p-4 bg-white min-h-[116px]">
-              <div className="font-mono text-xs uppercase text-secondary mb-2">Coverage</div>
-              <div className="text-primary font-semibold leading-snug">Current dataset coverage: {coverageWindowLabel}</div>
-            </div>
-            <div className="card-static p-4 bg-white min-h-[116px]">
-              <div className="font-mono text-xs uppercase text-secondary mb-2">Salary Data</div>
-              <div className="text-primary font-semibold leading-snug">
-                {insights?.companies_with_salary_data?.toLocaleString() || '0'} companies with offer records
-              </div>
-            </div>
-            <div className="card-static p-4 bg-white min-h-[116px]">
-              <div className="font-mono text-xs uppercase text-secondary mb-2">Live Jobs</div>
-              <div className="text-primary font-semibold leading-snug">
-                {insights?.companies_with_jobs?.toLocaleString() || '0'} companies with active job postings
-              </div>
-            </div>
+            ))}
           </div>
 
           <div className="filter-grid">
