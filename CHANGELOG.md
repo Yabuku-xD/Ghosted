@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.8] - 2026-03-18
+
+### Changed
+- Moved the homepage screenshot to the top of `README.md` so the preview appears immediately instead of later in the document.
+- Removed the separate preview section and kept the table of contents aligned with the new README flow.
+
 ## [0.3.7] - 2026-03-18
 
 ### Changed
