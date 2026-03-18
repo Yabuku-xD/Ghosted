@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_FONT = ROOT / "assets" / "fonts" / "PressStart2P-Regular.ttf"
 DEFAULT_OUTPUT = ROOT / "assets" / "banner.png"
 
-BACKGROUND = (26, 26, 26, 255)
+BACKGROUND = (13, 17, 23, 255)
 TOP_COLOR = (212, 163, 115)
 BOTTOM_COLOR = (199, 62, 29)
 OUTLINE = (26, 26, 26, 255)

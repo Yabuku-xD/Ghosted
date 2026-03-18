@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.16] - 2026-03-18
+
+### Changed
+- Regenerated the README banner with a `#0d1117` background so it blends cleanly into GitHub's dark page chrome.
+- Kept the Press Start 2P generator workflow intact while adjusting only the banner background tone.
+
 ## [0.3.15] - 2026-03-18
 
 ### Changed
