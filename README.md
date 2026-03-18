@@ -1,20 +1,23 @@
-<h1 align="center">
-  <img src="assets/ghosted-heading.svg" alt="Ghosted" width="900" />
-</h1>
+<p align="center">
+  <img src="assets/banner.png" alt="Ghosted" width="100%">
+</p>
+
+# Ghosted
 
 <p align="center">
-  <a href="https://github.com/Yabuku-xD/Ghosted/releases"><img src="https://img.shields.io/github/v/release/Yabuku-xD/Ghosted?display_name=tag&label=release&color=c73e1d&labelColor=1a1a1a&style=flat-square" alt="Release" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/Yabuku-xD/Ghosted?label=license&color=2d6a4f&labelColor=1a1a1a&style=flat-square" alt="License" /></a>
-  <a href="https://react.dev/"><img src="https://img.shields.io/badge/frontend-react%2019-1d4e89?labelColor=1a1a1a&style=flat-square" alt="Frontend" /></a>
-  <a href="https://www.djangoproject.com/"><img src="https://img.shields.io/badge/backend-django%20%2B%20drf-2d6a4f?labelColor=1a1a1a&style=flat-square" alt="Backend" /></a>
-  <a href="https://docs.docker.com/compose/"><img src="https://img.shields.io/badge/infra-docker%20compose-d4a373?labelColor=1a1a1a&style=flat-square" alt="Infra" /></a>
+  <a href="docs/"><img src="https://img.shields.io/badge/Docs-Repository%20Guide-6B7280?style=for-the-badge" alt="Docs" /></a>
+  <a href="backend/data/README.md"><img src="https://img.shields.io/badge/Data-DOL%20%2B%20Community-FFD700?style=for-the-badge" alt="Data sources" /></a>
+  <a href="https://github.com/Yabuku-xD/Ghosted/releases"><img src="https://img.shields.io/github/v/release/Yabuku-xD/Ghosted?display_name=tag&label=Release&color=C73E1D&style=for-the-badge" alt="Release" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2D6A4F?style=for-the-badge" alt="License MIT" /></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/Frontend-React%2019-1D4E89?style=for-the-badge" alt="Frontend React 19" /></a>
+  <a href="https://www.djangoproject.com/"><img src="https://img.shields.io/badge/Backend-Django%20%2B%20DRF-2D6A4F?style=for-the-badge" alt="Backend Django and DRF" /></a>
 </p>
 
 Visa-aware job intelligence platform with H-1B data, salary insights, company comparison, and prediction tools.
 
 Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is built around four public workflows: company discovery, salary intelligence, company comparison, and prediction tools for compensation and sponsorship odds.
 
-Current tracked release: `v0.3.12`
+Current tracked release: `v0.3.14`
 
 ![Ghosted homepage](assets/home.png)
 

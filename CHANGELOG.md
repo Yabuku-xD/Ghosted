@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.14] - 2026-03-18
+
+### Changed
+- Reworked the README hero to mirror the Hermes structure: a full-width `assets/banner.png` image, then a plain `# Ghosted` heading, then a centered badge row.
+- Swapped the intro badges to a `for-the-badge` style and added a dedicated data-source badge for Department of Labor plus community data.
+
 ## [0.3.13] - 2026-03-18
 
 ### Changed
