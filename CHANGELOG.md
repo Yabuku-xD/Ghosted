@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.17] - 2026-03-18
+
+### Changed
+- Regenerated the README banner with a transparent background so GitHub's own page color shows through instead of the image carrying a visible panel.
+- Kept the Press Start 2P banner workflow and Ghosted palette while removing the opaque canvas.
+
 ## [0.3.16] - 2026-03-18
 
 ### Changed
