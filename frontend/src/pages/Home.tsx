@@ -47,6 +47,9 @@ function Home() {
     return `FY${insights.coverage_years.first}-FY${insights.coverage_years.last}`;
   })();
 
+  const hasCommunityData = (insights?.community_offers || 0) > 0;
+  const hasBenefitsData = (insights?.total_benefits || 0) > 0;
+
   const stats = [
     {
       value: insightsLoading ? 'Loading...' : insights?.total_companies?.toLocaleString() || '0',
@@ -79,7 +82,9 @@ function Home() {
     {
       icon: TrendingUp,
       title: 'Salary Intelligence',
-      description: 'Compare government-derived salary records with community submissions and trust signals.',
+      description: hasCommunityData
+        ? 'Compare government-derived salary records with community submissions and trust signals.'
+        : 'Explore government-derived salary records with clearer source and confidence signals.',
       link: '/offers',
       color: 'bg-info',
     },
@@ -97,6 +102,30 @@ function Home() {
       link: '/compare',
       color: 'bg-warning',
     },
+  ];
+
+  const enrichmentItems = [
+    {
+      label: 'Domains',
+      value: insightsLoading ? 'Loading...' : insights?.companies_with_domains?.toLocaleString() || '0',
+    },
+    {
+      label: 'Logo-ready',
+      value: insightsLoading ? 'Loading...' : insights?.companies_with_logos?.toLocaleString() || '0',
+    },
+    {
+      label: 'Live Jobs',
+      value: insightsLoading ? 'Loading...' : insights?.total_jobs?.toLocaleString() || '0',
+    },
+    hasBenefitsData
+      ? {
+          label: 'Benefits',
+          value: insightsLoading ? 'Loading...' : insights?.total_benefits?.toLocaleString() || '0',
+        }
+      : {
+          label: 'Salary-backed',
+          value: insightsLoading ? 'Loading...' : insights?.companies_with_salary_data?.toLocaleString() || '0',
+        },
   ];
 
   const featuredCompanies = topSponsors?.slice(0, 3) || [];
@@ -300,22 +329,12 @@ function Home() {
               </div>
               <h2 className="headline-sm mb-4">Branding and coverage progress</h2>
               <div className="grid grid-cols-2 gap-4">
-                <div className="stat-box-responsive">
-                  <div className="stat-label">Domains</div>
-                  <div className="stat-value-responsive">{insightsLoading ? 'Loading...' : insights?.companies_with_domains?.toLocaleString() || '0'}</div>
-                </div>
-                <div className="stat-box-responsive">
-                  <div className="stat-label">Logo-ready</div>
-                  <div className="stat-value-responsive">{insightsLoading ? 'Loading...' : insights?.companies_with_logos?.toLocaleString() || '0'}</div>
-                </div>
-                <div className="stat-box-responsive">
-                  <div className="stat-label">Live Jobs</div>
-                  <div className="stat-value-responsive">{insightsLoading ? 'Loading...' : insights?.total_jobs?.toLocaleString() || '0'}</div>
-                </div>
-                <div className="stat-box-responsive">
-                  <div className="stat-label">Benefits</div>
-                  <div className="stat-value-responsive">{insightsLoading ? 'Loading...' : insights?.total_benefits?.toLocaleString() || '0'}</div>
-                </div>
+                {enrichmentItems.map((item) => (
+                  <div key={item.label} className="stat-box-responsive">
+                    <div className="stat-label">{item.label}</div>
+                    <div className="stat-value-responsive">{item.value}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -365,12 +384,14 @@ function Home() {
                   {insightsLoading ? 'Loading...' : insights?.total_offers?.toLocaleString() || '0'} salary records
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="font-medium text-primary text-sm sm:text-base">
-                  {insightsLoading ? 'Loading...' : insights?.community_offers?.toLocaleString() || '0'} community submissions
-                </span>
-              </div>
+              {hasCommunityData ? (
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="font-medium text-primary text-sm sm:text-base">
+                    {insightsLoading ? 'Loading...' : insights?.community_offers?.toLocaleString() || '0'} community submissions
+                  </span>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

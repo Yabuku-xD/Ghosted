@@ -115,6 +115,13 @@ function Offers() {
   };
 
   const communityCount = statistics?.by_source.find((entry) => entry.data_source === 'community_submission')?.count || 0;
+  const hasCommunityData = communityCount > 0;
+
+  useEffect(() => {
+    if (!hasCommunityData && source === 'community') {
+      setSource('');
+    }
+  }, [hasCommunityData, source]);
 
   return (
     <div className="min-h-screen bg-bg-primary">
@@ -136,7 +143,9 @@ function Offers() {
           <div className="p-4 mb-6 bg-white card-static">
             <div className="mb-2 font-mono text-xs tracking-wider uppercase text-secondary">Search Scope</div>
             <p className="text-sm text-primary">
-              Filters now search across the full salary dataset instead of only the current page, and every row shows whether it came from government-derived data or a community submission.
+              {hasCommunityData
+                ? 'Filters now search across the full salary dataset instead of only the current page, and every row shows whether it came from government-derived data or a community submission.'
+                : 'Filters now search across the full salary dataset instead of only the current page, with the current public view grounded in government-derived records.'}
             </p>
           </div>
 
@@ -192,7 +201,7 @@ function Offers() {
               options={[
                 { value: '', label: 'All Sources' },
                 { value: 'government', label: 'Government-derived only' },
-                { value: 'community', label: 'Community only' },
+                ...(hasCommunityData ? [{ value: 'community', label: 'Community only' }] : []),
               ]}
             />
           </div>
@@ -200,13 +209,13 @@ function Offers() {
       </div>
 
       <div className="container py-6 sm:py-8">
-        <div className="grid grid-cols-2 gap-3 mb-6 sm:gap-4 sm:mb-8 xl:grid-cols-4">
+        <div className={`grid grid-cols-2 gap-3 mb-6 sm:gap-4 sm:mb-8 ${hasCommunityData ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
           {statsLoading ? (
             <>
               <StatBoxSkeleton />
               <StatBoxSkeleton />
               <StatBoxSkeleton />
-              <StatBoxSkeleton />
+              {hasCommunityData ? <StatBoxSkeleton /> : null}
             </>
           ) : (
             <>
@@ -234,13 +243,15 @@ function Offers() {
                 <div className="stat-value-responsive">{statistics?.overall.company_count?.toLocaleString() || '0'}</div>
               </div>
 
-              <div className="stat-box-responsive">
-                <div className="stat-label">
-                  <TrendingUp className="w-4 h-4 text-accent" />
-                  Community
+              {hasCommunityData ? (
+                <div className="stat-box-responsive">
+                  <div className="stat-label">
+                    <TrendingUp className="w-4 h-4 text-accent" />
+                    Community
+                  </div>
+                  <div className="stat-value-responsive">{communityCount.toLocaleString()}</div>
                 </div>
-                <div className="stat-value-responsive">{communityCount.toLocaleString()}</div>
-              </div>
+              ) : null}
             </>
           )}
         </div>

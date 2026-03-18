@@ -112,6 +112,7 @@ function Companies() {
 
     return `FY${insights.coverage_years.first} to FY${insights.coverage_years.last}`;
   })();
+  const hasBenefitsData = (insights?.total_benefits || 0) > 0;
 
   const summaryItems = [
     {
@@ -349,12 +350,14 @@ function Companies() {
                           {(company.active_job_count || 0).toLocaleString()}
                         </div>
                       </div>
-                      <div>
-                        <div className="font-mono text-xs uppercase text-secondary mb-1">Benefits</div>
-                        <div className="text-sm font-semibold text-primary">
-                          {(company.benefit_count || 0).toLocaleString()}
+                      {hasBenefitsData ? (
+                        <div>
+                          <div className="font-mono text-xs uppercase text-secondary mb-1">Benefits</div>
+                          <div className="text-sm font-semibold text-primary">
+                            {(company.benefit_count || 0).toLocaleString()}
+                          </div>
                         </div>
-                      </div>
+                      ) : null}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 mt-4">

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - 2026-03-18
+
+### Changed
+- Hid community-submission messaging and filters anywhere the live dataset still reports zero community records.
+- Removed empty benefits surfaces from the public experience until real benefits data exists, including sparse company pages and benefit-count summaries.
+- Replaced the home enrichment `Benefits` stat with a more truthful `Salary-backed` signal while benefits coverage remains empty.
+
+### Fixed
+- Stopped company-detail pages from fetching benefits data when a company has no tracked benefits.
+- Verified home, offers, and company-detail layouts on desktop and narrow mobile widths with no horizontal overflow after the cleanup.
+
 ## [0.3.3] - 2026-03-18
 
 ### Changed

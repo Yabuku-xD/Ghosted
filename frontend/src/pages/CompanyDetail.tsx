@@ -44,7 +44,7 @@ function CompanyDetail() {
   const { data: benefits } = useQuery({
     queryKey: ['company-benefits', slug],
     queryFn: () => companiesApi.getBenefits(slug!),
-    enabled: !!slug,
+    enabled: !!slug && (company?.benefit_count || 0) > 0,
   });
 
   const { data: similarCompanies } = useQuery({
@@ -120,6 +120,7 @@ function CompanyDetail() {
   const confidenceBadge = getConfidenceBadge(company.data_confidence);
   const industryLabel = company.industry_display || company.industry;
   const companySizeLabel = company.company_size_display || company.company_size;
+  const hasBenefitsData = (company.benefit_count || 0) > 0;
   const coverageLabel = company.first_filing_year && company.last_filing_year
     ? company.first_filing_year === company.last_filing_year
       ? `FY${company.last_filing_year}`
@@ -441,53 +442,43 @@ function CompanyDetail() {
               )}
             </section>
 
-            <section className="company-story-section company-story-section-light">
-              <div className="company-section-head">
-                <div>
-                  <div className="section-marker mb-2">
-                    <span>Benefits Signal</span>
-                  </div>
-                  <h2 className="headline-sm">Benefits Coverage</h2>
-                  <p className="company-section-copy">
-                    Once benefits data is imported or contributed, this section becomes a quick quality-of-life snapshot.
-                  </p>
-                </div>
-                <Badge variant="outline">{(benefits || []).length.toLocaleString()} items</Badge>
-              </div>
-
-              {benefits && benefits.length > 0 ? (
-                <div className="company-benefit-grid">
-                  {benefits.slice(0, 6).map((benefit: CompanyBenefit) => (
-                    <div key={benefit.id} className="company-benefit-card">
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <span className="font-semibold text-primary">{benefit.title}</span>
-                        <Badge variant={benefit.is_verified ? 'accent' : 'ghost'} size="sm">
-                          {benefit.category_display || benefit.category}
-                        </Badge>
-                      </div>
-                      {benefit.value ? (
-                        <div className="font-mono text-xs uppercase text-accent mb-2">{benefit.value}</div>
-                      ) : null}
-                      {benefit.description ? (
-                        <p className="text-sm text-secondary leading-relaxed">{benefit.description}</p>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="company-empty-band company-empty-band-soft">
-                  <div className="company-empty-band-icon">
-                    <MessageSquare className="w-6 h-6" />
-                  </div>
+            {hasBenefitsData ? (
+              <section className="company-story-section company-story-section-light">
+                <div className="company-section-head">
                   <div>
-                    <h3 className="company-empty-band-title">No benefit coverage yet</h3>
-                    <p className="company-empty-band-description">
-                      Benefits support is ready; once data is imported or contributed, it will appear here.
+                    <div className="section-marker mb-2">
+                      <span>Benefits Signal</span>
+                    </div>
+                    <h2 className="headline-sm">Benefits Coverage</h2>
+                    <p className="company-section-copy">
+                      This section turns real benefits data into a quick quality-of-life snapshot for applicants.
                     </p>
                   </div>
+                  <Badge variant="outline">{(benefits || []).length.toLocaleString()} items</Badge>
                 </div>
-              )}
-            </section>
+
+                {benefits && benefits.length > 0 ? (
+                  <div className="company-benefit-grid">
+                    {benefits.slice(0, 6).map((benefit: CompanyBenefit) => (
+                      <div key={benefit.id} className="company-benefit-card">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className="font-semibold text-primary">{benefit.title}</span>
+                          <Badge variant={benefit.is_verified ? 'accent' : 'ghost'} size="sm">
+                            {benefit.category_display || benefit.category}
+                          </Badge>
+                        </div>
+                        {benefit.value ? (
+                          <div className="font-mono text-xs uppercase text-accent mb-2">{benefit.value}</div>
+                        ) : null}
+                        {benefit.description ? (
+                          <p className="text-sm text-secondary leading-relaxed">{benefit.description}</p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
           </div>
 
           {/* Right Column */}
@@ -587,15 +578,17 @@ function CompanyDetail() {
                       {(company.active_job_count || 0).toLocaleString()}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-secondary text-sm">
-                      <Building2 className="w-4 h-4" />
-                      Benefits
+                  {hasBenefitsData ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-secondary text-sm">
+                        <Building2 className="w-4 h-4" />
+                        Benefits
+                      </div>
+                      <span className="font-semibold text-primary text-sm">
+                        {(company.benefit_count || 0).toLocaleString()}
+                      </span>
                     </div>
-                    <span className="font-semibold text-primary text-sm">
-                      {(company.benefit_count || 0).toLocaleString()}
-                    </span>
-                  </div>
+                  ) : null}
                   <div className="pt-2">
                     <Badge variant={confidenceBadge.variant}>{confidenceBadge.label}</Badge>
                   </div>
