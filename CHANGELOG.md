@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.12] - 2026-03-18
+
+### Changed
+- Replaced the README's plain ASCII heading with a reference-style Ghosted wordmark that more closely matches the requested retro stacked-letter treatment.
+- Added a dedicated heading asset for the README hero while keeping the badge row and homepage preview layout intact.
+
 ## [0.3.11] - 2026-03-18
 
 ### Changed
