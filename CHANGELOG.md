@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] - 2026-03-17
+
+### Changed
+- Redesigned the predictions page hero into a richer editorial layout with dynamic tool context, dataset callouts, and stronger visual hierarchy.
+- Upgraded the salary predictor and sponsorship odds tabs into card-style selectors with clearer labels and active states.
+- Reworked the predictions sidebar guidance into structured "how it works" and interpretation panels so the page feels more intentional and useful.
+
+### Fixed
+- Verified the refreshed predictions experience on desktop and narrow mobile widths with no horizontal overflow in either tab state.
+
 ## [0.3.1] - 2026-03-17
 
 ### Fixed
