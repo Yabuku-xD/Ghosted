@@ -1,10 +1,18 @@
 # Ghosted
 
+[![Release](https://img.shields.io/github/v/release/Yabuku-xD/Ghosted?display_name=tag&label=release&color=c73e1d&labelColor=1a1a1a&style=flat-square)](https://github.com/Yabuku-xD/Ghosted/releases)
+[![License](https://img.shields.io/github/license/Yabuku-xD/Ghosted?label=license&color=2d6a4f&labelColor=1a1a1a&style=flat-square)](LICENSE)
+[![Frontend](https://img.shields.io/badge/frontend-react%2019-1d4e89?labelColor=1a1a1a&style=flat-square)](https://react.dev/)
+[![Backend](https://img.shields.io/badge/backend-django%20%2B%20drf-2d6a4f?labelColor=1a1a1a&style=flat-square)](https://www.djangoproject.com/)
+[![Infra](https://img.shields.io/badge/infra-docker%20compose-d4a373?labelColor=1a1a1a&style=flat-square)](https://docs.docker.com/compose/)
+
+![Ghosted ASCII banner](assets/ghosted-banner.svg)
+
 Visa-aware job intelligence platform with H-1B data, salary insights, company comparison, and prediction tools.
 
 Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is built around four public workflows: company discovery, salary intelligence, company comparison, and prediction tools for compensation and sponsorship odds.
 
-Current tracked release: `v0.3.8`
+Current tracked release: `v0.3.9`
 
 ![Ghosted homepage](assets/home.png)
 

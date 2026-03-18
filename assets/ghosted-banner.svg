@@ -1,0 +1,33 @@
+<svg width="1400" height="260" viewBox="0 0 1400 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Ghosted ASCII banner</title>
+  <desc id="desc">ASCII art banner for Ghosted using the application's accent colors.</desc>
+  <rect width="1400" height="260" fill="#faf9f7"/>
+  <rect x="10" y="10" width="1380" height="240" fill="#f5f5f0" stroke="#1a1a1a" stroke-width="4"/>
+  <rect x="38" y="34" width="360" height="24" fill="#c73e1d"/>
+  <text x="54" y="50" fill="#ffffff" font-family="Courier New, monospace" font-size="14" font-weight="700" letter-spacing="3">VISA-AWARE JOB INTELLIGENCE</text>
+  <g font-family="Courier New, monospace" font-size="36" font-weight="700" xml:space="preserve">
+    <text x="101" y="104" fill="#1a1a1a" opacity="0.22">  ____ _               _           _</text>
+    <text x="101" y="142" fill="#1a1a1a" opacity="0.22"> / ___| |__   ___  ___| |_ ___  __| |</text>
+    <text x="101" y="180" fill="#1a1a1a" opacity="0.22">| |  _| '_ \ / _ \/ __| __/ _ \/ _` |</text>
+    <text x="101" y="218" fill="#1a1a1a" opacity="0.22">| |_| | | | | (_) \__ \ ||  __/ (_| |</text>
+    <text x="101" y="256" fill="#1a1a1a" opacity="0.22"> \____|_| |_|\___/|___/\__\___|\__,_|</text>
+
+    <text x="92" y="95" fill="#d4a373">  ____ _               _           _</text>
+    <text x="92" y="133" fill="#d4a373"> / ___| |__   ___  ___| |_ ___  __| |</text>
+    <text x="92" y="171" fill="#d4a373">| |  _| '_ \ / _ \/ __| __/ _ \/ _` |</text>
+    <text x="92" y="209" fill="#d4a373">| |_| | | | | (_) \__ \ ||  __/ (_| |</text>
+    <text x="92" y="247" fill="#d4a373"> \____|_| |_|\___/|___/\__\___|\__,_|</text>
+
+    <text x="84" y="86" fill="#c73e1d">  ____ _               _           _</text>
+    <text x="84" y="124" fill="#c73e1d"> / ___| |__   ___  ___| |_ ___  __| |</text>
+    <text x="84" y="162" fill="#c73e1d">| |  _| '_ \ / _ \/ __| __/ _ \/ _` |</text>
+    <text x="84" y="200" fill="#c73e1d">| |_| | | | | (_) \__ \ ||  __/ (_| |</text>
+    <text x="84" y="238" fill="#c73e1d"> \____|_| |_|\___/|___/\__\___|\__,_|</text>
+  </g>
+  <rect x="1002" y="56" width="312" height="38" fill="#ffffff" stroke="#1a1a1a" stroke-width="3"/>
+  <text x="1022" y="80" fill="#1a1a1a" font-family="Courier New, monospace" font-size="15" font-weight="700" letter-spacing="2">H-1B DATA · SALARIES · COMPARE</text>
+  <rect x="1002" y="110" width="312" height="38" fill="#2d6a4f" stroke="#1a1a1a" stroke-width="3"/>
+  <text x="1064" y="134" fill="#ffffff" font-family="Courier New, monospace" font-size="15" font-weight="700" letter-spacing="2">SPONSORSHIP SIGNALS</text>
+  <rect x="1002" y="164" width="312" height="38" fill="#d4a373" stroke="#1a1a1a" stroke-width="3"/>
+  <text x="1042" y="188" fill="#1a1a1a" font-family="Courier New, monospace" font-size="15" font-weight="700" letter-spacing="2">PUBLIC PRODUCT SURFACE</text>
+</svg>

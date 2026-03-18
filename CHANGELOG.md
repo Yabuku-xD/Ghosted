@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.9] - 2026-03-18
+
+### Changed
+- Added README badges for the current release, license, frontend stack, backend stack, and Docker-based infrastructure.
+- Added a themed `Ghosted` ASCII banner asset at the top of the README using the site's accent palette.
+
 ## [0.3.8] - 2026-03-18
 
 ### Changed
