@@ -126,6 +126,13 @@ function CompanyDetail() {
       ? `FY${company.last_filing_year}`
       : `FY${company.first_filing_year}-FY${company.last_filing_year}`
     : 'Coverage pending';
+  const activeYearsLabel = company.first_filing_year && company.last_filing_year
+    ? company.first_filing_year === company.last_filing_year
+      ? `${company.last_filing_year}`
+      : `${company.first_filing_year}-${company.last_filing_year}`
+    : company.last_filing_year
+      ? `${company.last_filing_year}`
+      : 'N/A';
   const applicantInsights = (company.actionable_insights && company.actionable_insights.length > 0)
     ? company.actionable_insights
     : [
@@ -279,7 +286,7 @@ function CompanyDetail() {
                   </div>
                   <div className="stat-box-responsive">
                     <div className="stat-label">Active Years</div>
-                    <div className="stat-value-responsive">{company.first_filing_year && company.last_filing_year ? `${company.first_filing_year}-${company.last_filing_year}` : 'N/A'}</div>
+                    <div className="stat-value-responsive">{activeYearsLabel}</div>
                   </div>
                 </div>
 

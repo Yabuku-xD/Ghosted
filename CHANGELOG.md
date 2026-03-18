@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.5] - 2026-03-18
+
+### Fixed
+- Collapsed single-year company filing ranges on the company detail page so `Active Years` now shows `2025` instead of duplicated values like `2025-2025`.
+- Kept multi-year ranges unchanged while preserving the existing responsive company-detail layout.
+
 ## [0.3.4] - 2026-03-18
 
 ### Changed
