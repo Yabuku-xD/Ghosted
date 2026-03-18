@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeftRight, ArrowRight, Building2, Search, Scale, Sparkles } from 'lucide-react';
@@ -11,12 +11,16 @@ function CompanyPicker({
   label,
   value,
   onChange,
+  isOpen,
+  onOpen,
   selectedCompany,
   onSelect,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  isOpen: boolean;
+  onOpen: () => void;
   selectedCompany?: Company | null;
   onSelect: (company: Company) => void;
 }) {
@@ -28,6 +32,10 @@ function CompanyPicker({
   });
 
   const suggestions = data?.results || [];
+  const normalizedValue = value.trim().toLowerCase();
+  const normalizedSelectedName = selectedCompany?.name.trim().toLowerCase() || '';
+  const hasExactSelection = Boolean(selectedCompany && normalizedValue === normalizedSelectedName);
+  const showSuggestions = isOpen && deferredSearch.length >= 2 && suggestions.length > 0 && !hasExactSelection;
 
   return (
     <div className="card-static p-4 sm:p-6 bg-white">
@@ -38,7 +46,10 @@ function CompanyPicker({
         <input
           type="text"
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => {
+            onChange(event.target.value);
+          }}
+          onFocus={onOpen}
           placeholder="Search by company name..."
           className="input pl-10"
         />
@@ -62,7 +73,7 @@ function CompanyPicker({
         </div>
       ) : null}
 
-      {deferredSearch.length >= 2 && suggestions.length > 0 ? (
+      {showSuggestions ? (
         <div className="mt-4 border-2 border-border divide-y-2 divide-border-light bg-white max-h-64 overflow-y-auto">
           {suggestions.slice(0, 6).map((company) => (
             <button
@@ -96,9 +107,24 @@ function CompareCompanies() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [leftSearch, setLeftSearch] = useState('');
   const [rightSearch, setRightSearch] = useState('');
+  const [leftPreview, setLeftPreview] = useState<Company | null>(null);
+  const [rightPreview, setRightPreview] = useState<Company | null>(null);
+  const [activePicker, setActivePicker] = useState<'left' | 'right' | null>(null);
 
   const leftSlug = searchParams.get('left') || '';
   const rightSlug = searchParams.get('right') || '';
+
+  const { data: leftCompany } = useQuery({
+    queryKey: ['company-picker-selected', leftSlug],
+    queryFn: () => companiesApi.get(leftSlug),
+    enabled: Boolean(leftSlug),
+  });
+
+  const { data: rightCompany } = useQuery({
+    queryKey: ['company-picker-selected', rightSlug],
+    queryFn: () => companiesApi.get(rightSlug),
+    enabled: Boolean(rightSlug),
+  });
 
   const { data: comparison, isLoading } = useQuery({
     queryKey: ['company-comparison', leftSlug, rightSlug],
@@ -106,13 +132,83 @@ function CompareCompanies() {
     enabled: Boolean(leftSlug && rightSlug),
   });
 
-  const pickerParams = useMemo(() => ({ left: leftSlug, right: rightSlug }), [leftSlug, rightSlug]);
+  const selectedLeftCompany = comparison?.left || leftCompany || leftPreview || null;
+  const selectedRightCompany = comparison?.right || rightCompany || rightPreview || null;
 
   const setCompany = (side: 'left' | 'right', company: Company) => {
-    const next = new URLSearchParams(pickerParams);
+    const next = new URLSearchParams(searchParams);
     next.set(side, company.slug);
     setSearchParams(next);
+    setActivePicker(null);
+
+    if (side === 'left') {
+      setLeftPreview(company);
+      setLeftSearch(company.name);
+      return;
+    }
+
+    setRightPreview(company);
+    setRightSearch(company.name);
   };
+
+  const updateSearch = (side: 'left' | 'right', value: string) => {
+    const selectedCompany = side === 'left' ? selectedLeftCompany : selectedRightCompany;
+    setActivePicker(side);
+
+    if (side === 'left') {
+      setLeftSearch(value);
+    } else {
+      setRightSearch(value);
+    }
+
+    if (!selectedCompany) {
+      return;
+    }
+
+    if (value.trim().toLowerCase() === selectedCompany.name.trim().toLowerCase()) {
+      return;
+    }
+
+    const next = new URLSearchParams(searchParams);
+    next.delete(side);
+    setSearchParams(next);
+  };
+
+  useEffect(() => {
+    if (selectedLeftCompany && !leftSearch.trim()) {
+      setLeftSearch(selectedLeftCompany.name);
+    }
+  }, [leftSearch, selectedLeftCompany]);
+
+  useEffect(() => {
+    if (selectedRightCompany && !rightSearch.trim()) {
+      setRightSearch(selectedRightCompany.name);
+    }
+  }, [rightSearch, selectedRightCompany]);
+
+  useEffect(() => {
+    if (!leftSlug) {
+      setLeftPreview(null);
+    }
+  }, [leftSlug]);
+
+  useEffect(() => {
+    if (!rightSlug) {
+      setRightPreview(null);
+    }
+  }, [rightSlug]);
+
+  useEffect(() => {
+    if (leftCompany) {
+      setLeftPreview(leftCompany);
+    }
+  }, [leftCompany]);
+
+  useEffect(() => {
+    if (rightCompany) {
+      setRightPreview(rightCompany);
+    }
+  }, [rightCompany]);
 
   const heroText = leftSlug && rightSlug
     ? 'Compare sponsorship strength, salary coverage, and live jobs side by side.'
@@ -135,8 +231,10 @@ function CompareCompanies() {
           <CompanyPicker
             label="Company A"
             value={leftSearch}
-            onChange={setLeftSearch}
-            selectedCompany={comparison?.left || null}
+            isOpen={activePicker === 'left'}
+            onOpen={() => setActivePicker('left')}
+            onChange={(value) => updateSearch('left', value)}
+            selectedCompany={selectedLeftCompany}
             onSelect={(company) => setCompany('left', company)}
           />
 
@@ -149,8 +247,10 @@ function CompareCompanies() {
           <CompanyPicker
             label="Company B"
             value={rightSearch}
-            onChange={setRightSearch}
-            selectedCompany={comparison?.right || null}
+            isOpen={activePicker === 'right'}
+            onOpen={() => setActivePicker('right')}
+            onChange={(value) => updateSearch('right', value)}
+            selectedCompany={selectedRightCompany}
             onSelect={(company) => setCompany('right', company)}
           />
         </div>

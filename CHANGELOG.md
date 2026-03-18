@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-03-17
+
+### Fixed
+- Compare-company search selections now lock in immediately after a click instead of leaving the suggestion dropdown open.
+- Both compare pickers now preserve the chosen company card while async comparison data catches up, preventing the UI from feeling unselected.
+
+### Notes
+- Verified live in the browser with Amazon and Microsoft selections on the compare page.
+
 ## [0.2.0] - 2026-03-17
 
 ### Added
