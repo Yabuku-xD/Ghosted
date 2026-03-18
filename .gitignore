@@ -35,4 +35,5 @@ yarn-error.log*
 backend/data/*.csv
 backend/data/*.xlsx
 !backend/data/README.md
+backend/celerybeat-schedule
 *.log

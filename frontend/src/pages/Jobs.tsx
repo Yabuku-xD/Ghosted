@@ -260,25 +260,25 @@ function Jobs() {
           </div>
 
           <div className="jobs-filters mt-8">
-            <div className="relative">
+            <div className="jobs-filter-field jobs-filter-field-wide relative">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
               <input
                 type="text"
                 placeholder="Search title, team, or company"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="input pl-11 text-sm sm:text-base"
+                className="input jobs-filter-input pl-11"
               />
             </div>
 
-            <div className="relative">
+            <div className="jobs-filter-field relative">
               <MapPin className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
               <input
                 type="text"
                 placeholder="Location"
                 value={location}
                 onChange={(event) => setLocation(event.target.value)}
-                className="input pl-11 text-sm sm:text-base"
+                className="input jobs-filter-input pl-11"
               />
             </div>
 
@@ -287,7 +287,8 @@ function Jobs() {
               onChange={setRemotePolicy}
               ariaLabel="Remote policy filter"
               icon={<Globe2 className="h-4 w-4 text-muted" />}
-              buttonClassName="text-sm sm:text-base"
+              className="jobs-filter-field"
+              buttonClassName="jobs-filter-select"
               options={[
                 { value: '', label: 'Any Workplace Type' },
                 { value: 'remote', label: 'Remote' },
@@ -301,7 +302,8 @@ function Jobs() {
               onChange={setVisaSignal}
               ariaLabel="Visa sponsorship signal filter"
               icon={<Sparkles className="h-4 w-4 text-muted" />}
-              buttonClassName="text-sm sm:text-base"
+              className="jobs-filter-field"
+              buttonClassName="jobs-filter-select"
               options={[
                 { value: '', label: 'Any Sponsorship Signal' },
                 { value: 'historically_sponsors', label: 'Historically Sponsors' },
@@ -315,7 +317,8 @@ function Jobs() {
               onChange={setSource}
               ariaLabel="Job source filter"
               icon={<BriefcaseBusiness className="h-4 w-4 text-muted" />}
-              buttonClassName="text-sm sm:text-base"
+              className="jobs-filter-field"
+              buttonClassName="jobs-filter-select"
               options={sourceOptions}
             />
 
@@ -324,7 +327,8 @@ function Jobs() {
               onChange={setPostedWithinDays}
               ariaLabel="Recency filter"
               icon={<Clock3 className="h-4 w-4 text-muted" />}
-              buttonClassName="text-sm sm:text-base"
+              className="jobs-filter-field"
+              buttonClassName="jobs-filter-select"
               options={[
                 { value: '', label: 'Any Posting Age' },
                 { value: '7', label: 'Last 7 Days' },
@@ -337,7 +341,8 @@ function Jobs() {
               onChange={setOrdering}
               ariaLabel="Job ordering"
               icon={<Filter className="h-4 w-4 text-muted" />}
-              buttonClassName="text-sm sm:text-base"
+              className="jobs-filter-field"
+              buttonClassName="jobs-filter-select"
               options={[
                 { value: '-job_score', label: 'Recommended' },
                 { value: '-posted_at', label: 'Newest First' },
@@ -349,7 +354,7 @@ function Jobs() {
             <button
               type="button"
               onClick={() => setHasSalary((current) => !current)}
-              className={`jobs-toggle ${hasSalary ? 'jobs-toggle-active' : ''}`}
+              className={`jobs-toggle jobs-filter-field ${hasSalary ? 'jobs-toggle-active' : ''}`}
             >
               <DollarSign className="h-4 w-4" />
               Salary posted

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2026-03-18
+
+### Fixed
+- Reworked the jobs filter bar into a roomier responsive grid so the search and filter controls stay readable on desktop instead of collapsing into tiny columns.
+- Increased the jobs filter control height and spacing so inputs, selects, and the salary toggle feel consistent across desktop and mobile layouts.
+
 ## [0.4.0] - 2026-03-18
 
 ### Added

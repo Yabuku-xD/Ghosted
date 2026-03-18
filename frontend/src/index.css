@@ -1189,12 +1189,32 @@
   }
 
   .jobs-filters {
-    @apply grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8;
+    @apply grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4;
+  }
+
+  .jobs-filter-field {
+    @apply min-w-0;
+  }
+
+  .jobs-filter-field-wide {
+    @apply sm:col-span-2 xl:col-span-2 2xl:col-span-2;
+  }
+
+  .jobs-filter-input {
+    @apply min-h-[4rem] text-base sm:text-base;
+  }
+
+  .jobs-filter-select {
+    @apply min-h-[4rem] text-base;
   }
 
   .jobs-toggle {
-    @apply inline-flex items-center justify-center gap-2 border-2 border-[#1a1a1a] bg-white px-4 py-3
+    @apply inline-flex min-h-[4rem] items-center justify-center gap-2 border-2 border-[#1a1a1a] bg-white px-5 py-3
            font-mono text-xs uppercase tracking-[0.18em] text-[#1a1a1a] transition-colors hover:bg-[#f3efe8];
+  }
+
+  .jobs-toggle svg {
+    @apply flex-shrink-0;
   }
 
   .jobs-toggle-active {
