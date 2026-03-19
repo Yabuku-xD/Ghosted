@@ -241,6 +241,8 @@ function Jobs() {
   const hasNext = !!data?.next;
   const hasPrevious = !!data?.previous;
   const resumeSession = resumeSessionQuery.data;
+  const resumeHighMatchCount = resumeSession?.high_match_count || 0;
+  const resumeHasMatches = resumeHighMatchCount > 0;
   const resumeDownloadUrl = resumeSessionId && resumeSession?.has_download
     ? jobsApi.getResumeMatchDownloadUrl(resumeSessionId)
     : null;
@@ -573,14 +575,25 @@ function Jobs() {
                     <div className="jobs-resume-summary-top">
                       <div>
                         <div className="jobs-resume-summary-title">
-                          {resumeSession.high_match_count || 0} high-match jobs found
+                          {resumeHasMatches ? `${resumeHighMatchCount} high-match jobs found` : 'No high-match jobs found'}
                         </div>
                         <p className="mt-2 text-sm leading-relaxed text-secondary">
-                          Filtered out {resumeSession.filtered_low_match_count || 0} lower-signal roles
-                          and grouped the strongest fits into one tailored resume track.
+                          {resumeHasMatches
+                            ? (
+                              <>
+                                Filtered out {resumeSession.filtered_low_match_count || 0} lower-signal roles
+                                and grouped the strongest fits into one tailored resume track.
+                              </>
+                              )
+                            : (
+                              <>
+                                Checked {resumeSession.filtered_low_match_count || 0} lower-signal roles and
+                                intentionally held back a shortlist because nothing cleared the high-match bar.
+                              </>
+                              )}
                         </p>
                       </div>
-                      {resumeDownloadUrl && resumeSession.resume_ready ? (
+                      {resumeHasMatches && resumeDownloadUrl && resumeSession.resume_ready ? (
                         <a
                           href={resumeDownloadUrl}
                           target="_blank"
@@ -601,12 +614,21 @@ function Jobs() {
                             || `${resumeSession.profile_summary?.estimated_years_experience || 0} years`}
                         </div>
                       </div>
-                      <div className="jobs-resume-stat">
-                        <div className="jobs-resume-stat-label">Target cluster</div>
-                        <div className="jobs-resume-stat-value">
-                          {resumeSession.target_cluster?.family || 'Generalist'}
+                      {resumeHasMatches ? (
+                        <div className="jobs-resume-stat">
+                          <div className="jobs-resume-stat-label">Target cluster</div>
+                          <div className="jobs-resume-stat-value">
+                            {resumeSession.target_cluster?.family || 'Generalist'}
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="jobs-resume-stat">
+                          <div className="jobs-resume-stat-label">Shortlist status</div>
+                          <div className="jobs-resume-stat-value">
+                            No strong fit yet
+                          </div>
+                        </div>
+                      )}
                       <div className="jobs-resume-stat">
                         <div className="jobs-resume-stat-label">Expires</div>
                         <div className="jobs-resume-stat-value">
@@ -623,10 +645,10 @@ function Jobs() {
                       </div>
                     ) : null}
 
-                    {(resumeSession.high_match_count || 0) === 0 ? (
+                    {!resumeHasMatches ? (
                       <Alert variant="warning" title="No strong matches under the current filters">
-                        Try loosening the Jobs filters or uploading a resume with more machine-readable text.
-                        Ghosted intentionally hides lower-signal roles instead of forcing weak matches.
+                        Ghosted is using the actual description, years requirements, and direct-work evidence here.
+                        If nothing cleared the bar, it is intentionally avoiding a misleading shortlist.
                       </Alert>
                     ) : null}
 
@@ -901,7 +923,7 @@ function Jobs() {
                               href={match.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center justify-end font-mono text-xs uppercase tracking-wider text-accent hover-underline sm:self-center"
+                              className="jobs-card-link"
                             >
                               Open job posting
                             </a>
@@ -1017,7 +1039,7 @@ function Jobs() {
                         </Link>
                         <button
                           type="button"
-                          className="font-mono text-xs uppercase tracking-wider text-secondary hover:text-accent transition-colors text-left sm:text-right"
+                          className="jobs-card-link jobs-card-link-muted"
                           onClick={() => setCompanySlug(job.company_slug)}
                         >
                           More roles from {job.company_name}

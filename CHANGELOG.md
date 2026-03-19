@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.5] - 2026-03-19
+
+### Changed
+- Tightened resume-to-job scoring so direct work evidence and project-only overlap are tracked separately, which makes full-stack and family-specific roles rely more on actual experience sections instead of combined keyword pools.
+- Updated the Jobs resume summary to tell the truth when no strong shortlist exists, hiding the fake `Generalist` fallback and replacing it with a clear no-match status.
+
+### Fixed
+- Replaced substring-based stack detection with bounded term matching so short tokens like `go`, `ui`, and `web` no longer misclassify job descriptions during frontend/backend/full-stack gating.
+- Fixed family-specific experience fallback so unrelated total experience is no longer described as directly relevant for specialized roles.
+- Filtered noisy generic skill chips more aggressively before they reach shortlist reasons, top-skills summaries, or the tailored PDF.
+- Aligned the Jobs card footer links so `Open job posting` and `More roles from ...` sit consistently across card heights without changing the theme.
+
 ## [0.6.4] - 2026-03-19
 
 ### Changed

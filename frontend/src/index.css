@@ -1417,6 +1417,14 @@
   .jobs-card-footer {
     @apply mt-auto flex flex-col gap-3 border-t border-[rgba(26,26,26,0.12)] pt-4 sm:flex-row sm:items-center sm:justify-between;
   }
+
+  .jobs-card-link {
+    @apply inline-flex items-center justify-start self-start font-mono text-xs uppercase tracking-wider text-accent transition-colors hover:text-[#8f2a12] hover-underline sm:justify-end sm:self-center;
+  }
+
+  .jobs-card-link-muted {
+    @apply text-secondary hover:text-accent;
+  }
 }
 
 /* ============================================================

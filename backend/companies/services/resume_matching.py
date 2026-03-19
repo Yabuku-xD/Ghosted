@@ -41,7 +41,7 @@ from offers.models import Offer
 
 
 MAX_BULLET_COUNT = 6
-RESUME_MATCH_SESSION_VERSION = 3
+RESUME_MATCH_SESSION_VERSION = 4
 SECTION_HEADINGS = {
     'summary': {'summary', 'professional summary', 'profile', 'objective'},
     'skills': {'skills', 'technical skills', 'core skills', 'competencies'},
@@ -148,6 +148,8 @@ class CandidateProfile:
     experience_by_family_months: dict[str, int]
     seniority: str
     skills: list[str]
+    professional_skills: list[str]
+    project_skills: list[str]
     highlights: list[str]
     education: list[str]
     certifications: list[str]
@@ -449,6 +451,34 @@ def format_experience_label(months: int) -> str:
     return f'~{years:.1f} years'
 
 
+def skill_has_direct_evidence(skill: str, text: str) -> bool:
+    return keyword_in_text(skill, text)
+
+
+def filter_high_signal_skills(skills: list[str], limit: int | None = None) -> list[str]:
+    filtered: list[str] = []
+    seen: set[str] = set()
+
+    for skill in skills:
+        cleaned = clean_skill_phrase(skill, source='explicit')
+        normalized = normalize_blob(cleaned or '')
+        compact = normalized.replace(' ', '')
+        if not cleaned or not normalized or normalized in seen:
+            continue
+        if normalized in GENERIC_OVERLAP_TERMS:
+            continue
+        if compact in SUSPICIOUS_SESSION_TOKENS or any(token in compact for token in SUSPICIOUS_SESSION_TOKENS):
+            continue
+        if len(normalized) <= 2 and normalized not in {'go', 'ui', 'ux', 'ai', 'ml'}:
+            continue
+        seen.add(normalized)
+        filtered.append(cleaned)
+        if limit is not None and len(filtered) >= limit:
+            break
+
+    return filtered
+
+
 def build_candidate_profile(text: str) -> CandidateProfile:
     lines = [normalize_resume_line(line) for line in text.splitlines()]
     lines = [line for line in lines if line]
@@ -481,11 +511,27 @@ def build_candidate_profile(text: str) -> CandidateProfile:
     experience_text = ' '.join(sections.get('experience', []))
     projects_text = ' '.join(sections.get('projects', []))
 
-    skills = merge_unique_strings(
-        extract_explicit_resume_skills(sections.get('skills', [])),
-        extract_skills(skills_text, limit=12),
-        extract_skills(projects_text, limit=10),
-        extract_skills(experience_text, limit=10),
+    explicit_skills = filter_high_signal_skills(extract_explicit_resume_skills(sections.get('skills', [])), limit=18)
+    experience_skills = filter_high_signal_skills(extract_skills(experience_text, limit=14), limit=14)
+    project_skills = filter_high_signal_skills(extract_skills(projects_text, limit=12), limit=12)
+
+    professional_skills = merge_unique_strings(
+        [skill for skill in explicit_skills if skill_has_direct_evidence(skill, experience_text)],
+        experience_skills,
+        limit=14,
+    )
+    project_backed_skills = merge_unique_strings(
+        [skill for skill in explicit_skills if skill_has_direct_evidence(skill, projects_text)],
+        project_skills,
+        limit=12,
+    )
+    skills = filter_high_signal_skills(
+        merge_unique_strings(
+            explicit_skills,
+            professional_skills,
+            project_backed_skills,
+            limit=18,
+        ),
         limit=18,
     )
     seniority = infer_seniority(' '.join(lines[:12]), f'{overall_years} years experience')
@@ -513,6 +559,8 @@ def build_candidate_profile(text: str) -> CandidateProfile:
         experience_by_family_months=experience_by_family_months,
         seniority=seniority,
         skills=skills,
+        professional_skills=professional_skills,
+        project_skills=project_backed_skills,
         highlights=highlights,
         education=education,
         certifications=certifications,
@@ -819,13 +867,15 @@ def stack_match_count(skills: list[str], terms: set[str]) -> int:
 
 
 def text_contains_stack_terms(text: str, terms: set[str]) -> bool:
-    normalized = normalize_blob(text)
-    return any(term in normalized for term in terms)
+    return any(keyword_in_text(term, text) for term in terms)
 
 
 def build_job_profile(job) -> dict[str, Any]:
     role_family = infer_role_family(job.title, job.team, job.description)
-    job_skills = extract_skills(' '.join(filter(None, [job.title, job.team, job.description])), limit=10)
+    job_skills = filter_high_signal_skills(
+        extract_skills(' '.join(filter(None, [job.title, job.team, job.description])), limit=12),
+        limit=10,
+    )
     required_years = parse_required_years(job.title, job.description)
     seniority = infer_seniority(job.title, job.description)
     trust = compute_job_trust(job)
@@ -850,10 +900,14 @@ def score_job_match(
     text_similarity: float,
     overlap_terms: list[str],
 ) -> dict[str, Any] | None:
-    professional_matches = matched_job_keywords(candidate.experience_text, candidate.skills, job_profile['skills'])
+    professional_matches = matched_job_keywords(
+        candidate.experience_text,
+        candidate.professional_skills,
+        job_profile['skills'],
+    )
     project_matches = [
         skill
-        for skill in matched_job_keywords(candidate.projects_text, candidate.skills, job_profile['skills'])
+        for skill in matched_job_keywords(candidate.projects_text, candidate.project_skills, job_profile['skills'])
         if normalize_blob(skill) not in {normalize_blob(value) for value in professional_matches}
     ]
     overlap = merge_unique_strings(
@@ -874,7 +928,8 @@ def score_job_match(
     overlap_count = len(high_signal_overlap) or len(overlap)
     required_years = job_profile['required_years']
     family = job_profile['family']
-    relevant_months = candidate.experience_by_family_months.get(family) or candidate.overall_months
+    direct_family_months = candidate.experience_by_family_months.get(family)
+    relevant_months = candidate.overall_months if family == 'general' else (direct_family_months or 0)
     relevant_years = months_to_years(relevant_months)
     required_months = (required_years * 12) if required_years is not None else None
     seniority_delta = seniority_gap(candidate.seniority, job_profile['seniority'])
@@ -918,7 +973,10 @@ def score_job_match(
     )
 
     if required_months is None:
-        experience_score = 10 if relevant_months >= 12 else 6 if relevant_months >= 6 else 2
+        if family != 'general' and relevant_months == 0:
+            experience_score = 1 if candidate.overall_months >= 12 else 0
+        else:
+            experience_score = 10 if relevant_months >= 12 else 6 if relevant_months >= 6 else 2
     elif relevant_months >= required_months:
         experience_score = 18
     elif relevant_months + 6 >= required_months:
@@ -962,12 +1020,23 @@ def score_job_match(
             f'{", ".join(displayed_overlap[:4])}.'
         )
     if required_years is not None:
-        reasons.append(
-            f'Your directly relevant experience looks closer to {format_experience_label(relevant_months).lower()} '
-            f'against a {required_years}+ year requirement.'
-        )
+        if family != 'general' and relevant_months == 0 and candidate.overall_months > 0:
+            reasons.append(
+                f'You show {format_experience_label(candidate.overall_months).lower()} overall, '
+                f'but direct {role_family_display(family).lower()} evidence is limited against a {required_years}+ year requirement.'
+            )
+        else:
+            reasons.append(
+                f'Your directly relevant experience looks closer to {format_experience_label(relevant_months).lower()} '
+                f'against a {required_years}+ year requirement.'
+            )
     elif full_stack_role and professional_overlap_count == 0 and project_overlap_count > 0:
         reasons.append('Most of the full-stack overlap comes from project work rather than direct professional experience.')
+    elif family != 'general' and relevant_months == 0 and candidate.overall_months > 0:
+        reasons.append(
+            f'You show {format_experience_label(candidate.overall_months).lower()} overall, '
+            f'but direct {role_family_display(family).lower()} evidence is still limited.'
+        )
     elif professional_overlap_count > 0:
         reasons.append('Some overlap is backed by direct work experience, not only resume keywords.')
     else:
@@ -1113,7 +1182,7 @@ def choose_target_cluster(high_matches: list[dict[str, Any]]) -> dict[str, Any] 
     return {
         'family': family,
         'jobs': jobs[:6],
-        'top_skills': top_skills[:8],
+        'top_skills': filter_high_signal_skills(top_skills, limit=8),
         'average_score': average_score,
     }
 
@@ -1182,6 +1251,7 @@ def build_tailored_resume_pdf(session_id: str, candidate: CandidateProfile, targ
                 top_skills.append(skill)
     if not top_skills:
         top_skills = candidate.skills[:10]
+    top_skills = filter_high_signal_skills(top_skills, limit=10)
 
     summary_bits = [
         format_experience_label(candidate.overall_months) if candidate.overall_months else "Experience aligned to this role family",
@@ -1287,7 +1357,7 @@ def matched_job_keywords(candidate_text: str, candidate_skills: list[str], job_s
             seen.add(normalized)
             matches.append(skill)
 
-    return matches[:6]
+    return filter_high_signal_skills(matches, limit=6)
 
 
 def top_overlap_terms(resume_vector, job_vector, feature_names) -> list[str]:
