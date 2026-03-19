@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.5] - 2026-03-18
+
+### Fixed
+- Rebuilt the shared custom select interactions so the Jobs, Offers, and Companies filters now support Arrow key navigation, Home/End movement, Enter/Space selection, and Escape dismissal without changing the existing theme.
+- Replaced the incorrect menubar-style roles in the site header with standard navigation semantics and removed the extra hidden page-level heading so each route now exposes a single meaningful `h1`.
+- Added programmatic labels for the Jobs search and location fields so the primary text filters remain understandable to assistive technologies after users start typing.
+- Added outside-click and Escape dismissal handling to the Compare company picker so suggestion panels no longer linger when users back out of a search.
+
 ## [0.5.4] - 2026-03-18
 
 ### Changed

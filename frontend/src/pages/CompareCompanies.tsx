@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useState } from 'react';
+import { useDeferredValue, useEffect, useId, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeftRight, ArrowRight, Building2, Search, Scale, Sparkles } from 'lucide-react';
@@ -13,6 +13,7 @@ function CompanyPicker({
   onChange,
   isOpen,
   onOpen,
+  onClose,
   selectedCompany,
   onSelect,
 }: {
@@ -21,9 +22,13 @@ function CompanyPicker({
   onChange: (value: string) => void;
   isOpen: boolean;
   onOpen: () => void;
+  onClose: () => void;
   selectedCompany?: Company | null;
   onSelect: (company: Company) => void;
 }) {
+  const inputId = useId();
+  const listboxId = `${inputId}-suggestions`;
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const deferredSearch = useDeferredValue(value.trim());
   const { data } = useQuery({
     queryKey: ['company-picker', label, deferredSearch],
@@ -37,19 +42,51 @@ function CompanyPicker({
   const hasExactSelection = Boolean(selectedCompany && normalizedValue === normalizedSelectedName);
   const showSuggestions = isOpen && deferredSearch.length >= 2 && suggestions.length > 0 && !hasExactSelection;
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, onClose]);
+
   return (
-    <div className="card-static p-4 sm:p-6 bg-white">
-      <div className="font-mono text-xs uppercase tracking-wider text-secondary mb-3">{label}</div>
+    <div ref={rootRef} className="card-static p-4 sm:p-6 bg-white">
+      <label htmlFor={inputId} className="font-mono text-xs uppercase tracking-wider text-secondary mb-3 block">
+        {label}
+      </label>
 
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
         <input
+          id={inputId}
           type="text"
           value={value}
           onChange={(event) => {
             onChange(event.target.value);
           }}
           onFocus={onOpen}
+          aria-expanded={showSuggestions}
+          aria-controls={showSuggestions ? listboxId : undefined}
+          aria-autocomplete="list"
           placeholder="Search by company name..."
           className="input pl-10"
         />
@@ -74,11 +111,16 @@ function CompanyPicker({
       ) : null}
 
       {showSuggestions ? (
-        <div className="mt-4 border-2 border-border divide-y-2 divide-border-light bg-white max-h-64 overflow-y-auto">
+        <div
+          id={listboxId}
+          role="listbox"
+          className="mt-4 border-2 border-border divide-y-2 divide-border-light bg-white max-h-64 overflow-y-auto"
+        >
           {suggestions.slice(0, 6).map((company) => (
             <button
               key={company.id}
               type="button"
+              role="option"
               onClick={() => onSelect(company)}
               className="w-full text-left px-3 py-3 hover:bg-secondary transition-colors flex items-center gap-3"
             >
@@ -233,6 +275,7 @@ function CompareCompanies() {
             value={leftSearch}
             isOpen={activePicker === 'left'}
             onOpen={() => setActivePicker('left')}
+            onClose={() => setActivePicker((current) => (current === 'left' ? null : current))}
             onChange={(value) => updateSearch('left', value)}
             selectedCompany={selectedLeftCompany}
             onSelect={(company) => setCompany('left', company)}
@@ -249,6 +292,7 @@ function CompareCompanies() {
             value={rightSearch}
             isOpen={activePicker === 'right'}
             onOpen={() => setActivePicker('right')}
+            onClose={() => setActivePicker((current) => (current === 'right' ? null : current))}
             onChange={(value) => updateSearch('right', value)}
             selectedCompany={selectedRightCompany}
             onSelect={(company) => setCompany('right', company)}

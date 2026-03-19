@@ -5,11 +5,9 @@ import SkipLink from './ui/SkipLink';
 
 interface LayoutProps {
   children: React.ReactNode;
-  title?: string;
-  description?: string;
 }
 
-function Layout({ children, title, description }: LayoutProps) {
+function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -43,24 +41,24 @@ function Layout({ children, title, description }: LayoutProps) {
             </Link>
 
             {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-2" role="menubar">
+            <ul className="hidden md:flex items-center gap-2">
               {navLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  role="menuitem"
-                  aria-current={isActive(link.to) ? 'page' : undefined}
-                  className={`flex items-center gap-2 px-3 lg:px-4 py-2 font-mono text-xs lg:text-sm uppercase tracking-wider transition-all ${
-                    isActive(link.to)
-                      ? 'bg-secondary border-2 border-border shadow-solid-sm'
-                      : 'hover:bg-secondary'
-                  }`}
-                >
-                  <link.icon className="w-4 h-4" aria-hidden="true" />
-                  {link.label}
-                </Link>
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    aria-current={isActive(link.to) ? 'page' : undefined}
+                    className={`flex items-center gap-2 px-3 lg:px-4 py-2 font-mono text-xs lg:text-sm uppercase tracking-wider transition-all ${
+                      isActive(link.to)
+                        ? 'bg-secondary border-2 border-border shadow-solid-sm'
+                        : 'hover:bg-secondary'
+                    }`}
+                  >
+                    <link.icon className="w-4 h-4" aria-hidden="true" />
+                    {link.label}
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
 
             {/* Mobile Menu Button */}
             <button
@@ -81,26 +79,27 @@ function Layout({ children, title, description }: LayoutProps) {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div id="mobile-menu" className="md:hidden border-t-2 border-border bg-white" role="menu">
-            <div className="container py-4 space-y-2">
+          <div id="mobile-menu" className="md:hidden border-t-2 border-border bg-white">
+            <div className="container py-4">
+              <ul className="space-y-2">
               {navLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setMobileMenuOpen(false)}
-                  role="menuitem"
-                  aria-current={isActive(link.to) ? 'page' : undefined}
-                  className={`flex items-center gap-3 px-4 py-3 font-mono text-sm uppercase tracking-wider border-2 ${
-                    isActive(link.to)
-                      ? 'bg-secondary border-border shadow-solid-sm'
-                      : 'border-transparent hover:bg-secondary'
-                  }`}
-                >
-                  <link.icon className="w-5 h-5" aria-hidden="true" />
-                  {link.label}
-                </Link>
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    aria-current={isActive(link.to) ? 'page' : undefined}
+                    className={`flex items-center gap-3 px-4 py-3 font-mono text-sm uppercase tracking-wider border-2 ${
+                      isActive(link.to)
+                        ? 'bg-secondary border-border shadow-solid-sm'
+                        : 'border-transparent hover:bg-secondary'
+                    }`}
+                  >
+                    <link.icon className="w-5 h-5" aria-hidden="true" />
+                    {link.label}
+                  </Link>
+                </li>
               ))}
-
+              </ul>
             </div>
           </div>
         )}
@@ -108,9 +107,6 @@ function Layout({ children, title, description }: LayoutProps) {
 
       {/* Main Content */}
       <main id="main-content" className="flex-1" role="main" tabIndex={-1}>
-        {/* Screen reader announcement for page changes */}
-        <h1 className="sr-only">{title || 'Ghosted'}</h1>
-        {description && <p className="sr-only">{description}</p>}
         {children}
       </main>
 

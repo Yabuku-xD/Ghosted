@@ -1,4 +1,4 @@
-import { startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { startTransition, useDeferredValue, useEffect, useId, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -34,6 +34,8 @@ function Jobs() {
   const [postedWithinDays, setPostedWithinDays] = useState(searchParams.get('posted_within_days') || '');
   const [page, setPage] = useState(Number(searchParams.get('page') || '1'));
   const [companySlug, setCompanySlug] = useState(searchParams.get('company_slug') || '');
+  const searchInputId = useId();
+  const locationInputId = useId();
 
   const deferredSearch = useDeferredValue(search.trim());
   const deferredLocation = useDeferredValue(location.trim());
@@ -308,8 +310,10 @@ function Jobs() {
 
           <div className="jobs-filters mt-8">
             <div className="jobs-filter-field jobs-filter-field-wide relative">
+              <label htmlFor={searchInputId} className="sr-only">Search jobs or companies</label>
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
               <input
+                id={searchInputId}
                 type="text"
                 placeholder="Search jobs or companies"
                 value={search}
@@ -319,8 +323,10 @@ function Jobs() {
             </div>
 
             <div className="jobs-filter-field relative">
+              <label htmlFor={locationInputId} className="sr-only">Filter jobs by location or remote</label>
               <MapPin className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
               <input
+                id={locationInputId}
                 type="text"
                 placeholder="Location or remote"
                 value={location}
