@@ -176,6 +176,52 @@ export interface JobStatistics {
   }>;
 }
 
+export interface ResumeMatchedJob extends JobPosting {
+  job_family?: string;
+  required_years_experience?: number | null;
+  candidate_years_experience?: number | null;
+  resume_match_score: number;
+  resume_match_band: string;
+  resume_match_reasons: string[];
+  matched_skills: string[];
+  trust_level?: string;
+  trust_score?: number;
+  trust_notes?: string[];
+  stale_warning?: string | null;
+}
+
+export interface ResumeMatchProfileSummary {
+  estimated_years_experience: number;
+  seniority: string;
+  top_skills: string[];
+  target_families: string[];
+}
+
+export interface ResumeMatchTargetCluster {
+  family: string | null;
+  job_count: number;
+  average_match_score: number | null;
+  top_skills: string[];
+}
+
+export interface ResumeMatchSession {
+  session_id: string;
+  status: 'processing' | 'completed' | 'failed' | 'missing';
+  created_at?: string;
+  completed_at?: string;
+  expires_at?: string;
+  privacy_note?: string;
+  error?: string;
+  has_download?: boolean;
+  resume_ready?: boolean;
+  resume_file_name?: string;
+  high_match_count?: number;
+  filtered_low_match_count?: number;
+  profile_summary?: ResumeMatchProfileSummary;
+  high_matches?: ResumeMatchedJob[];
+  target_cluster?: ResumeMatchTargetCluster | null;
+}
+
 export interface CompanyBenefit {
   id: number;
   company: number;

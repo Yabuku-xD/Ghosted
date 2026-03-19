@@ -1,6 +1,6 @@
-import { startTransition, useDeferredValue, useEffect, useId, useMemo, useState } from 'react';
+import { type ChangeEvent, startTransition, useDeferredValue, useEffect, useId, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -8,20 +8,27 @@ import {
   ChevronRight,
   Clock3,
   DollarSign,
+  Download,
+  FileText,
   Filter,
   Globe2,
   MapPin,
   Search,
+  ShieldCheck,
   Sparkles,
+  Trash2,
+  Upload,
 } from 'lucide-react';
 
 import { jobsApi } from '../api/services';
-import { Badge, Card, CardBody, CompanyLogo, EmptyState, Select, Spinner } from '../components/ui';
-import type { JobPosting } from '../types';
+import { Alert, Badge, Button, Card, CardBody, CompanyLogo, EmptyState, Select, Spinner, useToast } from '../components/ui';
+import type { JobPosting, ResumeMatchSession } from '../types';
 
 const PAGE_SIZE = 10;
+const MAX_RESUME_BYTES = 5 * 1024 * 1024;
 
 function Jobs() {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -34,8 +41,11 @@ function Jobs() {
   const [postedWithinDays, setPostedWithinDays] = useState(searchParams.get('posted_within_days') || '');
   const [page, setPage] = useState(Number(searchParams.get('page') || '1'));
   const [companySlug, setCompanySlug] = useState(searchParams.get('company_slug') || '');
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeSessionId, setResumeSessionId] = useState<string | null>(null);
   const searchInputId = useId();
   const locationInputId = useId();
+  const resumeInputId = useId();
 
   const deferredSearch = useDeferredValue(search.trim());
   const deferredLocation = useDeferredValue(location.trim());
@@ -116,6 +126,26 @@ function Jobs() {
     visaSignal,
   ]);
 
+  const resumeFilters = useMemo(() => ({
+    search: deferredSearch || undefined,
+    location: deferredLocation || undefined,
+    company_slug: companySlug || undefined,
+    source: source || undefined,
+    remote_policy: remotePolicy || undefined,
+    visa_sponsorship_signal: visaSignal || undefined,
+    has_salary: hasSalary || undefined,
+    posted_within_days: postedWithinDays ? parseInt(postedWithinDays, 10) : undefined,
+  }), [
+    companySlug,
+    deferredLocation,
+    deferredSearch,
+    hasSalary,
+    postedWithinDays,
+    remotePolicy,
+    source,
+    visaSignal,
+  ]);
+
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['jobs', listParams],
     queryFn: () => jobsApi.list(listParams),
@@ -127,11 +157,56 @@ function Jobs() {
     queryFn: () => jobsApi.statistics(statsParams),
   });
 
+  const resumeSessionQuery = useQuery({
+    queryKey: ['job-resume-match', resumeSessionId],
+    queryFn: () => jobsApi.getResumeMatchSession(resumeSessionId as string),
+    enabled: Boolean(resumeSessionId),
+    refetchInterval: (query) => {
+      const session = query.state.data as ResumeMatchSession | undefined;
+      return session?.status === 'processing' ? 2000 : false;
+    },
+  });
+
+  const uploadResumeMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (resumeSessionId) {
+        await jobsApi.clearResumeMatchSession(resumeSessionId).catch(() => undefined);
+      }
+      return jobsApi.createResumeMatchSession(file, resumeFilters);
+    },
+    onSuccess: (session) => {
+      setResumeSessionId(session.session_id);
+      setResumeFile(null);
+      toast.success('Ghosted is tailoring a shortlist now.', 'Resume processing');
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : 'Resume upload failed.';
+      toast.error(message, 'Upload failed');
+    },
+  });
+
+  const clearResumeMutation = useMutation({
+    mutationFn: async (sessionId: string) => jobsApi.clearResumeMatchSession(sessionId),
+    onSuccess: () => {
+      setResumeSessionId(null);
+      setResumeFile(null);
+      void queryClient.removeQueries({ queryKey: ['job-resume-match'] });
+      toast.info('Temporary resume session cleared.', 'Session removed');
+    },
+    onError: () => {
+      toast.error('Could not clear the temporary session. Please try again.', 'Clear failed');
+    },
+  });
+
   const jobs = data?.results || [];
   const totalCount = data?.count || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const hasNext = !!data?.next;
   const hasPrevious = !!data?.previous;
+  const resumeSession = resumeSessionQuery.data;
+  const resumeDownloadUrl = resumeSessionId && resumeSession?.has_download
+    ? jobsApi.getResumeMatchDownloadUrl(resumeSessionId)
+    : null;
 
   const prefetchPage = (targetPage: number) => {
     if (targetPage < 1 || targetPage > totalPages || targetPage === page) {
@@ -174,6 +249,44 @@ function Jobs() {
     setPostedWithinDays('');
     setCompanySlug('');
     setPage(1);
+  };
+
+  const handleResumeFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      toast.warning('Please choose a PDF resume.', 'Unsupported file');
+      return;
+    }
+
+    if (file.size > MAX_RESUME_BYTES) {
+      toast.warning('Please keep the resume under 5 MB.', 'File too large');
+      return;
+    }
+
+    setResumeFile(file);
+  };
+
+  const handleResumeUpload = () => {
+    if (!resumeFile) {
+      toast.info('Choose a PDF resume first.', 'Resume required');
+      return;
+    }
+
+    uploadResumeMutation.mutate(resumeFile);
+  };
+
+  const handleResumeClear = () => {
+    if (resumeSessionId) {
+      clearResumeMutation.mutate(resumeSessionId);
+      return;
+    }
+    setResumeFile(null);
   };
 
   const goToPreviousPage = () => {
@@ -231,6 +344,18 @@ function Jobs() {
     }).format(new Date(value));
   };
 
+  const formatDateTime = (value?: string | null) => {
+    if (!value) {
+      return null;
+    }
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(new Date(value));
+  };
+
   const getVisaBadge = (signal?: string) => {
     switch (signal) {
       case 'historically_sponsors':
@@ -253,6 +378,13 @@ function Jobs() {
       default:
         return { variant: 'ghost' as const, label: 'Location Pending' };
     }
+  };
+
+  const getMatchBadge = (band?: string) => {
+    if (band === 'high') {
+      return { variant: 'success' as const, label: 'High match' };
+    }
+    return { variant: 'warning' as const, label: 'Good match' };
   };
 
   return (
@@ -307,6 +439,167 @@ function Jobs() {
               )}
             </div>
           </div>
+
+          <Card static className="jobs-resume-shell mt-8 overflow-hidden">
+            <CardBody className="jobs-resume-grid">
+              <div className="jobs-resume-upload">
+                <div className="section-marker mb-3">
+                  <span>Temporary Resume Match</span>
+                </div>
+                <h2 className="headline-sm mb-3">Upload one PDF, get only the strongest-fit roles</h2>
+                <p className="text-sm leading-relaxed text-secondary sm:text-base">
+                  Ghosted reads your uploaded resume temporarily, scores only the higher-signal jobs against
+                  the live description text and experience requirements, then generates one shared tailored
+                  resume for the strongest role cluster.
+                </p>
+
+                <div className="jobs-resume-note">
+                  <ShieldCheck className="h-4 w-4 text-success" />
+                  <span>Raw PDFs are deleted after extraction and the temporary session expires automatically.</span>
+                </div>
+
+                <div className="jobs-resume-actions">
+                  <label htmlFor={resumeInputId} className="jobs-resume-dropzone">
+                    <Upload className="h-5 w-5 text-accent" />
+                    <div>
+                      <div className="font-semibold text-primary">
+                        {resumeFile ? resumeFile.name : 'Choose a PDF resume'}
+                      </div>
+                      <div className="text-sm text-secondary">PDF only, up to 5 MB, no permanent storage</div>
+                    </div>
+                  </label>
+                  <input
+                    id={resumeInputId}
+                    type="file"
+                    accept="application/pdf"
+                    className="sr-only"
+                    onChange={handleResumeFileChange}
+                  />
+
+                  <div className="jobs-resume-button-row">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={handleResumeUpload}
+                      loading={uploadResumeMutation.isPending}
+                      disabled={!resumeFile || clearResumeMutation.isPending}
+                    >
+                      <FileText className="h-4 w-4" />
+                      Generate shortlist
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleResumeClear}
+                      disabled={(!resumeFile && !resumeSessionId) || clearResumeMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Clear session
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="jobs-resume-summary">
+                {!resumeSessionId ? (
+                  <div className="jobs-resume-empty">
+                    <FileText className="h-10 w-10 text-muted" />
+                    <div>
+                      <div className="jobs-resume-summary-title">High-match shortlist will appear here</div>
+                      <p className="mt-2 text-sm leading-relaxed text-secondary">
+                        The current Jobs filters are included automatically, so the upload is scoped to what
+                        you are browsing right now.
+                      </p>
+                    </div>
+                  </div>
+                ) : resumeSession?.status === 'processing' || uploadResumeMutation.isPending || resumeSessionQuery.isLoading ? (
+                  <div className="jobs-resume-processing">
+                    <Spinner />
+                    <div>
+                      <div className="jobs-resume-summary-title">Processing your temporary resume session</div>
+                      <p className="mt-2 text-sm leading-relaxed text-secondary">
+                        Ghosted is extracting experience, checking years requirements, and filtering out
+                        low-match roles before building a common tailored PDF.
+                      </p>
+                    </div>
+                  </div>
+                ) : resumeSessionQuery.isError ? (
+                  <Alert variant="warning" title="Temporary session expired">
+                    The upload session is no longer available. Choose the PDF again if you want a fresh shortlist.
+                  </Alert>
+                ) : resumeSession?.status === 'failed' ? (
+                  <Alert variant="error" title="Resume processing failed">
+                    {resumeSession.error || 'The uploaded PDF could not be parsed. Try a simpler text-based PDF.'}
+                  </Alert>
+                ) : resumeSession?.status === 'completed' ? (
+                  <div className="space-y-4">
+                    <div className="jobs-resume-summary-top">
+                      <div>
+                        <div className="jobs-resume-summary-title">
+                          {resumeSession.high_match_count || 0} high-match jobs found
+                        </div>
+                        <p className="mt-2 text-sm leading-relaxed text-secondary">
+                          Filtered out {resumeSession.filtered_low_match_count || 0} lower-signal roles
+                          and grouped the strongest fits into one tailored resume track.
+                        </p>
+                      </div>
+                      {resumeDownloadUrl && resumeSession.resume_ready ? (
+                        <a
+                          href={resumeDownloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-primary w-full justify-center sm:w-auto"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download tailored PDF
+                        </a>
+                      ) : null}
+                    </div>
+
+                    <div className="jobs-resume-stat-grid">
+                      <div className="jobs-resume-stat">
+                        <div className="jobs-resume-stat-label">Estimated experience</div>
+                        <div className="jobs-resume-stat-value">
+                          {resumeSession.profile_summary?.estimated_years_experience || 0}+ years
+                        </div>
+                      </div>
+                      <div className="jobs-resume-stat">
+                        <div className="jobs-resume-stat-label">Target cluster</div>
+                        <div className="jobs-resume-stat-value">
+                          {resumeSession.target_cluster?.family || 'Generalist'}
+                        </div>
+                      </div>
+                      <div className="jobs-resume-stat">
+                        <div className="jobs-resume-stat-label">Expires</div>
+                        <div className="jobs-resume-stat-value">
+                          {formatDateTime(resumeSession.expires_at) || 'Soon'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {resumeSession.profile_summary?.top_skills?.length ? (
+                      <div className="jobs-resume-badge-row">
+                        {resumeSession.profile_summary.top_skills.slice(0, 8).map((skill) => (
+                          <Badge key={skill} variant="outline">{skill}</Badge>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {(resumeSession.high_match_count || 0) === 0 ? (
+                      <Alert variant="warning" title="No strong matches under the current filters">
+                        Try loosening the Jobs filters or uploading a resume with more machine-readable text.
+                        Ghosted intentionally hides lower-signal roles instead of forcing weak matches.
+                      </Alert>
+                    ) : null}
+
+                    <p className="text-xs leading-relaxed text-secondary">
+                      {resumeSession.privacy_note}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            </CardBody>
+          </Card>
 
           <div className="jobs-filters mt-8">
             <div className="jobs-filter-field jobs-filter-field-wide relative">
@@ -462,6 +755,127 @@ function Jobs() {
           />
         ) : (
           <>
+            {resumeSession?.status === 'completed' && (resumeSession.high_matches?.length || 0) > 0 ? (
+              <section className="jobs-resume-shortlist">
+                <div className="company-section-head">
+                  <div>
+                    <div className="section-marker mb-3">
+                      <span>Resume shortlist</span>
+                    </div>
+                    <h2 className="headline-sm">Top roles filtered from your temporary upload</h2>
+                    <p className="company-section-copy">
+                      These are the strongest matches only. The ranking combines live job-description overlap,
+                      experience requirements, seniority alignment, and Ghosted’s sponsorship signal.
+                    </p>
+                  </div>
+                  {resumeDownloadUrl && resumeSession.resume_ready ? (
+                    <a
+                      href={resumeDownloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-secondary w-full justify-center sm:w-auto"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download tailored resume
+                    </a>
+                  ) : null}
+                </div>
+
+                <div className="jobs-resume-match-grid">
+                  {resumeSession.high_matches?.map((match) => {
+                    const visaBadge = getVisaBadge(match.visa_sponsorship_signal);
+                    const remoteBadge = getRemoteBadge(match.remote_policy);
+                    const matchBadge = getMatchBadge(match.resume_match_band);
+                    const matchCompensation = formatRange(match);
+
+                    return (
+                      <Card key={match.id} static className="jobs-resume-match-card">
+                        <CardBody className="space-y-4 p-5">
+                          <div className="flex items-start gap-3">
+                            <CompanyLogo
+                              companyName={match.company_name}
+                              logoUrl={match.company_logo_url}
+                              companyDomain={match.company_domain}
+                              size="sm"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="jobs-card-badges">
+                                <Badge variant={matchBadge.variant}>{matchBadge.label}</Badge>
+                                <Badge variant={visaBadge.variant}>{visaBadge.label}</Badge>
+                                <Badge variant={remoteBadge.variant}>{remoteBadge.label}</Badge>
+                              </div>
+                              <h3 className="text-xl font-semibold leading-tight text-primary">{match.title}</h3>
+                              <p className="mt-2 text-sm leading-relaxed text-secondary">
+                                {match.company_name}
+                                {match.location ? ` • ${match.location}` : ''}
+                                {match.team ? ` • ${match.team}` : ''}
+                              </p>
+                            </div>
+                            <div className="jobs-resume-score-block">
+                              <div className="jobs-resume-score-value">{match.resume_match_score}</div>
+                              <div className="jobs-resume-score-label">match</div>
+                            </div>
+                          </div>
+
+                          <div className="jobs-resume-match-meta">
+                            <div>
+                              <div className="jobs-resume-match-label">Required years</div>
+                              <div className="jobs-resume-match-value">
+                                {match.required_years_experience ? `${match.required_years_experience}+ years` : 'Not stated'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="jobs-resume-match-label">Your fit</div>
+                              <div className="jobs-resume-match-value">
+                                {match.candidate_years_experience ? `${match.candidate_years_experience}+ relevant years` : 'Role-aligned'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="jobs-resume-match-label">Compensation signal</div>
+                              <div className="jobs-resume-match-value">
+                                {matchCompensation || `${match.company_offer_count || 0} salary records`}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="jobs-resume-reason-list">
+                            {match.resume_match_reasons.map((reason) => (
+                              <div key={reason} className="jobs-resume-reason-item">
+                                <span className="jobs-reason-dot" />
+                                <span>{reason}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {match.matched_skills.length ? (
+                            <div className="jobs-resume-badge-row">
+                              {match.matched_skills.slice(0, 6).map((skill) => (
+                                <Badge key={skill} variant="outline">{skill}</Badge>
+                              ))}
+                            </div>
+                          ) : null}
+
+                          <div className="jobs-card-footer">
+                            <Link to={`/companies/${match.company_slug}`} className="btn btn-secondary justify-center text-sm">
+                              View Company
+                            </Link>
+                            <a
+                              href={match.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-mono text-xs uppercase tracking-wider text-accent hover-underline"
+                            >
+                              Open job posting
+                            </a>
+                          </div>
+                        </CardBody>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
+
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
               {jobs.map((job, index) => {
                 const visaBadge = getVisaBadge(job.visa_sponsorship_signal);

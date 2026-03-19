@@ -3,6 +3,8 @@ from datetime import timedelta
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Case, Count, IntegerField, Max, Min, OuterRef, Q, Subquery, Value, When
@@ -16,7 +18,16 @@ from .serializers import (
     CompanyReviewSerializer,
     CompanySerializer,
     JobPostingSerializer,
+    ResumeMatchUploadSerializer,
 )
+from .services.resume_matching import (
+    clear_resume_match_session,
+    create_resume_match_session,
+    get_resume_match_session,
+    process_resume_match_session,
+    resume_download_response,
+)
+from .tasks import process_resume_match_session_task
 from .services.scoring import get_company_score_breakdown, CompanyScorer
 from offers.models import Offer
 from h1b_data.models import H1BApplication
@@ -546,3 +557,67 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
             **stats,
             'by_source': by_source,
         })
+
+    @action(
+        detail=False,
+        methods=['post'],
+        url_path='resume-match',
+        permission_classes=[AllowAny],
+        parser_classes=[MultiPartParser, FormParser],
+    )
+    def resume_match(self, request):
+        serializer = ResumeMatchUploadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        validated = serializer.validated_data
+        filters = {
+            key: validated.get(key)
+            for key in (
+                'search',
+                'location',
+                'company_slug',
+                'source',
+                'remote_policy',
+                'visa_sponsorship_signal',
+                'posted_within_days',
+                'has_salary',
+            )
+        }
+        try:
+            session = create_resume_match_session(validated['resume'], filters=filters)
+        except ValueError as exc:
+            return Response({'resume': [str(exc)]}, status=status.HTTP_400_BAD_REQUEST)
+        session_id = session['session_id']
+
+        try:
+            process_resume_match_session_task.delay(session_id)
+        except Exception:
+            process_resume_match_session(session_id)
+
+        current = get_resume_match_session(session_id) or session
+        return Response(current, status=status.HTTP_202_ACCEPTED)
+
+    @action(
+        detail=False,
+        methods=['get', 'delete'],
+        url_path=r'resume-match/(?P<session_id>[^/.]+)',
+        permission_classes=[AllowAny],
+    )
+    def resume_match_session(self, request, session_id=None):
+        if request.method.lower() == 'delete':
+            clear_resume_match_session(session_id)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        session = get_resume_match_session(session_id)
+        if not session:
+            return Response({'detail': 'Resume match session not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(session)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path=r'resume-match/(?P<session_id>[^/.]+)/download',
+        permission_classes=[AllowAny],
+    )
+    def resume_match_download(self, request, session_id=None):
+        return resume_download_response(session_id)

@@ -8,6 +8,7 @@ import type {
   JobPosting,
   JobListParams,
   JobStatistics,
+  ResumeMatchSession,
   Offer,
   OfferListParams,
   OfferStatistics,
@@ -56,6 +57,29 @@ export const jobsApi = {
     apiClient.get<PaginatedResponse<JobPosting>>('/jobs/', { params }).then(r => r.data),
   statistics: (params?: Omit<JobListParams, 'page' | 'page_size' | 'ordering'>) =>
     apiClient.get<JobStatistics>('/jobs/statistics/', { params }).then(r => r.data),
+  createResumeMatchSession: (file: File, filters?: Omit<JobListParams, 'page' | 'page_size' | 'ordering' | 'company'>) => {
+    const formData = new FormData();
+    formData.append('resume', file);
+
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') {
+        return;
+      }
+      formData.append(key, typeof value === 'boolean' ? String(value) : String(value));
+    });
+
+    return apiClient.post<ResumeMatchSession>('/jobs/resume-match/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }).then(r => r.data);
+  },
+  getResumeMatchSession: (sessionId: string) =>
+    apiClient.get<ResumeMatchSession>(`/jobs/resume-match/${sessionId}/`).then(r => r.data),
+  clearResumeMatchSession: (sessionId: string) =>
+    apiClient.delete(`/jobs/resume-match/${sessionId}/`).then(r => r.data),
+  getResumeMatchDownloadUrl: (sessionId: string) =>
+    `${apiClient.defaults.baseURL || ''}/jobs/resume-match/${sessionId}/download/`,
 };
 
 // Offers API

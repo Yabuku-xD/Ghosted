@@ -5,6 +5,10 @@ from companies.services.jobs import (
     deactivate_stale_jobs,
     sync_all_company_jobs,
 )
+from companies.services.resume_matching import (
+    cleanup_expired_resume_artifacts,
+    process_resume_match_session,
+)
 
 
 @shared_task
@@ -20,3 +24,13 @@ def sync_job_postings_task(limit: int = 250):
 @shared_task
 def deactivate_stale_jobs_task(days: int = 3):
     return deactivate_stale_jobs(days=days)
+
+
+@shared_task
+def process_resume_match_session_task(session_id: str):
+    return process_resume_match_session(session_id)
+
+
+@shared_task
+def cleanup_resume_sessions_task():
+    return cleanup_expired_resume_artifacts()

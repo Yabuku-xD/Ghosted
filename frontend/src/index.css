@@ -1188,6 +1188,118 @@
     @apply border border-[rgba(26,26,26,0.18)] bg-white/80 px-3 py-2 font-mono text-[10px] sm:text-xs uppercase tracking-[0.18em] text-[#1a1a1a];
   }
 
+  .jobs-resume-shell {
+    @apply bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,241,234,0.96))];
+  }
+
+  .jobs-resume-grid {
+    @apply grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] xl:items-start;
+  }
+
+  .jobs-resume-upload {
+    @apply space-y-4;
+  }
+
+  .jobs-resume-note {
+    @apply inline-flex items-center gap-2 rounded-none border border-[rgba(45,106,79,0.28)]
+           bg-[rgba(45,106,79,0.08)] px-3 py-2 text-xs leading-relaxed text-[#1a1a1a];
+  }
+
+  .jobs-resume-actions {
+    @apply space-y-4;
+  }
+
+  .jobs-resume-dropzone {
+    @apply flex cursor-pointer items-start gap-3 border-2 border-dashed border-[#1a1a1a]
+           bg-[#faf9f7] px-4 py-4 transition-colors hover:bg-[#f3efe8];
+  }
+
+  .jobs-resume-button-row {
+    @apply flex flex-col gap-3 sm:flex-row;
+  }
+
+  .jobs-resume-summary {
+    @apply border-l-4 border-[#1a1a1a] bg-[linear-gradient(90deg,rgba(245,245,240,0.98),rgba(255,255,255,0.88))]
+           px-5 py-5 sm:px-6;
+  }
+
+  .jobs-resume-empty,
+  .jobs-resume-processing {
+    @apply flex flex-col gap-4 sm:flex-row sm:items-start;
+  }
+
+  .jobs-resume-summary-top {
+    @apply flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between;
+  }
+
+  .jobs-resume-summary-title {
+    @apply text-xl font-semibold leading-tight text-[#1a1a1a];
+  }
+
+  .jobs-resume-stat-grid {
+    @apply grid gap-3 sm:grid-cols-3;
+  }
+
+  .jobs-resume-stat {
+    @apply border-l-4 border-[#1a1a1a] bg-white px-4 py-3;
+  }
+
+  .jobs-resume-stat-label {
+    @apply font-mono text-[10px] uppercase tracking-[0.18em] text-[#6b6b6b];
+  }
+
+  .jobs-resume-stat-value {
+    @apply mt-2 text-base font-semibold leading-snug text-[#1a1a1a];
+  }
+
+  .jobs-resume-shortlist {
+    @apply mb-8 space-y-5;
+  }
+
+  .jobs-resume-match-grid {
+    @apply grid gap-4 xl:grid-cols-2;
+  }
+
+  .jobs-resume-match-card {
+    @apply bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(247,244,238,0.95))];
+  }
+
+  .jobs-resume-score-block {
+    @apply flex min-w-[4.75rem] flex-col items-center justify-center border-2 border-[#1a1a1a] bg-white px-3 py-2 text-center;
+  }
+
+  .jobs-resume-score-value {
+    @apply font-mono text-2xl font-bold leading-none text-[#c73e1d];
+  }
+
+  .jobs-resume-score-label {
+    @apply mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[#6b6b6b];
+  }
+
+  .jobs-resume-match-meta {
+    @apply grid gap-3 border-t border-[rgba(26,26,26,0.1)] pt-4 sm:grid-cols-3;
+  }
+
+  .jobs-resume-match-label {
+    @apply font-mono text-[10px] uppercase tracking-[0.18em] text-[#6b6b6b];
+  }
+
+  .jobs-resume-match-value {
+    @apply mt-2 text-sm font-medium leading-relaxed text-[#1a1a1a];
+  }
+
+  .jobs-resume-reason-list {
+    @apply grid gap-2;
+  }
+
+  .jobs-resume-reason-item {
+    @apply flex items-start gap-2 text-sm leading-relaxed text-[#4d4d4d];
+  }
+
+  .jobs-resume-badge-row {
+    @apply flex flex-wrap gap-2;
+  }
+
   .jobs-filters {
     @apply flex flex-wrap gap-3;
   }

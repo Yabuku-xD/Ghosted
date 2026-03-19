@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-03-18
+
+### Added
+- Added a temporary resume-matching flow on the Jobs page that accepts a PDF upload, scores only the strongest-fit live roles, and generates one shared tailored resume PDF for the best-matching role cluster.
+- Added public Jobs resume endpoints for upload, polling, session clearing, and temporary PDF download without creating long-lived candidate records.
+
+### Changed
+- Reworked the Jobs page to include a dedicated resume studio with privacy messaging, processing state, shortlist results, and download actions while keeping the existing Ghosted visual theme.
+- Updated the resume-matching pipeline to use live job-description similarity, role-family alignment, and years-of-experience gating instead of depending on a hand-maintained skill map.
+
+### Fixed
+- Removed raw resume-file handoff between containers by switching the upload pipeline to in-memory extraction, so temporary sessions no longer fail when the worker processes the job on a different container filesystem.
+- Tightened high-match filtering so the shortlist excludes more low-signal roles and finishes faster under the current ATS dataset.
+
 ## [0.5.6] - 2026-03-18
 
 ### Changed

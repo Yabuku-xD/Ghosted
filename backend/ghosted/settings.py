@@ -3,6 +3,7 @@ Django settings for ghosted project.
 """
 
 import os
+from tempfile import gettempdir
 from pathlib import Path
 
 from celery.schedules import crontab
@@ -95,6 +96,10 @@ else:
 
 CACHE_TTL_SECONDS = int(os.getenv('CACHE_TTL_SECONDS', '120'))
 PAGINATION_COUNT_CACHE_TIMEOUT = int(os.getenv('PAGINATION_COUNT_CACHE_TIMEOUT', str(CACHE_TTL_SECONDS)))
+RESUME_SESSION_TTL_SECONDS = int(os.getenv('RESUME_SESSION_TTL_SECONDS', '3600'))
+RESUME_MAX_FILE_BYTES = int(os.getenv('RESUME_MAX_FILE_BYTES', str(5 * 1024 * 1024)))
+RESUME_MAX_PAGES = int(os.getenv('RESUME_MAX_PAGES', '4'))
+RESUME_SESSION_STORAGE_DIR = Path(os.getenv('RESUME_SESSION_STORAGE_DIR', str(Path(gettempdir()) / 'ghosted_resume_sessions')))
 
 if os.getenv('REDIS_URL'):
     CACHES = {
@@ -188,5 +193,9 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'companies.tasks.deactivate_stale_jobs_task',
         'schedule': crontab(minute=45, hour=2),
         'args': (3,),
+    },
+    'cleanup-resume-sessions-hourly': {
+        'task': 'companies.tasks.cleanup_resume_sessions_task',
+        'schedule': crontab(minute=25),
     },
 }

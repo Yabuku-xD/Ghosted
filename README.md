@@ -17,7 +17,7 @@ Visa-aware job intelligence platform with H-1B data, live jobs, salary insights,
 
 Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is now built around five public workflows: company discovery, live jobs, salary intelligence, company comparison, and prediction tools for compensation and sponsorship odds.
 
-Current tracked release: `v0.5.4`
+Current tracked release: `v0.6.0`
 
 ![Ghosted homepage](assets/home.png)
 
@@ -50,6 +50,7 @@ Core product capabilities:
 - Offer browsing with trust metadata and responsive pagination
 - Domain and logo enrichment with graceful fallback rendering
 - Automated ATS sync and discovery from supported public job boards
+- Temporary resume-to-shortlist matching with a shared tailored PDF output
 - Side-by-side company comparison
 - Salary prediction and sponsorship-odds tools
 
@@ -101,7 +102,7 @@ npm run dev
 Once the app is running, the public product surface centers on five areas:
 
 - `Companies`: browse sponsorship-friendly employers, visa scores, trust signals, and company detail pages
-- `Jobs`: search live ATS roles with visa-aware ranking, freshness, and salary evidence signals
+- `Jobs`: search live ATS roles with visa-aware ranking, freshness, salary evidence signals, and a temporary resume-powered high-match shortlist
 - `Offers`: explore salary records with source metadata, filters, and pagination
 - `Compare`: evaluate two companies side by side on sponsorship strength, salary coverage, and live jobs
 - `Predictions`: estimate salary expectations and sponsorship odds from the currently available market data

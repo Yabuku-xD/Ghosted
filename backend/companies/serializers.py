@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 from .models import Company, CompanyBenefit, CompanyReview, JobPosting
 
@@ -354,3 +355,26 @@ class CompanyReviewSerializer(serializers.ModelSerializer):
                   'visa_type', 'years_at_company', 'is_anonymous', 'is_verified',
                   'created_at']
         read_only_fields = ['id', 'is_verified', 'created_at']
+
+
+class ResumeMatchUploadSerializer(serializers.Serializer):
+    resume = serializers.FileField()
+    search = serializers.CharField(required=False, allow_blank=True)
+    location = serializers.CharField(required=False, allow_blank=True)
+    company_slug = serializers.CharField(required=False, allow_blank=True)
+    source = serializers.CharField(required=False, allow_blank=True)
+    remote_policy = serializers.CharField(required=False, allow_blank=True)
+    visa_sponsorship_signal = serializers.CharField(required=False, allow_blank=True)
+    posted_within_days = serializers.IntegerField(required=False, min_value=1, max_value=365)
+    has_salary = serializers.BooleanField(required=False, default=False)
+
+    def validate_resume(self, value):
+        file_name = (value.name or '').lower()
+        if not file_name.endswith('.pdf'):
+            raise serializers.ValidationError('Please upload a PDF resume.')
+
+        max_bytes = int(getattr(settings, 'RESUME_MAX_FILE_BYTES', 5 * 1024 * 1024))
+        if value.size > max_bytes:
+            raise serializers.ValidationError(f'Please upload a PDF smaller than {max_bytes // (1024 * 1024)} MB.')
+
+        return value
