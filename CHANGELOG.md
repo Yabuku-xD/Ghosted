@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.2] - 2026-03-18
+
+### Fixed
+- Balanced the Jobs results grid by letting the last card span the full row when a 15-item page ends on an odd card count, so the layout no longer leaves a dead empty half-column.
+- Replaced the old tab icon with a simpler Ghosted monogram favicon and refreshed the icon links with a new versioned URL so browsers pick up the new asset instead of stale cached branding.
+
 ## [0.5.1] - 2026-03-18
 
 ### Fixed

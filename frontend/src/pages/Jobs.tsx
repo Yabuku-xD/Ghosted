@@ -410,13 +410,18 @@ function Jobs() {
         ) : (
           <>
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-              {jobs.map((job) => {
+              {jobs.map((job, index) => {
                 const visaBadge = getVisaBadge(job.visa_sponsorship_signal);
                 const remoteBadge = getRemoteBadge(job.remote_policy);
                 const compensation = formatRange(job);
+                const isOddLastCard = jobs.length % 2 === 1 && index === jobs.length - 1;
 
                 return (
-                  <Card key={job.id} static className="jobs-result-card h-full overflow-hidden">
+                  <Card
+                    key={job.id}
+                    static
+                    className={`jobs-result-card h-full overflow-hidden ${isOddLastCard ? 'xl:col-span-2' : ''}`}
+                  >
                     <CardBody className="jobs-card-body">
                       <div className="jobs-card-top">
                         <div className="jobs-card-heading">
