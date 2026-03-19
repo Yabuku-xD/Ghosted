@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.6] - 2026-03-18
+
+### Changed
+- Simplified the Companies browse header by removing the duplicate top-of-page summary strip, since the same high-level dataset metrics are already communicated on the homepage.
+- Reworked the Companies directory grid into a balanced two-column desktop layout so 10-item pages land evenly instead of ending with a visually awkward orphan card.
+
 ## [0.5.5] - 2026-03-18
 
 ### Fixed

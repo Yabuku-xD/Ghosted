@@ -53,7 +53,7 @@ function Companies() {
     placeholderData: keepPreviousData,
   });
 
-  const { data: insights, isLoading: insightsLoading } = useQuery({
+  const { data: insights } = useQuery({
     queryKey: ['company-insights'],
     queryFn: () => companiesApi.getInsights(),
   });
@@ -161,41 +161,6 @@ function Companies() {
   })();
   const hasBenefitsData = (insights?.total_benefits || 0) > 0;
 
-  const summaryItems = [
-    {
-      label: 'Global Search',
-      value: insightsLoading ? 'Loading...' : insights?.total_companies?.toLocaleString() || '0',
-      detail: 'indexed companies ready to search across the directory',
-      icon: Search,
-      toneClassName: 'directory-summary-item-accent',
-      iconClassName: 'text-accent bg-accent-light',
-    },
-    {
-      label: 'Coverage',
-      value: insightsLoading ? 'Loading...' : coverageWindowLabel,
-      detail: 'current fiscal-year window available in the dataset',
-      icon: Database,
-      toneClassName: 'directory-summary-item-info',
-      iconClassName: 'text-info bg-[rgba(29,78,137,0.1)]',
-    },
-    {
-      label: 'Salary Data',
-      value: insightsLoading ? 'Loading...' : insights?.companies_with_salary_data?.toLocaleString() || '0',
-      detail: 'companies backed by at least one salary record',
-      icon: Scale,
-      toneClassName: 'directory-summary-item-success',
-      iconClassName: 'text-success bg-success-light',
-    },
-    {
-      label: 'Live Jobs',
-      value: insightsLoading ? 'Loading...' : insights?.companies_with_jobs?.toLocaleString() || '0',
-      detail: 'companies with active public job postings right now',
-      icon: Building2,
-      toneClassName: 'directory-summary-item-warning',
-      iconClassName: 'text-warning bg-warning-light',
-    },
-  ];
-
   return (
     <div className="bg-bg-primary min-h-screen">
       <div className="bg-secondary border-b-3 border-border">
@@ -217,21 +182,6 @@ function Companies() {
                 Compare Companies
               </Link>
             </div>
-          </div>
-
-          <div className="directory-summary-strip mb-6">
-            {summaryItems.map((item) => (
-              <div key={item.label} className={`directory-summary-item ${item.toneClassName}`}>
-                <div className={`directory-summary-icon ${item.iconClassName}`}>
-                  <item.icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="directory-summary-label">{item.label}</div>
-                  <div className="directory-summary-value">{item.value}</div>
-                  <p className="directory-summary-detail">{item.detail}</p>
-                </div>
-              </div>
-            ))}
           </div>
 
           <div className="filter-grid">
@@ -311,7 +261,7 @@ function Companies() {
 
       <div className="container py-8 sm:py-12">
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             {[...Array(6)].map((_, i) => (
               <CardSkeleton key={i} />
             ))}
@@ -324,18 +274,19 @@ function Companies() {
           />
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {companies.map((company: Company) => {
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
+              {companies.map((company: Company, index: number) => {
                 const score = Number(company.visa_fair_score || 0);
                 const scoreBadge = getScoreBadge(score);
                 const confidenceBadge = getConfidenceBadge(company.data_confidence);
                 const industryLabel = company.industry_display || company.industry || 'Other';
+                const isOddLastCard = companies.length % 2 === 1 && index === companies.length - 1;
 
                 return (
                   <Link
                     key={company.id}
                     to={`/companies/${company.slug}`}
-                    className="card group block p-4 sm:p-6"
+                    className={`card group block p-4 sm:p-6 ${isOddLastCard ? 'lg:col-span-2' : ''}`}
                   >
                     <div className="flex items-start gap-3 sm:gap-4 mb-4">
                       <CompanyLogo
