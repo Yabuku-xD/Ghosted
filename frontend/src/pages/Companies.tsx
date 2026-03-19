@@ -67,28 +67,34 @@ function Companies() {
     ? 'Loading companies...'
     : `${totalCount.toLocaleString()} matching companies`;
 
+  const prefetchPage = (targetPage: number) => {
+    if (targetPage < 1 || targetPage > totalPages || targetPage === page) {
+      return;
+    }
+
+    const targetParams = { ...queryParams, page: targetPage };
+    void queryClient.prefetchQuery({
+      queryKey: ['companies', targetParams],
+      queryFn: () => companiesApi.list(targetParams),
+    });
+  };
+
   useEffect(() => {
     if (hasNext) {
-      const nextParams = { ...queryParams, page: page + 1 };
-      void queryClient.prefetchQuery({
-        queryKey: ['companies', nextParams],
-        queryFn: () => companiesApi.list(nextParams),
-      });
+      prefetchPage(page + 1);
     }
 
     if (hasPrevious && page > 1) {
-      const previousParams = { ...queryParams, page: page - 1 };
-      void queryClient.prefetchQuery({
-        queryKey: ['companies', previousParams],
-        queryFn: () => companiesApi.list(previousParams),
-      });
+      prefetchPage(page - 1);
     }
-  }, [hasNext, hasPrevious, page, queryClient, queryParams]);
+  }, [hasNext, hasPrevious, page, queryClient, queryParams, totalPages]);
 
   const goToPreviousPage = () => {
     if (!hasPrevious) {
       return;
     }
+
+    prefetchPage(page - 1);
 
     startTransition(() => {
       setPage((current) => Math.max(1, current - 1));
@@ -99,6 +105,8 @@ function Companies() {
     if (!hasNext) {
       return;
     }
+
+    prefetchPage(page + 1);
 
     startTransition(() => {
       setPage((current) => Math.min(totalPages, current + 1));
@@ -423,6 +431,8 @@ function Companies() {
               <div className="flex flex-col items-center justify-center gap-3 mt-8 pt-8 border-t-2 border-border sm:flex-row sm:gap-4">
                 <button
                   onClick={goToPreviousPage}
+                  onMouseEnter={() => prefetchPage(page - 1)}
+                  onFocus={() => prefetchPage(page - 1)}
                   disabled={!hasPrevious}
                   className="btn btn-secondary flex w-full items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >
@@ -439,6 +449,8 @@ function Companies() {
 
                 <button
                   onClick={goToNextPage}
+                  onMouseEnter={() => prefetchPage(page + 1)}
+                  onFocus={() => prefetchPage(page + 1)}
                   disabled={!hasNext}
                   className="btn btn-secondary flex w-full items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >

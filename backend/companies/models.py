@@ -35,7 +35,7 @@ class Company(models.Model):
     ]
 
     name = models.CharField(max_length=200, unique=True)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(max_length=255, unique=True)
     description = models.TextField(blank=True)
     website = models.URLField(blank=True)
     company_domain = models.CharField(max_length=255, blank=True, db_index=True)
@@ -86,6 +86,11 @@ class Company(models.Model):
     class Meta:
         verbose_name_plural = 'companies'
         ordering = ['-visa_fair_score', 'name']
+        indexes = [
+            models.Index(fields=['-visa_fair_score', 'name']),
+            models.Index(fields=['-total_h1b_filings', 'name']),
+            models.Index(fields=['-last_filing_year', 'name']),
+        ]
     
     def __str__(self):
         return self.name
@@ -213,6 +218,9 @@ class JobPosting(models.Model):
             models.Index(fields=['is_active']),
             models.Index(fields=['posted_at']),
             models.Index(fields=['remote_policy']),
+            models.Index(fields=['company', 'is_active']),
+            models.Index(fields=['is_active', '-posted_at']),
+            models.Index(fields=['source', 'is_active']),
         ]
 
     def __str__(self):

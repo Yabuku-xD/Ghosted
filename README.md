@@ -17,7 +17,7 @@ Visa-aware job intelligence platform with H-1B data, live jobs, salary insights,
 
 Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is now built around five public workflows: company discovery, live jobs, salary intelligence, company comparison, and prediction tools for compensation and sponsorship odds.
 
-Current tracked release: `v0.5.0`
+Current tracked release: `v0.5.4`
 
 ![Ghosted homepage](assets/home.png)
 
@@ -74,6 +74,8 @@ docker compose up --build
 ```
 
 This starts the frontend, backend API, database, cache, Celery worker, Celery Beat scheduler, and the supporting local services defined in [`docker-compose.yml`](docker-compose.yml).
+
+The Compose stack now defaults the backend to PostgreSQL whenever a database host is configured, so the API does not silently fall back to SQLite inside the container runtime.
 
 ### Manual Development
 

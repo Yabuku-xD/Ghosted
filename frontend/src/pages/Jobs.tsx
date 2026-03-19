@@ -131,23 +131,27 @@ function Jobs() {
   const hasNext = !!data?.next;
   const hasPrevious = !!data?.previous;
 
+  const prefetchPage = (targetPage: number) => {
+    if (targetPage < 1 || targetPage > totalPages || targetPage === page) {
+      return;
+    }
+
+    const targetParams = { ...listParams, page: targetPage };
+    void queryClient.prefetchQuery({
+      queryKey: ['jobs', targetParams],
+      queryFn: () => jobsApi.list(targetParams),
+    });
+  };
+
   useEffect(() => {
     if (hasNext) {
-      const nextParams = { ...listParams, page: page + 1 };
-      void queryClient.prefetchQuery({
-        queryKey: ['jobs', nextParams],
-        queryFn: () => jobsApi.list(nextParams),
-      });
+      prefetchPage(page + 1);
     }
 
     if (hasPrevious && page > 1) {
-      const previousParams = { ...listParams, page: page - 1 };
-      void queryClient.prefetchQuery({
-        queryKey: ['jobs', previousParams],
-        queryFn: () => jobsApi.list(previousParams),
-      });
+      prefetchPage(page - 1);
     }
-  }, [hasNext, hasPrevious, listParams, page, queryClient]);
+  }, [hasNext, hasPrevious, listParams, page, queryClient, totalPages]);
 
   const sourceOptions = [
     { value: '', label: 'All Sources' },
@@ -175,6 +179,8 @@ function Jobs() {
       return;
     }
 
+    prefetchPage(page - 1);
+
     startTransition(() => {
       setPage((current) => Math.max(1, current - 1));
     });
@@ -184,6 +190,8 @@ function Jobs() {
     if (!hasNext) {
       return;
     }
+
+    prefetchPage(page + 1);
 
     startTransition(() => {
       setPage((current) => Math.min(totalPages, current + 1));
@@ -568,6 +576,8 @@ function Jobs() {
                 <button
                   type="button"
                   onClick={goToPreviousPage}
+                  onMouseEnter={() => prefetchPage(page - 1)}
+                  onFocus={() => prefetchPage(page - 1)}
                   disabled={!hasPrevious}
                   className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >
@@ -585,6 +595,8 @@ function Jobs() {
                 <button
                   type="button"
                   onClick={goToNextPage}
+                  onMouseEnter={() => prefetchPage(page + 1)}
+                  onFocus={() => prefetchPage(page + 1)}
                   disabled={!hasNext}
                   className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >

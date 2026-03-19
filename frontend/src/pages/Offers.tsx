@@ -74,28 +74,34 @@ function Offers() {
     ? 'Loading offers...'
     : `${totalCount.toLocaleString()} matching offers`;
 
+  const prefetchPage = (targetPage: number) => {
+    if (targetPage < 1 || targetPage > totalPages || targetPage === page) {
+      return;
+    }
+
+    const targetParams = { ...listParams, page: targetPage };
+    void queryClient.prefetchQuery({
+      queryKey: ['offers', targetParams],
+      queryFn: () => offersApi.list(targetParams),
+    });
+  };
+
   useEffect(() => {
     if (hasNext) {
-      const nextParams = { ...listParams, page: page + 1 };
-      void queryClient.prefetchQuery({
-        queryKey: ['offers', nextParams],
-        queryFn: () => offersApi.list(nextParams),
-      });
+      prefetchPage(page + 1);
     }
 
     if (hasPrevious && page > 1) {
-      const previousParams = { ...listParams, page: page - 1 };
-      void queryClient.prefetchQuery({
-        queryKey: ['offers', previousParams],
-        queryFn: () => offersApi.list(previousParams),
-      });
+      prefetchPage(page - 1);
     }
-  }, [hasNext, hasPrevious, listParams, page, queryClient]);
+  }, [hasNext, hasPrevious, listParams, page, queryClient, totalPages]);
 
   const goToPreviousPage = () => {
     if (!hasPrevious) {
       return;
     }
+
+    prefetchPage(page - 1);
 
     startTransition(() => {
       setPage((current) => Math.max(1, current - 1));
@@ -106,6 +112,8 @@ function Offers() {
     if (!hasNext) {
       return;
     }
+
+    prefetchPage(page + 1);
 
     startTransition(() => {
       setPage((current) => Math.min(totalPages, current + 1));
@@ -484,6 +492,8 @@ function Offers() {
               <div className="flex flex-col items-center justify-center gap-3 pt-8 mt-8 border-t-2 border-border sm:flex-row sm:gap-4">
                 <button
                   onClick={goToPreviousPage}
+                  onMouseEnter={() => prefetchPage(page - 1)}
+                  onFocus={() => prefetchPage(page - 1)}
                   disabled={!hasPrevious}
                   className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >
@@ -500,6 +510,8 @@ function Offers() {
 
                 <button
                   onClick={goToNextPage}
+                  onMouseEnter={() => prefetchPage(page + 1)}
+                  onFocus={() => prefetchPage(page + 1)}
                   disabled={!hasNext}
                   className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >

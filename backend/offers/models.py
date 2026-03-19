@@ -67,6 +67,11 @@ class Offer(models.Model):
     
     class Meta:
         ordering = ['-submitted_at']
+        indexes = [
+            models.Index(fields=['company', 'is_verified']),
+            models.Index(fields=['submitted_by']),
+            models.Index(fields=['-submitted_at']),
+        ]
     
     def __str__(self):
         return f"{self.position_title} at {self.company.name} - ${self.base_salary:,}"

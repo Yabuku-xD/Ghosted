@@ -2,8 +2,9 @@
 Django settings for ghosted project.
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+
 from celery.schedules import crontab
 from dotenv import load_dotenv
 
@@ -64,8 +65,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ghosted.wsgi.application'
 
-# Use SQLite for development/testing when PostgreSQL is not available
-if os.getenv('USE_SQLITE', 'True').lower() == 'true':
+USE_SQLITE_ENV = os.getenv('USE_SQLITE')
+USE_SQLITE = (
+    USE_SQLITE_ENV.lower() == 'true'
+    if USE_SQLITE_ENV is not None
+    else not os.getenv('DB_HOST')
+)
+
+# Default to PostgreSQL when a database host is configured, while keeping
+# SQLite available for lightweight local runs without container services.
+if USE_SQLITE:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -81,6 +90,27 @@ else:
             'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
             'HOST': os.getenv('DB_HOST', 'db'),
             'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
+
+CACHE_TTL_SECONDS = int(os.getenv('CACHE_TTL_SECONDS', '120'))
+PAGINATION_COUNT_CACHE_TIMEOUT = int(os.getenv('PAGINATION_COUNT_CACHE_TIMEOUT', str(CACHE_TTL_SECONDS)))
+
+if os.getenv('REDIS_URL'):
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL'),
+            'TIMEOUT': CACHE_TTL_SECONDS,
+            'KEY_PREFIX': 'ghosted',
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'ghosted-local-cache',
+            'TIMEOUT': CACHE_TTL_SECONDS,
         }
     }
 

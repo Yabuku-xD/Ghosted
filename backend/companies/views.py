@@ -8,6 +8,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Case, Count, IntegerField, Max, Min, OuterRef, Q, Subquery, Value, When
 from django.db.models.functions import Coalesce, Lower
 from django.utils import timezone
+from ghosted.pagination import CachedCountPaginator
 from .models import Company, CompanyBenefit, CompanyReview, JobPosting
 from .serializers import (
     CompanyBenefitSerializer,
@@ -30,6 +31,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
         page_size = 10
         page_size_query_param = 'page_size'
         max_page_size = 10
+        django_paginator_class = CachedCountPaginator
 
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
@@ -379,6 +381,7 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
         page_size = 10
         page_size_query_param = 'page_size'
         max_page_size = 10
+        django_paginator_class = CachedCountPaginator
 
     serializer_class = JobPostingSerializer
     pagination_class = JobPagination
@@ -404,7 +407,6 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
             'url',
             'source',
             'source_board',
-            'description',
             'salary_min',
             'salary_max',
             'currency',
@@ -430,6 +432,7 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
         company_slug = params.get('company_slug', '').strip()
         ordering = params.get('ordering', '-job_score').strip()
         posted_within_days = params.get('posted_within_days')
+        now = timezone.now()
 
         if search_term:
             queryset = queryset.filter(
@@ -449,7 +452,7 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(Q(salary_min__isnull=False) | Q(salary_max__isnull=False))
 
         if posted_within_days and posted_within_days.isdigit():
-            queryset = queryset.filter(posted_at__gte=timezone.now() - timedelta(days=int(posted_within_days)))
+            queryset = queryset.filter(posted_at__gte=now - timedelta(days=int(posted_within_days)))
 
         if params.get('source'):
             queryset = queryset.filter(source=params['source'])
@@ -480,8 +483,8 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         freshness_score = Case(
-            When(posted_at__gte=timezone.now() - timedelta(days=7), then=Value(14)),
-            When(posted_at__gte=timezone.now() - timedelta(days=30), then=Value(8)),
+            When(posted_at__gte=now - timedelta(days=7), then=Value(14)),
+            When(posted_at__gte=now - timedelta(days=30), then=Value(8)),
             When(posted_at__isnull=False, then=Value(4)),
             default=Value(1),
             output_field=IntegerField(),

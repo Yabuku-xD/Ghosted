@@ -36,4 +36,6 @@ backend/data/*.csv
 backend/data/*.xlsx
 !backend/data/README.md
 backend/celerybeat-schedule
+backend/gunicorn.ctl
 *.log
+tmp/

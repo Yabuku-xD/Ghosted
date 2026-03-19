@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.4] - 2026-03-18
+
+### Changed
+- Updated the Dockerized backend runtime to prefer PostgreSQL automatically when a database host is configured, and switched the API service from Django's development server to Gunicorn for faster paginated requests.
+- Documented the Postgres-backed Compose behavior in the README so the runtime matches the published setup notes.
+
+### Fixed
+- Added cached paginator counts for filtered list endpoints so repeated page navigation no longer redoes the same expensive count work on Companies, Offers, and Jobs.
+- Trimmed the Jobs list queryset by dropping the unused `description` field from paginated row loading and reusing the same cached next/previous-page prefetch path across the paginated pages.
+- Added performance-oriented database indexes for company ordering, active job listings, and verified offer lookups to reduce cold pagination latency under Postgres.
+- Widened the `Company.slug` field so the existing dataset loads cleanly into PostgreSQL without truncation failures.
+
 ## [0.5.3] - 2026-03-18
 
 ### Changed
