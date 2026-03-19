@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] - 2026-03-18
+
+### Changed
+- Kept temporary resume shortlist sessions across page reloads by storing only the session id in browser tab storage, while still letting the raw PDF disappear immediately after extraction and the backend session expire automatically.
+- Tightened the resume parser to build candidate signals from real resume sections instead of the raw PDF header, which removes duplicated contact noise from the matching flow.
+
+### Fixed
+- Fixed PDF contact extraction so repeated icon/header artifacts no longer leak into email parsing or surface as fake skills in the Jobs resume studio.
+- Reworked resume skill extraction to preserve ordered skills from the uploaded resume, improving the shortlist summary and matched-skill chips with cleaner terms like Python, React, TypeScript, and SQL.
+- Improved keyword alignment for resume-to-job scoring by using whole-word style keyword checks inspired by the Resume-Matcher project, reducing noisy generic matches and making high-match reasons more believable.
+- Narrowed role-family inference to phrase-level matches instead of raw substring hits, which avoids false positives like `ui` matching inside unrelated words.
+
 ## [0.6.0] - 2026-03-18
 
 ### Added

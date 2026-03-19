@@ -19,6 +19,14 @@ SKILL_CONTEXT_PATTERNS = (
     re.compile(r'(?:skills?|technologies|tooling)\s*[:\-]\s*([^\n]+)', flags=re.IGNORECASE),
 )
 
+SKILL_LINE_PATTERNS = (
+    re.compile(
+        r'^(?:languages?(?:/tools?)?|tools?|frameworks?(?:/libraries?)?|libraries?|technologies|databases?|'
+        r'platforms?|cloud|infrastructure)\s*[:\-]\s*(.+)$',
+        flags=re.IGNORECASE,
+    ),
+)
+
 SKILL_STOPWORDS = {
     'ability', 'abilities', 'about', 'across', 'advanced', 'analysis', 'analytical', 'and', 'any', 'architecture',
     'background', 'best', 'business', 'candidate', 'clients', 'collaboration', 'collaborative', 'communication',
@@ -43,6 +51,40 @@ COMMON_FILLER_PHRASES = {
     'nice to have',
     'problem solving',
     'time management',
+}
+
+GENERIC_SKILL_BLACKLIST = {
+    'automated',
+    'automation',
+    'built',
+    'deployment',
+    'developer',
+    'education',
+    'feedback',
+    'frameworks',
+    'github',
+    'gmail',
+    'inbox',
+    'intelligence',
+    'learn',
+    'learning',
+    'libraries',
+    'linkedin',
+    'real',
+    'research',
+    'seattle',
+    'stack',
+    'technologies',
+    'technology',
+    'time',
+    'using',
+    'washington',
+}
+
+MONTH_WORDS = {
+    'jan', 'january', 'feb', 'february', 'mar', 'march', 'apr', 'april', 'may', 'jun', 'june',
+    'jul', 'july', 'aug', 'august', 'sep', 'sept', 'september', 'oct', 'october', 'nov',
+    'november', 'dec', 'december',
 }
 
 FAMILY_KEYWORDS = {
@@ -81,7 +123,9 @@ FAMILY_KEYWORDS = {
         'design',
         'ux',
         'ui',
-        'researcher',
+        'user research',
+        'ux research',
+        'design research',
     ),
     'sales': (
         'sales',
@@ -166,11 +210,25 @@ def extract_skills(text: str, limit: int = 12) -> list[str]:
 
     candidates: Counter[str] = Counter()
 
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        for pattern in SKILL_LINE_PATTERNS:
+            match = pattern.match(stripped)
+            if not match:
+                continue
+            fragment = match.group(1)
+            for part in re.split(r',|/|;|\||\band\b|\bor\b', fragment, flags=re.IGNORECASE):
+                phrase = clean_skill_phrase(part, source='explicit')
+                if phrase:
+                    candidates[phrase] += 6
+
     for pattern in SKILL_CONTEXT_PATTERNS:
         for match in pattern.finditer(text):
             fragment = match.group(1)
             for part in re.split(r',|/|;|\||\band\b|\bor\b', fragment, flags=re.IGNORECASE):
-                phrase = clean_skill_phrase(part)
+                phrase = clean_skill_phrase(part, source='context')
                 if phrase:
                     candidates[phrase] += 4
 
@@ -185,7 +243,7 @@ def extract_skills(text: str, limit: int = 12) -> list[str]:
         for term, score in zip(vectorizer.get_feature_names_out(), matrix.toarray()[0]):
             if not score:
                 continue
-            phrase = clean_skill_phrase(term)
+            phrase = clean_skill_phrase(term, source='ngram')
             if phrase:
                 candidates[phrase] += int(score)
     except ValueError:
@@ -204,8 +262,9 @@ def extract_skills(text: str, limit: int = 12) -> list[str]:
     return [label for label, _ in ranked[:limit]]
 
 
-def clean_skill_phrase(raw: str) -> str | None:
-    phrase = re.sub(r'^[•*\-\s]+', '', raw or '').strip()
+def clean_skill_phrase(raw: str, source: str = 'generic') -> str | None:
+    phrase = re.sub(r'\b([A-Z])\s+(?=[A-Za-z]{2,}\b)', r'\1', raw or '').strip()
+    phrase = re.sub(r'^[•*\-\s]+', '', phrase).strip()
     phrase = re.sub(r'\([^)]*\)', '', phrase)
     phrase = re.sub(r'[^A-Za-z0-9.+#/\-\s]', ' ', phrase)
     phrase = re.sub(r'\s+', ' ', phrase).strip()
@@ -213,19 +272,39 @@ def clean_skill_phrase(raw: str) -> str | None:
         return None
 
     lowered = phrase.lower()
-    if lowered in COMMON_FILLER_PHRASES:
+    if (
+        lowered in COMMON_FILLER_PHRASES
+        or lowered in GENERIC_SKILL_BLACKLIST
+        or lowered in MONTH_WORDS
+        or '@' in raw
+        or '.com' in lowered
+        or '.org' in lowered
+        or '.net' in lowered
+        or 'http' in lowered
+        or 'www.' in lowered
+    ):
         return None
 
     words = lowered.split()
     if not words or len(words) > 4:
         return None
+    if source == 'ngram' and len(words) == 1:
+        return None
     if all(word in SKILL_STOPWORDS for word in words):
         return None
     if sum(1 for word in words if word in SKILL_STOPWORDS) > max(1, len(words) - 1):
         return None
+    if len(words) == 1 and words[0] in GENERIC_SKILL_BLACKLIST:
+        return None
 
     cleaned_words = [word for word in words if word not in SKILL_STOPWORDS]
     if not cleaned_words:
+        return None
+    if any(word in MONTH_WORDS for word in cleaned_words):
+        return None
+    if len(cleaned_words) == 1 and cleaned_words[0] in GENERIC_SKILL_BLACKLIST:
+        return None
+    if source == 'ngram' and len(cleaned_words) == 1:
         return None
 
     title = ' '.join(format_skill_token(word) for word in cleaned_words)
@@ -236,7 +315,7 @@ def clean_skill_phrase(raw: str) -> str | None:
 
 def format_skill_token(token: str) -> str:
     lowered = token.lower()
-    if lowered in {'aws', 'gcp', 'sql', 'api', 'apis', 'ux', 'ui', 'ml', 'ai', 'etl', 'seo'}:
+    if lowered in {'aws', 'gcp', 'sql', 'api', 'apis', 'ux', 'ui', 'ml', 'ai', 'etl', 'seo', 'jwt', 'ssl', 'tls', 'ci', 'cd', 'mvc', 'ood'}:
         return lowered.upper()
     if lowered == 'javascript':
         return 'JavaScript'
@@ -256,6 +335,12 @@ def format_skill_token(token: str) -> str:
         return 'GitHub'
     if lowered == 'figma':
         return 'Figma'
+    if lowered == 'numpy':
+        return 'NumPy'
+    if lowered == 'pandas':
+        return 'Pandas'
+    if lowered == 'faiss':
+        return 'FAISS'
     if lowered == 'power' or lowered == 'bi':
         return token.title()
     if '+' in token or '#' in token or '.' in token or '/' in token:
@@ -271,7 +356,8 @@ def infer_role_family(*parts: str) -> str:
     scores: Counter[str] = Counter()
     for family, keywords in FAMILY_KEYWORDS.items():
         for keyword in keywords:
-            if keyword in normalized:
+            keyword_pattern = r'\b' + re.escape(keyword).replace(r'\ ', r'\s+') + r'\b'
+            if re.search(keyword_pattern, normalized, flags=re.IGNORECASE):
                 scores[family] += 1
 
     if not scores:

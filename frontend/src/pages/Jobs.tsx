@@ -1,3 +1,4 @@
+import type { AxiosError } from 'axios';
 import { type ChangeEvent, startTransition, useDeferredValue, useEffect, useId, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -26,6 +27,7 @@ import type { JobPosting, ResumeMatchSession } from '../types';
 
 const PAGE_SIZE = 10;
 const MAX_RESUME_BYTES = 5 * 1024 * 1024;
+const RESUME_SESSION_STORAGE_KEY = 'ghosted:resume-match-session';
 
 function Jobs() {
   const toast = useToast();
@@ -42,7 +44,12 @@ function Jobs() {
   const [page, setPage] = useState(Number(searchParams.get('page') || '1'));
   const [companySlug, setCompanySlug] = useState(searchParams.get('company_slug') || '');
   const [resumeFile, setResumeFile] = useState<File | null>(null);
-  const [resumeSessionId, setResumeSessionId] = useState<string | null>(null);
+  const [resumeSessionId, setResumeSessionId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    return window.sessionStorage.getItem(RESUME_SESSION_STORAGE_KEY);
+  });
   const searchInputId = useId();
   const locationInputId = useId();
   const resumeInputId = useId();
@@ -80,6 +87,19 @@ function Jobs() {
     source,
     visaSignal,
   ]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (resumeSessionId) {
+      window.sessionStorage.setItem(RESUME_SESSION_STORAGE_KEY, resumeSessionId);
+      return;
+    }
+
+    window.sessionStorage.removeItem(RESUME_SESSION_STORAGE_KEY);
+  }, [resumeSessionId]);
 
   const listParams = useMemo(() => ({
     page,
@@ -161,11 +181,28 @@ function Jobs() {
     queryKey: ['job-resume-match', resumeSessionId],
     queryFn: () => jobsApi.getResumeMatchSession(resumeSessionId as string),
     enabled: Boolean(resumeSessionId),
+    retry: (failureCount, error) => {
+      const status = (error as AxiosError | undefined)?.response?.status;
+      if (status === 404) {
+        return false;
+      }
+      return failureCount < 2;
+    },
     refetchInterval: (query) => {
       const session = query.state.data as ResumeMatchSession | undefined;
       return session?.status === 'processing' ? 2000 : false;
     },
   });
+
+  useEffect(() => {
+    const status = (resumeSessionQuery.error as AxiosError | undefined)?.response?.status;
+    if (status === 404 && resumeSessionId) {
+      setResumeSessionId(null);
+      setResumeFile(null);
+      void queryClient.removeQueries({ queryKey: ['job-resume-match'] });
+      toast.info('The temporary resume session expired. Upload again for a fresh shortlist.', 'Session expired');
+    }
+  }, [queryClient, resumeSessionId, resumeSessionQuery.error, toast]);
 
   const uploadResumeMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -455,7 +492,7 @@ function Jobs() {
 
                 <div className="jobs-resume-note">
                   <ShieldCheck className="h-4 w-4 text-success" />
-                  <span>Raw PDFs are deleted after extraction and the temporary session expires automatically.</span>
+                  <span>Raw PDFs are deleted after extraction. Reload keeps the shortlist in this tab until it expires or you clear it.</span>
                 </div>
 
                 <div className="jobs-resume-actions">

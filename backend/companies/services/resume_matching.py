@@ -5,6 +5,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone as dt_timezone
 from io import BytesIO
+from math import ceil
 from pathlib import Path
 from tempfile import gettempdir
 from typing import Any
@@ -26,6 +27,7 @@ from sklearn.metrics.pairwise import linear_kernel
 
 from companies.models import JobPosting
 from companies.services.job_intelligence import (
+    clean_skill_phrase,
     compute_job_trust,
     extract_skills,
     infer_role_family,
@@ -54,9 +56,13 @@ DATE_RANGE_PATTERN = re.compile(
     r'(?P<end>(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+)?(?:20\d{2}|19\d{2})|present|current|now)',
     flags=re.IGNORECASE,
 )
-PHONE_PATTERN = re.compile(r'(\+?\d[\d\s().-]{8,}\d)')
-EMAIL_PATTERN = re.compile(r'[\w.+-]+@[\w-]+\.[\w.-]+')
-LINKEDIN_PATTERN = re.compile(r'linkedin\.com/in/[\w-]+', flags=re.IGNORECASE)
+PHONE_PATTERN = re.compile(r'(\+?\(?\d[\d\s().-]{8,}\d)')
+EMAIL_PATTERN = re.compile(
+    r'([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+?\.(?:com|edu|org|net|io|co|ai|in|us))'
+    r'(?=$|[^A-Za-z0-9]|(?=[A-Za-z0-9._%+-]+@))',
+    flags=re.IGNORECASE,
+)
+LINKEDIN_PATTERN = re.compile(r'(?:https?://)?(?:www\.)?linkedin\.com/in/[\w-]+', flags=re.IGNORECASE)
 ACTION_VERBS = (
     'built',
     'created',
@@ -94,6 +100,16 @@ MONTH_MAP = {
     'nov': 11,
     'dec': 12,
 }
+LIGATURE_REPLACEMENTS = {
+    '\u0000': '',
+    '\ufb00': 'ff',
+    '\ufb01': 'fi',
+    '\ufb02': 'fl',
+    '\ufb03': 'ffi',
+    '\ufb04': 'ffl',
+}
+CONTACT_LINE_MARKERS = ('envelope', 'phone', 'mailto', 'http://', 'https://', 'www.', 'linkedin.com/', 'github.com/')
+LOW_SIGNAL_MATCH_SKILLS = {'API', 'APIS', 'CD', 'CI', 'JWT', 'MVC', 'OOD', 'SSL', 'TLS'}
 
 
 @dataclass
@@ -312,39 +328,67 @@ def extract_pdf_text_from_bytes(raw_bytes: bytes) -> str:
         chunks.append(page.extract_text() or '')
 
     text = '\n'.join(chunks)
-    normalized = re.sub(r'\u0000', '', text).strip()
+    normalized = normalize_resume_text(text)
     if not normalized:
         raise ValueError('No readable text was found in the uploaded PDF.')
     return normalized
 
 
-def build_candidate_profile(text: str) -> CandidateProfile:
-    lines = [re.sub(r'\s+', ' ', line).strip() for line in text.splitlines()]
-    lines = [line for line in lines if line]
-    sections = split_into_sections(lines)
-    experience_blocks = extract_experience_blocks(lines)
+def normalize_resume_text(text: str) -> str:
+    normalized = text or ''
+    for original, replacement in LIGATURE_REPLACEMENTS.items():
+        normalized = normalized.replace(original, replacement)
+    normalized = normalized.replace('\r', '')
+    normalized = re.sub(r'[^\S\n]+', ' ', normalized)
+    normalized = re.sub(r' *\n *', '\n', normalized)
+    normalized = re.sub(r'\n{3,}', '\n\n', normalized)
+    return normalized.strip()
 
+
+def build_candidate_profile(text: str) -> CandidateProfile:
+    lines = [normalize_resume_line(line) for line in text.splitlines()]
+    lines = [line for line in lines if line]
     contact_name = extract_contact_name(lines)
-    email = EMAIL_PATTERN.search(text).group(0) if EMAIL_PATTERN.search(text) else ''
-    phone = PHONE_PATTERN.search(text).group(0) if PHONE_PATTERN.search(text) else ''
-    linkedin_match = LINKEDIN_PATTERN.search(text)
-    linkedin = linkedin_match.group(0) if linkedin_match else ''
+    content_lines = extract_resume_content_lines(lines, contact_name)
+    sections = split_into_sections(content_lines)
+    experience_blocks = extract_experience_blocks(sections.get('experience', []))
+
+    email = extract_primary_email(text)
+    phone = extract_primary_phone(text)
+    linkedin = extract_primary_linkedin(text)
 
     merged_months = merge_experience_months(experience_blocks)
-    overall_years = max(1, round(merged_months / 12)) if merged_months else estimate_years_from_text(text)
+    overall_years = max(1, ceil(merged_months / 12)) if merged_months else estimate_years_from_text(
+        ' '.join(sections.get('experience', []) + sections.get('projects', []))
+    )
 
     experience_by_family: dict[str, int] = {}
     for block in experience_blocks:
         if block.family == 'general':
             continue
-        years = max(1, round(block.months / 12)) if block.months else 0
+        years = max(1, ceil(block.months / 12)) if block.months else 0
         experience_by_family[block.family] = experience_by_family.get(block.family, 0) + years
 
-    skills = extract_skills(text, limit=18)
+    skills = merge_unique_strings(
+        extract_explicit_resume_skills(sections.get('skills', [])),
+        extract_skills('\n'.join(sections.get('skills', [])), limit=12),
+        extract_skills('\n'.join(sections.get('projects', [])), limit=10),
+        extract_skills('\n'.join(sections.get('experience', [])), limit=10),
+        limit=18,
+    )
     seniority = infer_seniority(' '.join(lines[:12]), f'{overall_years} years experience')
-    highlights = extract_highlights(sections, lines)
+    highlights = extract_highlights(sections, content_lines)
     education = [line for line in sections.get('education', []) if len(line) <= 120][:4]
     certifications = [line for line in sections.get('certifications', []) if len(line) <= 120][:4]
+    analysis_text = '\n'.join(
+        part for part in [
+            ' '.join(sections.get('summary', [])),
+            ' '.join(sections.get('skills', [])),
+            ' '.join(sections.get('experience', [])),
+            ' '.join(sections.get('projects', [])),
+            ' '.join(skills),
+        ] if part
+    )
 
     return CandidateProfile(
         contact_name=contact_name,
@@ -358,7 +402,7 @@ def build_candidate_profile(text: str) -> CandidateProfile:
         highlights=highlights,
         education=education,
         certifications=certifications,
-        analysis_text=text,
+        analysis_text=analysis_text or text,
     )
 
 
@@ -385,11 +429,100 @@ def split_into_sections(lines: list[str]) -> dict[str, list[str]]:
 
 def extract_contact_name(lines: list[str]) -> str:
     for line in lines[:6]:
-        if EMAIL_PATTERN.search(line) or PHONE_PATTERN.search(line) or LINKEDIN_PATTERN.search(line):
+        if is_contact_or_noise_line(line):
             continue
         if 1 < len(line.split()) <= 4 and len(line) <= 60 and not any(char.isdigit() for char in line):
             return line.title()
     return 'Candidate'
+
+
+def normalize_resume_line(line: str) -> str:
+    collapsed = re.sub(r'\b([A-Z])\s+(?=[A-Za-z]{2,}\b)', r'\1', line or '')
+    collapsed = re.sub(r'\s+', ' ', collapsed).strip().strip('|')
+    return collapsed
+
+
+def extract_resume_content_lines(lines: list[str], contact_name: str) -> list[str]:
+    content_lines = []
+    for index, line in enumerate(lines):
+        if index < 6 and (line == contact_name or is_contact_or_noise_line(line)):
+            continue
+        content_lines.append(line)
+    return content_lines
+
+
+def is_contact_or_noise_line(line: str) -> bool:
+    lowered = line.lower()
+    compact = re.sub(r'\s+', '', line)
+    return (
+        bool(EMAIL_PATTERN.search(compact))
+        or bool(PHONE_PATTERN.search(line))
+        or any(marker in lowered for marker in CONTACT_LINE_MARKERS)
+    )
+
+
+def extract_primary_email(text: str) -> str:
+    compact = re.sub(r'\s+', '', text or '')
+    match = EMAIL_PATTERN.search(compact)
+    if not match:
+        return ''
+
+    email = match.group(1).lower()
+    for prefix in ('envelope', 'email', 'mailto'):
+        if email.startswith(prefix):
+            email = email[len(prefix):]
+    return email
+
+
+def extract_primary_phone(text: str) -> str:
+    match = PHONE_PATTERN.search(text or '')
+    if not match:
+        return ''
+
+    digits = re.sub(r'\D', '', match.group(1))
+    if len(digits) == 11 and digits.startswith('1'):
+        digits = digits[1:]
+    if len(digits) == 10:
+        return f'({digits[:3]}) {digits[3:6]}-{digits[6:]}'
+    return match.group(1).strip()
+
+
+def extract_primary_linkedin(text: str) -> str:
+    compact = re.sub(r'\s+', '', text or '')
+    match = LINKEDIN_PATTERN.search(compact)
+    return match.group(0) if match else ''
+
+
+def merge_unique_strings(*groups: list[str], limit: int = 18) -> list[str]:
+    merged = []
+    seen = set()
+    for group in groups:
+        for value in group:
+            normalized = normalize_blob(value)
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            merged.append(value)
+            if len(merged) == limit:
+                return merged
+    return merged
+
+
+def extract_explicit_resume_skills(lines: list[str]) -> list[str]:
+    explicit_skills: list[str] = []
+    seen = set()
+
+    for line in lines:
+        fragment = line.split(':', 1)[1] if ':' in line else line
+        for part in re.split(r',|/|;|\||\band\b', fragment, flags=re.IGNORECASE):
+            phrase = clean_skill_phrase(part, source='explicit')
+            normalized = normalize_blob(phrase or '')
+            if not phrase or not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            explicit_skills.append(phrase)
+
+    return explicit_skills
 
 
 def parse_resume_date(token: str) -> date | None:
@@ -582,9 +715,22 @@ def score_job_match(
     text_similarity: float,
     overlap_terms: list[str],
 ) -> dict[str, Any] | None:
-    overlap = relevant_skill_overlap(candidate.skills, job_profile['skills'])
-    overlap.extend(term for term in overlap_terms if term not in overlap)
-    overlap_count = len(overlap)
+    keyword_matches = matched_job_keywords(candidate.analysis_text, candidate.skills, job_profile['skills'])
+    overlap = merge_unique_strings(
+        keyword_matches,
+        relevant_skill_overlap(candidate.skills, job_profile['skills']),
+        limit=8,
+    )
+    allowed_terms = {normalize_blob(skill): skill for skill in candidate.skills if skill}
+    for term in overlap_terms:
+        mapped = allowed_terms.get(normalize_blob(term))
+        if mapped and mapped not in overlap:
+            overlap.append(mapped)
+    high_signal_overlap = [
+        skill for skill in overlap
+        if normalize_blob(skill).upper() not in LOW_SIGNAL_MATCH_SKILLS
+    ]
+    overlap_count = len(high_signal_overlap) or len(overlap)
     required_years = job_profile['required_years']
     family = job_profile['family']
     relevant_years = candidate.experience_by_family.get(family) or candidate.overall_years
@@ -605,7 +751,7 @@ def score_job_match(
     if overlap_count < 2 and text_similarity < 0.14:
         return None
 
-    skill_score = min(overlap_count * 8, 32)
+    skill_score = min((len(high_signal_overlap) * 10) + (max(len(overlap) - len(high_signal_overlap), 0) * 3), 32)
     family_score = 18 if family_aligned and family != 'general' else 8 if family == 'general' else 2
 
     if required_years is None:
@@ -624,12 +770,16 @@ def score_job_match(
     similarity_score = min(round(text_similarity * 100), 24)
 
     total = skill_score + family_score + experience_score + seniority_score + sponsorship_score + salary_score + trust_score + similarity_score
-    if total < 74 or (overlap_count == 0 and text_similarity < 0.12):
+    if total < 74 or (not high_signal_overlap and text_similarity < 0.18):
         return None
 
     reasons = []
-    if overlap_count:
-        reasons.append(f'Matched {overlap_count} core skill{"s" if overlap_count != 1 else ""}: {", ".join(overlap[:4])}.')
+    displayed_overlap = high_signal_overlap or overlap
+    if displayed_overlap:
+        reasons.append(
+            f'Matched {len(displayed_overlap)} core skill{"s" if len(displayed_overlap) != 1 else ""}: '
+            f'{", ".join(displayed_overlap[:4])}.'
+        )
     if required_years is not None:
         reasons.append(f'Estimated {relevant_years}+ relevant years for a {required_years}+ year requirement.')
     else:
@@ -647,7 +797,7 @@ def score_job_match(
         'resume_match_reasons': reasons[:4],
         'candidate_years_experience': relevant_years,
         'required_years_experience': required_years,
-        'matched_skills': overlap[:6],
+        'matched_skills': displayed_overlap[:6],
     }
 
 
@@ -920,6 +1070,32 @@ def score_highlights(highlights: list[str], skills: list[str], titles: list[str]
         scored.append((score, highlight))
     scored.sort(key=lambda item: (item[0], len(item[1])), reverse=True)
     return [highlight for _, highlight in scored[:MAX_BULLET_COUNT]]
+
+
+def keyword_in_text(keyword: str, text: str) -> bool:
+    escaped = re.escape(keyword.lower()).replace(r'\ ', r'\s+')
+    return bool(re.search(rf'\b{escaped}\b', text.lower()))
+
+
+def matched_job_keywords(candidate_text: str, candidate_skills: list[str], job_skills: list[str]) -> list[str]:
+    candidate_lookup = {normalize_blob(skill): skill for skill in candidate_skills if skill}
+    matches: list[str] = []
+    seen = set()
+
+    for skill in job_skills:
+        normalized = normalize_blob(skill)
+        if not normalized or normalized in seen:
+            continue
+        matched = candidate_lookup.get(normalized)
+        if matched:
+            seen.add(normalized)
+            matches.append(matched)
+            continue
+        if keyword_in_text(skill, candidate_text):
+            seen.add(normalized)
+            matches.append(skill)
+
+    return matches[:6]
 
 
 def top_overlap_terms(resume_vector, job_vector, feature_names) -> list[str]:
