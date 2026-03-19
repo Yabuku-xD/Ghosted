@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] - 2026-03-18
+
+### Fixed
+- Increased the Jobs filter control widths, heights, and placeholder copy so search and select labels stay readable instead of clipping into tiny boxes.
+- Reworked the Jobs result cards for common desktop widths by stacking the apply action later, widening the content area, and simplifying reason callouts into clearer readable rows.
+- Kept the updated Jobs layout responsive with no horizontal overflow on mobile or desktop while preserving the existing Ghosted theme.
+
 ## [0.5.0] - 2026-03-18
 
 ### Added

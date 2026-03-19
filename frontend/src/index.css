@@ -1189,27 +1189,31 @@
   }
 
   .jobs-filters {
-    @apply grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4;
+    @apply flex flex-wrap gap-3;
   }
 
   .jobs-filter-field {
-    @apply min-w-0;
+    @apply min-w-[13.25rem] flex-[1_1_14rem];
   }
 
   .jobs-filter-field-wide {
-    @apply sm:col-span-2 xl:col-span-2 2xl:col-span-2;
+    @apply min-w-[21rem] flex-[2.25_1_24rem];
   }
 
   .jobs-filter-input {
-    @apply min-h-[4rem] text-base sm:text-base;
+    @apply min-h-[4.35rem] px-4 text-[0.97rem] leading-none sm:text-base;
+  }
+
+  .jobs-filter-input::placeholder {
+    color: #8b8b8b;
   }
 
   .jobs-filter-select {
-    @apply min-h-[4rem] text-base;
+    @apply min-h-[4.35rem] text-[0.97rem] sm:text-base;
   }
 
   .jobs-toggle {
-    @apply inline-flex min-h-[4rem] items-center justify-center gap-2 border-2 border-[#1a1a1a] bg-white px-5 py-3
+    @apply inline-flex min-h-[4.35rem] min-w-[13.25rem] flex-[1_1_14rem] items-center justify-center gap-2 border-2 border-[#1a1a1a] bg-white px-5 py-3
            font-mono text-xs uppercase tracking-[0.18em] text-[#1a1a1a] transition-colors hover:bg-[#f3efe8];
   }
 
@@ -1225,13 +1229,49 @@
     @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
   }
 
+  .jobs-result-card {
+    @apply bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(248,245,238,0.94))];
+  }
+
+  .jobs-card-body {
+    @apply flex h-full flex-col gap-5 p-5 sm:p-6;
+  }
+
+  .jobs-card-top {
+    @apply flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between;
+  }
+
+  .jobs-card-heading {
+    @apply flex min-w-0 items-start gap-3;
+  }
+
+  .jobs-card-badges {
+    @apply mb-3 flex flex-wrap items-center gap-2;
+  }
+
+  .jobs-card-title {
+    @apply text-[1.35rem] font-semibold leading-tight text-[#111111] sm:text-[1.55rem];
+  }
+
+  .jobs-card-meta {
+    @apply mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.95rem] text-[#5f5f5f];
+  }
+
+  .jobs-card-company {
+    @apply font-semibold text-[#1a1a1a];
+  }
+
+  .jobs-card-team {
+    @apply text-[#6b6b6b];
+  }
+
   .jobs-evidence-grid {
-    @apply grid gap-3 md:grid-cols-3;
+    @apply grid gap-3 md:grid-cols-2 2xl:grid-cols-3;
   }
 
   .jobs-evidence-card {
-    @apply border-t-2 border-[#1a1a1a] bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0))]
-           px-0 pb-1 pt-4;
+    @apply border-l-4 border-[#1a1a1a] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,244,238,0.94))]
+           px-4 py-4;
   }
 
   .jobs-evidence-label {
@@ -1239,19 +1279,31 @@
   }
 
   .jobs-evidence-value {
-    @apply mt-2 text-base sm:text-lg font-semibold text-[#1a1a1a] leading-snug;
+    @apply mt-2 text-lg sm:text-xl font-semibold text-[#1a1a1a] leading-snug;
   }
 
   .jobs-evidence-detail {
     @apply mt-2 text-sm leading-relaxed text-[#6b6b6b];
   }
 
-  .jobs-reason-pill {
-    @apply inline-flex items-center border border-[rgba(26,26,26,0.16)] bg-[#f7f4ee] px-3 py-1.5 text-xs text-[#1a1a1a];
+  .jobs-reason-list {
+    @apply grid gap-2;
+  }
+
+  .jobs-reason-item {
+    @apply flex items-start gap-2 border-l-2 border-[rgba(199,62,29,0.45)] pl-3 text-sm leading-relaxed text-[#4d4d4d];
+  }
+
+  .jobs-reason-dot {
+    @apply mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#c73e1d];
   }
 
   .jobs-card-apply {
-    @apply w-full sm:w-auto sm:min-w-[12rem];
+    @apply w-full sm:w-auto 2xl:min-w-[12.5rem] 2xl:self-start;
+  }
+
+  .jobs-card-footer {
+    @apply mt-auto flex flex-col gap-3 border-t border-[rgba(26,26,26,0.12)] pt-4 sm:flex-row sm:items-center sm:justify-between;
   }
 }
 

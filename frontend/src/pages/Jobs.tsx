@@ -264,7 +264,7 @@ function Jobs() {
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
               <input
                 type="text"
-                placeholder="Search title, team, or company"
+                placeholder="Search jobs or companies"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 className="input jobs-filter-input pl-11"
@@ -275,7 +275,7 @@ function Jobs() {
               <MapPin className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
               <input
                 type="text"
-                placeholder="Location"
+                placeholder="Location or remote"
                 value={location}
                 onChange={(event) => setLocation(event.target.value)}
                 className="input jobs-filter-input pl-11"
@@ -290,7 +290,7 @@ function Jobs() {
               className="jobs-filter-field"
               buttonClassName="jobs-filter-select"
               options={[
-                { value: '', label: 'Any Workplace Type' },
+                { value: '', label: 'Any workplace' },
                 { value: 'remote', label: 'Remote' },
                 { value: 'hybrid', label: 'Hybrid' },
                 { value: 'onsite', label: 'On-site' },
@@ -305,7 +305,7 @@ function Jobs() {
               className="jobs-filter-field"
               buttonClassName="jobs-filter-select"
               options={[
-                { value: '', label: 'Any Sponsorship Signal' },
+                { value: '', label: 'Any sponsor signal' },
                 { value: 'historically_sponsors', label: 'Historically Sponsors' },
                 { value: 'likely', label: 'Likely Sponsor' },
                 { value: 'unknown', label: 'Signal Limited' },
@@ -319,7 +319,10 @@ function Jobs() {
               icon={<BriefcaseBusiness className="h-4 w-4 text-muted" />}
               className="jobs-filter-field"
               buttonClassName="jobs-filter-select"
-              options={sourceOptions}
+              options={sourceOptions.map((option) => ({
+                ...option,
+                label: option.value === '' ? 'All ATS sources' : option.label,
+              }))}
             />
 
             <Select
@@ -330,7 +333,7 @@ function Jobs() {
               className="jobs-filter-field"
               buttonClassName="jobs-filter-select"
               options={[
-                { value: '', label: 'Any Posting Age' },
+                { value: '', label: 'Any posting age' },
                 { value: '7', label: 'Last 7 Days' },
                 { value: '30', label: 'Last 30 Days' },
               ]}
@@ -344,7 +347,7 @@ function Jobs() {
               className="jobs-filter-field"
               buttonClassName="jobs-filter-select"
               options={[
-                { value: '-job_score', label: 'Recommended' },
+                { value: '-job_score', label: 'Best match' },
                 { value: '-posted_at', label: 'Newest First' },
                 { value: 'company', label: 'Company A-Z' },
                 { value: 'title', label: 'Title A-Z' },
@@ -413,10 +416,10 @@ function Jobs() {
                 const compensation = formatRange(job);
 
                 return (
-                  <Card key={job.id} static className="overflow-hidden h-full">
-                    <CardBody className="p-5 sm:p-6 h-full flex flex-col gap-5">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="flex items-start gap-3 min-w-0">
+                  <Card key={job.id} static className="jobs-result-card h-full overflow-hidden">
+                    <CardBody className="jobs-card-body">
+                      <div className="jobs-card-top">
+                        <div className="jobs-card-heading">
                           <CompanyLogo
                             companyName={job.company_name}
                             logoUrl={job.company_logo_url}
@@ -424,22 +427,22 @@ function Jobs() {
                             size="sm"
                           />
                           <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <div className="jobs-card-badges">
                               <Badge variant={visaBadge.variant}>{visaBadge.label}</Badge>
                               <Badge variant={remoteBadge.variant}>{remoteBadge.label}</Badge>
-                              <Badge variant="outline">{job.source}</Badge>
+                              <Badge variant="outline">{job.source.toUpperCase()}</Badge>
                               {job.job_score ? <Badge variant="ghost">Score {job.job_score}</Badge> : null}
                             </div>
-                            <h2 className="text-lg sm:text-xl font-semibold text-primary leading-snug">{job.title}</h2>
-                            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-secondary">
-                              <span>{job.company_name}</span>
+                            <h2 className="jobs-card-title">{job.title}</h2>
+                            <div className="jobs-card-meta">
+                              <span className="jobs-card-company">{job.company_name}</span>
                               {job.location ? (
                                 <span className="inline-flex items-center gap-1">
                                   <MapPin className="h-3.5 w-3.5" />
                                   {job.location}
                                 </span>
                               ) : null}
-                              {job.team ? <span>{job.team}</span> : null}
+                              {job.team ? <span className="jobs-card-team">{job.team}</span> : null}
                             </div>
                           </div>
                         </div>
@@ -488,16 +491,17 @@ function Jobs() {
                       </div>
 
                       {job.match_reasons && job.match_reasons.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="jobs-reason-list">
                           {job.match_reasons.map((reason) => (
-                            <span key={reason} className="jobs-reason-pill">
-                              {reason}
-                            </span>
+                            <div key={reason} className="jobs-reason-item">
+                              <span className="jobs-reason-dot" />
+                              <span>{reason}</span>
+                            </div>
                           ))}
                         </div>
                       ) : null}
 
-                      <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="jobs-card-footer">
                         <Link to={`/companies/${job.company_slug}`} className="btn btn-secondary justify-center text-sm">
                           View Company
                         </Link>
