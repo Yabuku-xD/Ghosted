@@ -42,7 +42,7 @@ from offers.models import Offer
 
 
 MAX_BULLET_COUNT = 6
-RESUME_MATCH_SESSION_VERSION = 2
+RESUME_MATCH_SESSION_VERSION = 3
 SECTION_HEADINGS = {
     'summary': {'summary', 'professional summary', 'profile', 'objective'},
     'skills': {'skills', 'technical skills', 'core skills', 'competencies'},
@@ -111,6 +111,14 @@ LIGATURE_REPLACEMENTS = {
 }
 CONTACT_LINE_MARKERS = ('envelope', 'phone', 'mailto', 'http://', 'https://', 'www.', 'linkedin.com/', 'github.com/')
 LOW_SIGNAL_MATCH_SKILLS = {'API', 'APIS', 'CD', 'CI', 'JWT', 'MVC', 'OOD', 'SSL', 'TLS'}
+SUSPICIOUS_SESSION_TOKENS = (
+    'gmail.com',
+    'linkedin',
+    'github',
+    'envelope',
+    'mailto',
+    '.com',
+)
 
 
 @dataclass
@@ -186,6 +194,48 @@ def _clean_up_file(path_value: str | None) -> None:
         path.unlink(missing_ok=True)
 
 
+def _looks_like_suspicious_session_value(value: str) -> bool:
+    normalized = normalize_blob(value)
+    if not normalized:
+        return False
+
+    compact = normalized.replace(' ', '')
+    return (
+        any(token in compact for token in SUSPICIOUS_SESSION_TOKENS)
+        or compact.count('gmail') > 1
+        or compact.count('linkedin') > 1
+        or compact.count('github') > 1
+    )
+
+
+def _session_payload_is_invalid(payload: dict[str, Any]) -> bool:
+    if payload.get('match_engine_version') != RESUME_MATCH_SESSION_VERSION:
+        return True
+
+    if payload.get('status') != 'completed':
+        return False
+
+    profile_summary = payload.get('profile_summary') or {}
+    for value in profile_summary.get('top_skills') or []:
+        if _looks_like_suspicious_session_value(str(value)):
+            return True
+
+    target_cluster = payload.get('target_cluster') or {}
+    for value in target_cluster.get('top_skills') or []:
+        if _looks_like_suspicious_session_value(str(value)):
+            return True
+
+    for match in payload.get('high_matches') or []:
+        for value in match.get('matched_skills') or []:
+            if _looks_like_suspicious_session_value(str(value)):
+                return True
+        for value in match.get('resume_match_reasons') or []:
+            if _looks_like_suspicious_session_value(str(value)):
+                return True
+
+    return False
+
+
 def create_resume_match_session(uploaded_file, filters: dict[str, Any] | None = None) -> dict[str, Any]:
     session_id = uuid.uuid4().hex
     raw_bytes = b''.join(chunk for chunk in uploaded_file.chunks())
@@ -217,7 +267,7 @@ def get_resume_match_session(session_id: str) -> dict[str, Any] | None:
     payload = cache.get(resume_session_key(session_id))
     if not payload:
         return None
-    if payload.get('match_engine_version') != RESUME_MATCH_SESSION_VERSION:
+    if _session_payload_is_invalid(payload):
         cache.delete(resume_session_key(session_id))
         return None
 
@@ -247,7 +297,7 @@ def resume_download_response(session_id: str) -> FileResponse:
     payload = cache.get(resume_session_key(session_id))
     if (
         not payload
-        or payload.get('match_engine_version') != RESUME_MATCH_SESSION_VERSION
+        or _session_payload_is_invalid(payload)
         or payload.get('status') != 'completed'
         or not payload.get('output_bytes')
     ):
@@ -265,7 +315,7 @@ def process_resume_match_session(session_id: str) -> dict[str, Any]:
     payload = cache.get(resume_session_key(session_id))
     if not payload:
         return {'status': 'missing'}
-    if payload.get('match_engine_version') != RESUME_MATCH_SESSION_VERSION:
+    if _session_payload_is_invalid(payload):
         cache.delete(resume_session_key(session_id))
         return {'status': 'missing'}
 
@@ -318,6 +368,12 @@ def process_resume_match_session(session_id: str) -> dict[str, Any]:
             'resume_file_name': build_resume_file_name(candidate.contact_name, target_cluster['family'] if target_cluster else 'general'),
             'output_bytes': output_bytes,
         })
+        if _session_payload_is_invalid(payload):
+            payload.update({
+                'status': 'failed',
+                'error': 'Resume parsing picked up invalid contact noise. Please upload again for a fresh shortlist.',
+            })
+            payload.pop('output_bytes', None)
     except Exception as exc:
         payload.update({
             'status': 'failed',

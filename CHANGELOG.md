@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.3] - 2026-03-18
+
+### Changed
+- Bumped the temporary resume-match engine version again so older shortlist sessions created before the latest parser cleanup are forced out on the next reload instead of lingering in browser tab storage.
+
+### Fixed
+- Added server-side validation for completed resume-match sessions so any shortlist carrying repeated email or contact-header noise in top skills, matched skills, or match reasons is invalidated automatically.
+- Fixed the Jobs resume flow so stale async sessions from earlier worker code paths now resolve to an expired session instead of continuing to render broken `gmail.com...` chips and noisy PDF summaries after a refresh.
+
 ## [0.6.2] - 2026-03-18
 
 ### Changed
