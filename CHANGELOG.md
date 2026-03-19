@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.2] - 2026-03-18
+
+### Changed
+- Versioned temporary resume-match sessions so cached shortlist data from older parser builds is invalidated automatically after matcher updates instead of continuing to render stale keyword noise after a page reload.
+- Tightened the tailored PDF skill selection to prefer resume-backed matched skills, which keeps the generated resume summary and core-skills block closer to the uploaded resume instead of drifting toward loose job-only phrases.
+
+### Fixed
+- Fixed the Jobs resume studio so old cached sessions with pre-fix garbage keywords like repeated email fragments no longer survive refreshes and confuse the UI.
+- Narrowed contact-line detection so legitimate skills rows containing terms like GitHub are no longer dropped during PDF parsing.
+- Kept the improved keyword alignment approach inspired by Resume-Matcher while ensuring Ghosted only surfaces whole-word, resume-backed matches in shortlist reasons and skill chips.
+
 ## [0.6.1] - 2026-03-18
 
 ### Changed

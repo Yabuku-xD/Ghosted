@@ -42,6 +42,7 @@ from offers.models import Offer
 
 
 MAX_BULLET_COUNT = 6
+RESUME_MATCH_SESSION_VERSION = 2
 SECTION_HEADINGS = {
     'summary': {'summary', 'professional summary', 'profile', 'objective'},
     'skills': {'skills', 'technical skills', 'core skills', 'competencies'},
@@ -196,6 +197,7 @@ def create_resume_match_session(uploaded_file, filters: dict[str, Any] | None = 
         'created_at': _session_timestamp(),
         'expires_at': _session_timestamp(resume_session_ttl()),
         'resume_uploaded': True,
+        'match_engine_version': RESUME_MATCH_SESSION_VERSION,
         'privacy_note': 'Resume uploads are temporary, processed asynchronously, and removed automatically after matching.',
         'filters': _default_filters(filters),
         'resume_text': resume_text,
@@ -214,6 +216,9 @@ def create_resume_match_session(uploaded_file, filters: dict[str, Any] | None = 
 def get_resume_match_session(session_id: str) -> dict[str, Any] | None:
     payload = cache.get(resume_session_key(session_id))
     if not payload:
+        return None
+    if payload.get('match_engine_version') != RESUME_MATCH_SESSION_VERSION:
+        cache.delete(resume_session_key(session_id))
         return None
 
     filtered = {key: value for key, value in payload.items() if key not in {'resume_text', 'output_bytes'}}
@@ -240,7 +245,12 @@ def cleanup_expired_resume_artifacts() -> int:
 
 def resume_download_response(session_id: str) -> FileResponse:
     payload = cache.get(resume_session_key(session_id))
-    if not payload or payload.get('status') != 'completed' or not payload.get('output_bytes'):
+    if (
+        not payload
+        or payload.get('match_engine_version') != RESUME_MATCH_SESSION_VERSION
+        or payload.get('status') != 'completed'
+        or not payload.get('output_bytes')
+    ):
         raise Http404('Resume session unavailable')
 
     return FileResponse(
@@ -254,6 +264,9 @@ def resume_download_response(session_id: str) -> FileResponse:
 def process_resume_match_session(session_id: str) -> dict[str, Any]:
     payload = cache.get(resume_session_key(session_id))
     if not payload:
+        return {'status': 'missing'}
+    if payload.get('match_engine_version') != RESUME_MATCH_SESSION_VERSION:
+        cache.delete(resume_session_key(session_id))
         return {'status': 'missing'}
 
     resume_text = payload.get('resume_text', '')
@@ -988,8 +1001,10 @@ def build_tailored_resume_pdf(session_id: str, candidate: CandidateProfile, targ
     top_skills = []
     for job in jobs:
         for skill in job.get('matched_skills', []):
-            if skill not in top_skills:
+            if skill in candidate.skills and skill not in top_skills:
                 top_skills.append(skill)
+    if not top_skills:
+        top_skills = candidate.skills[:10]
 
     summary_bits = [
         f"{candidate.overall_years}+ years of experience" if candidate.overall_years else "Experience aligned to this role family",

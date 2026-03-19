@@ -200,7 +200,7 @@ function Jobs() {
       setResumeSessionId(null);
       setResumeFile(null);
       void queryClient.removeQueries({ queryKey: ['job-resume-match'] });
-      toast.info('The temporary resume session expired. Upload again for a fresh shortlist.', 'Session expired');
+      toast.info('The temporary resume session expired or was refreshed after an update. Upload again for a fresh shortlist.', 'Session expired');
     }
   }, [queryClient, resumeSessionId, resumeSessionQuery.error, toast]);
 
