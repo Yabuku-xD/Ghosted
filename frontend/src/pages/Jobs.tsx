@@ -597,7 +597,8 @@ function Jobs() {
                       <div className="jobs-resume-stat">
                         <div className="jobs-resume-stat-label">Estimated experience</div>
                         <div className="jobs-resume-stat-value">
-                          {resumeSession.profile_summary?.estimated_years_experience || 0}+ years
+                          {resumeSession.profile_summary?.estimated_experience_label
+                            || `${resumeSession.profile_summary?.estimated_years_experience || 0} years`}
                         </div>
                       </div>
                       <div className="jobs-resume-stat">
@@ -864,7 +865,7 @@ function Jobs() {
                             <div>
                               <div className="jobs-resume-match-label">Your fit</div>
                               <div className="jobs-resume-match-value">
-                                {match.candidate_years_experience ? `${match.candidate_years_experience}+ relevant years` : 'Role-aligned'}
+                                {match.candidate_experience_label || 'Role-aligned'}
                               </div>
                             </div>
                             <div>
@@ -900,7 +901,7 @@ function Jobs() {
                               href={match.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-mono text-xs uppercase tracking-wider text-accent hover-underline"
+                              className="inline-flex items-center justify-end font-mono text-xs uppercase tracking-wider text-accent hover-underline sm:self-center"
                             >
                               Open job posting
                             </a>

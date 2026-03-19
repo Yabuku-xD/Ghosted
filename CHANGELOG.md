@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.4] - 2026-03-19
+
+### Changed
+- Reworked resume-to-job scoring to be more conservative by separating direct work-experience evidence from project-only overlap, lowering how much sponsorship and trust signals can inflate a resume match.
+- Updated the Jobs resume studio to show an experience label based on parsed months instead of rounding everything up to a `+ years` figure.
+
+### Fixed
+- Fixed resume experience estimation so a resume with roughly 14 months of professional experience now shows as `~1.2 years` instead of inflating to `2+ years`.
+- Fixed the resume matcher to rely more on the actual job description and stack requirements, which prevents OpenAI-style full-stack roles from surfacing as unrealistically strong matches when the evidence is mostly project-based.
+- Tightened the shortlist footer link alignment so `Open job posting` sits more cleanly on the resume-match cards.
+
 ## [0.6.3] - 2026-03-18
 
 ### Changed

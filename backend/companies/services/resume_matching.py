@@ -5,7 +5,6 @@ import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone as dt_timezone
 from io import BytesIO
-from math import ceil
 from pathlib import Path
 from tempfile import gettempdir
 from typing import Any
@@ -111,6 +110,15 @@ LIGATURE_REPLACEMENTS = {
 }
 CONTACT_LINE_MARKERS = ('envelope', 'phone', 'mailto', 'http://', 'https://', 'www.', 'linkedin.com/', 'github.com/')
 LOW_SIGNAL_MATCH_SKILLS = {'API', 'APIS', 'CD', 'CI', 'JWT', 'MVC', 'OOD', 'SSL', 'TLS'}
+FRONTEND_SIGNAL_TERMS = {
+    'frontend', 'front end', 'front-end', 'full stack', 'full-stack', 'fullstack',
+    'react', 'typescript', 'javascript', 'ui', 'web', 'html', 'css',
+}
+BACKEND_SIGNAL_TERMS = {
+    'backend', 'back end', 'back-end', 'full stack', 'full-stack', 'fullstack',
+    'python', 'node.js', 'node', 'go', 'golang', 'django', 'django rest framework',
+    'flask', 'apis', 'api', 'sql', 'postgresql', 'redis', 'services',
+}
 SUSPICIOUS_SESSION_TOKENS = (
     'gmail.com',
     'linkedin',
@@ -134,13 +142,18 @@ class CandidateProfile:
     email: str
     phone: str
     linkedin: str
-    overall_years: int
-    experience_by_family: dict[str, int]
+    overall_years: float
+    overall_months: int
+    experience_by_family: dict[str, float]
+    experience_by_family_months: dict[str, int]
     seniority: str
     skills: list[str]
     highlights: list[str]
     education: list[str]
     certifications: list[str]
+    skills_text: str
+    experience_text: str
+    projects_text: str
     analysis_text: str
 
 
@@ -347,6 +360,7 @@ def process_resume_match_session(session_id: str) -> dict[str, Any]:
             'completed_at': _session_timestamp(),
             'profile_summary': {
                 'estimated_years_experience': candidate.overall_years,
+                'estimated_experience_label': format_experience_label(candidate.overall_months),
                 'seniority': candidate.seniority,
                 'top_skills': candidate.skills[:8],
                 'target_families': [
@@ -414,6 +428,27 @@ def normalize_resume_text(text: str) -> str:
     return normalized.strip()
 
 
+def months_to_years(months: int) -> float:
+    if months <= 0:
+        return 0.0
+    return round(months / 12, 1)
+
+
+def format_experience_label(months: int) -> str:
+    if months <= 0:
+        return 'Limited direct experience'
+    if months < 6:
+        return f'~{months} month{"s" if months != 1 else ""}'
+    if months < 12:
+        return '<1 year'
+
+    years = round(months / 12, 1)
+    if float(years).is_integer():
+        whole_years = int(years)
+        return f'{whole_years} year{"s" if whole_years != 1 else ""}'
+    return f'~{years:.1f} years'
+
+
 def build_candidate_profile(text: str) -> CandidateProfile:
     lines = [normalize_resume_line(line) for line in text.splitlines()]
     lines = [line for line in lines if line]
@@ -427,22 +462,30 @@ def build_candidate_profile(text: str) -> CandidateProfile:
     linkedin = extract_primary_linkedin(text)
 
     merged_months = merge_experience_months(experience_blocks)
-    overall_years = max(1, ceil(merged_months / 12)) if merged_months else estimate_years_from_text(
-        ' '.join(sections.get('experience', []) + sections.get('projects', []))
-    )
+    fallback_years = estimate_years_from_text(' '.join(sections.get('experience', []) + sections.get('projects', [])))
+    overall_months = merged_months or (fallback_years * 12)
+    overall_years = months_to_years(overall_months)
 
-    experience_by_family: dict[str, int] = {}
+    experience_by_family_months: dict[str, int] = {}
     for block in experience_blocks:
         if block.family == 'general':
             continue
-        years = max(1, ceil(block.months / 12)) if block.months else 0
-        experience_by_family[block.family] = experience_by_family.get(block.family, 0) + years
+        experience_by_family_months[block.family] = experience_by_family_months.get(block.family, 0) + max(block.months, 0)
+
+    experience_by_family = {
+        family: months_to_years(months)
+        for family, months in experience_by_family_months.items()
+    }
+
+    skills_text = ' '.join(sections.get('skills', []))
+    experience_text = ' '.join(sections.get('experience', []))
+    projects_text = ' '.join(sections.get('projects', []))
 
     skills = merge_unique_strings(
         extract_explicit_resume_skills(sections.get('skills', [])),
-        extract_skills('\n'.join(sections.get('skills', [])), limit=12),
-        extract_skills('\n'.join(sections.get('projects', [])), limit=10),
-        extract_skills('\n'.join(sections.get('experience', [])), limit=10),
+        extract_skills(skills_text, limit=12),
+        extract_skills(projects_text, limit=10),
+        extract_skills(experience_text, limit=10),
         limit=18,
     )
     seniority = infer_seniority(' '.join(lines[:12]), f'{overall_years} years experience')
@@ -452,9 +495,9 @@ def build_candidate_profile(text: str) -> CandidateProfile:
     analysis_text = '\n'.join(
         part for part in [
             ' '.join(sections.get('summary', [])),
-            ' '.join(sections.get('skills', [])),
-            ' '.join(sections.get('experience', [])),
-            ' '.join(sections.get('projects', [])),
+            skills_text,
+            experience_text,
+            projects_text,
             ' '.join(skills),
         ] if part
     )
@@ -465,12 +508,17 @@ def build_candidate_profile(text: str) -> CandidateProfile:
         phone=phone,
         linkedin=linkedin,
         overall_years=overall_years,
+        overall_months=overall_months,
         experience_by_family=experience_by_family,
+        experience_by_family_months=experience_by_family_months,
         seniority=seniority,
         skills=skills,
         highlights=highlights,
         education=education,
         certifications=certifications,
+        skills_text=skills_text,
+        experience_text=experience_text,
+        projects_text=projects_text,
         analysis_text=analysis_text or text,
     )
 
@@ -762,18 +810,36 @@ def filtered_jobs_queryset(filters: dict[str, Any]):
     return queryset.distinct()
 
 
+def normalized_skill_set(skills: list[str]) -> set[str]:
+    return {normalize_blob(skill) for skill in skills if normalize_blob(skill)}
+
+
+def stack_match_count(skills: list[str], terms: set[str]) -> int:
+    return sum(1 for skill in normalized_skill_set(skills) if skill in terms)
+
+
+def text_contains_stack_terms(text: str, terms: set[str]) -> bool:
+    normalized = normalize_blob(text)
+    return any(term in normalized for term in terms)
+
+
 def build_job_profile(job) -> dict[str, Any]:
     role_family = infer_role_family(job.title, job.team, job.description)
     job_skills = extract_skills(' '.join(filter(None, [job.title, job.team, job.description])), limit=10)
     required_years = parse_required_years(job.title, job.description)
     seniority = infer_seniority(job.title, job.description)
     trust = compute_job_trust(job)
+    job_text = ' '.join(filter(None, [job.title, job.team, job.description]))
+    requires_frontend = text_contains_stack_terms(job_text, FRONTEND_SIGNAL_TERMS)
+    requires_backend = text_contains_stack_terms(job_text, BACKEND_SIGNAL_TERMS)
     return {
         'family': role_family,
         'skills': job_skills,
         'required_years': required_years,
         'seniority': seniority,
         'trust': trust,
+        'requires_frontend': requires_frontend,
+        'requires_backend': requires_backend,
     }
 
 
@@ -784,9 +850,15 @@ def score_job_match(
     text_similarity: float,
     overlap_terms: list[str],
 ) -> dict[str, Any] | None:
-    keyword_matches = matched_job_keywords(candidate.analysis_text, candidate.skills, job_profile['skills'])
+    professional_matches = matched_job_keywords(candidate.experience_text, candidate.skills, job_profile['skills'])
+    project_matches = [
+        skill
+        for skill in matched_job_keywords(candidate.projects_text, candidate.skills, job_profile['skills'])
+        if normalize_blob(skill) not in {normalize_blob(value) for value in professional_matches}
+    ]
     overlap = merge_unique_strings(
-        keyword_matches,
+        professional_matches,
+        project_matches,
         relevant_skill_overlap(candidate.skills, job_profile['skills']),
         limit=8,
     )
@@ -802,13 +874,24 @@ def score_job_match(
     overlap_count = len(high_signal_overlap) or len(overlap)
     required_years = job_profile['required_years']
     family = job_profile['family']
-    relevant_years = candidate.experience_by_family.get(family) or candidate.overall_years
-    years_gap = (relevant_years - required_years) if required_years is not None else 1
+    relevant_months = candidate.experience_by_family_months.get(family) or candidate.overall_months
+    relevant_years = months_to_years(relevant_months)
+    required_months = (required_years * 12) if required_years is not None else None
     seniority_delta = seniority_gap(candidate.seniority, job_profile['seniority'])
-    candidate_families = {family_name for family_name, years in candidate.experience_by_family.items() if years > 0}
+    candidate_families = {family_name for family_name, months in candidate.experience_by_family_months.items() if months > 0}
     family_aligned = not candidate_families or family in candidate_families or family == 'general'
+    professional_overlap_count = len(professional_matches)
+    project_overlap_count = len(project_matches)
 
-    if required_years is not None and relevant_years + 1 < required_years:
+    professional_frontend = stack_match_count(professional_matches, FRONTEND_SIGNAL_TERMS)
+    professional_backend = stack_match_count(professional_matches, BACKEND_SIGNAL_TERMS)
+    project_frontend = stack_match_count(project_matches, FRONTEND_SIGNAL_TERMS)
+    project_backend = stack_match_count(project_matches, BACKEND_SIGNAL_TERMS)
+    has_frontend_evidence = (professional_frontend + project_frontend) > 0
+    has_backend_evidence = (professional_backend + project_backend) > 0
+    full_stack_role = job_profile['requires_frontend'] and job_profile['requires_backend']
+
+    if required_months is not None and relevant_months + 6 < required_months:
         return None
 
     if job_profile['seniority'] in {'manager', 'executive'} and seniority_delta < -1:
@@ -817,40 +900,76 @@ def score_job_match(
     if not family_aligned and text_similarity < 0.18:
         return None
 
-    if overlap_count < 2 and text_similarity < 0.14:
+    if overlap_count < 2 and text_similarity < 0.16:
         return None
 
-    skill_score = min((len(high_signal_overlap) * 10) + (max(len(overlap) - len(high_signal_overlap), 0) * 3), 32)
-    family_score = 18 if family_aligned and family != 'general' else 8 if family == 'general' else 2
+    if professional_overlap_count == 0 and text_similarity < 0.2:
+        return None
 
-    if required_years is None:
-        experience_score = 12 if candidate.overall_years else 0
-    elif years_gap >= 2:
-        experience_score = 24
-    elif years_gap >= 0:
+    if full_stack_role and not (has_frontend_evidence and has_backend_evidence):
+        return None
+
+    skill_score = min((professional_overlap_count * 10) + (project_overlap_count * 5), 26)
+    family_score = (
+        16 if family in candidate.experience_by_family_months and family != 'general'
+        else 9 if family_aligned and family != 'general'
+        else 6 if family == 'general'
+        else 2
+    )
+
+    if required_months is None:
+        experience_score = 10 if relevant_months >= 12 else 6 if relevant_months >= 6 else 2
+    elif relevant_months >= required_months:
         experience_score = 18
-    else:
+    elif relevant_months + 6 >= required_months:
         experience_score = 10
+    else:
+        experience_score = 3
 
     seniority_score = 10 if seniority_delta >= 0 else 4 if seniority_delta == -1 else 0
-    sponsorship_score = 9 if getattr(job, 'visa_sponsorship_signal', '') == 'historically_sponsors' else 4
-    salary_score = 5 if (job.salary_min or job.salary_max) else 2 if getattr(job.company, 'total_h1b_filings', 0) else 0
-    trust_score = round(job_profile['trust']['score'] * 0.12)
-    similarity_score = min(round(text_similarity * 100), 24)
+    sponsorship_score = 4 if getattr(job, 'visa_sponsorship_signal', '') == 'historically_sponsors' else 1
+    salary_score = 2 if (job.salary_min or job.salary_max) else 1 if getattr(job.company, 'total_h1b_filings', 0) else 0
+    trust_score = round(job_profile['trust']['score'] * 0.05)
+    similarity_score = min(round(text_similarity * 100), 18)
+    stack_score = 0
+    if full_stack_role:
+        if professional_frontend and professional_backend:
+            stack_score = 8
+        elif has_frontend_evidence and has_backend_evidence:
+            stack_score = 2
+        else:
+            stack_score = -6
 
-    total = skill_score + family_score + experience_score + seniority_score + sponsorship_score + salary_score + trust_score + similarity_score
-    if total < 74 or (not high_signal_overlap and text_similarity < 0.18):
+    total = (
+        skill_score
+        + family_score
+        + experience_score
+        + seniority_score
+        + sponsorship_score
+        + salary_score
+        + trust_score
+        + similarity_score
+        + stack_score
+    )
+    if total < 68 or (not high_signal_overlap and text_similarity < 0.2):
         return None
 
     reasons = []
     displayed_overlap = high_signal_overlap or overlap
     if displayed_overlap:
         reasons.append(
-            f'Matched {len(displayed_overlap)} core skill{"s" if len(displayed_overlap) != 1 else ""}: '
+            f'Matched {len(displayed_overlap)} requirement{"s" if len(displayed_overlap) != 1 else ""} from the description: '
             f'{", ".join(displayed_overlap[:4])}.'
         )
     if required_years is not None:
-        reasons.append(f'Estimated {relevant_years}+ relevant years for a {required_years}+ year requirement.')
+        reasons.append(
+            f'Your directly relevant experience looks closer to {format_experience_label(relevant_months).lower()} '
+            f'against a {required_years}+ year requirement.'
+        )
+    elif full_stack_role and professional_overlap_count == 0 and project_overlap_count > 0:
+        reasons.append('Most of the full-stack overlap comes from project work rather than direct professional experience.')
+    elif professional_overlap_count > 0:
+        reasons.append('Some overlap is backed by direct work experience, not only resume keywords.')
     else:
         reasons.append(f'Role aligns with a {role_family_display(family).lower()} background.')
     if getattr(job, 'visa_sponsorship_signal', '') == 'historically_sponsors':
@@ -862,9 +981,10 @@ def score_job_match(
         'job': job,
         'job_profile': job_profile,
         'resume_match_score': min(total, 100),
-        'resume_match_band': 'high' if total >= 78 else 'good',
+        'resume_match_band': 'high' if total >= 80 else 'good',
         'resume_match_reasons': reasons[:4],
         'candidate_years_experience': relevant_years,
+        'candidate_experience_label': format_experience_label(relevant_months),
         'required_years_experience': required_years,
         'matched_skills': displayed_overlap[:6],
     }
@@ -951,6 +1071,7 @@ def serialize_job_match(scored: dict[str, Any]) -> dict[str, Any]:
         'job_family': role_family_display(scored['job_profile']['family']),
         'required_years_experience': scored['required_years_experience'],
         'candidate_years_experience': scored['candidate_years_experience'],
+        'candidate_experience_label': scored['candidate_experience_label'],
         'resume_match_score': scored['resume_match_score'],
         'resume_match_band': scored['resume_match_band'],
         'resume_match_reasons': scored['resume_match_reasons'],
@@ -1063,7 +1184,7 @@ def build_tailored_resume_pdf(session_id: str, candidate: CandidateProfile, targ
         top_skills = candidate.skills[:10]
 
     summary_bits = [
-        f"{candidate.overall_years}+ years of experience" if candidate.overall_years else "Experience aligned to this role family",
+        format_experience_label(candidate.overall_months) if candidate.overall_months else "Experience aligned to this role family",
         f"focused on {role_family_display(target_family).lower()} roles",
     ]
     if top_skills:

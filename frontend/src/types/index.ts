@@ -180,6 +180,7 @@ export interface ResumeMatchedJob extends JobPosting {
   job_family?: string;
   required_years_experience?: number | null;
   candidate_years_experience?: number | null;
+  candidate_experience_label?: string;
   resume_match_score: number;
   resume_match_band: string;
   resume_match_reasons: string[];
@@ -192,6 +193,7 @@ export interface ResumeMatchedJob extends JobPosting {
 
 export interface ResumeMatchProfileSummary {
   estimated_years_experience: number;
+  estimated_experience_label?: string;
   seniority: string;
   top_skills: string[];
   target_families: string[];
