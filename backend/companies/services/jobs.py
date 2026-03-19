@@ -7,15 +7,39 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Iterable
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin, urlparse
 from urllib.request import Request, urlopen
 
+from django.db.models import Case, IntegerField, Value, When
 from django.db import transaction
 from django.utils import timezone
 
 from companies.models import Company, JobPosting
 
 USER_AGENT = 'Ghosted Jobs Sync/1.0'
+HTML_USER_AGENT = (
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+    '(KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36'
+)
+COMMON_CAREER_PATHS = (
+    '/careers',
+    '/jobs',
+    '/careers/jobs',
+    '/company/careers',
+    '/join-us',
+    '/about/careers',
+)
+CAREER_LINK_KEYWORDS = (
+    'career',
+    'careers',
+    'job',
+    'jobs',
+    'join-us',
+    'joinus',
+    'opportunities',
+    'open-positions',
+)
+MAX_HTML_BYTES = 350_000
 
 KNOWN_JOB_BOARD_HINTS = {
     'anthropic': ('greenhouse', 'anthropic'),
@@ -26,6 +50,7 @@ KNOWN_JOB_BOARD_HINTS = {
     'databricks': ('greenhouse', 'databricks'),
     'snowflake': ('greenhouse', 'snowflake'),
     'stripe': ('greenhouse', 'stripe'),
+    'openai': ('ashby', 'openai'),
 }
 
 
@@ -79,6 +104,20 @@ def fetch_json(url: str, timeout: int = 20):
         return json.loads(response.read().decode('utf-8'))
 
 
+def fetch_text(url: str, timeout: int = 5, max_bytes: int = MAX_HTML_BYTES) -> tuple[str, str]:
+    request = Request(
+        url,
+        headers={
+            'User-Agent': HTML_USER_AGENT,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+    )
+    with urlopen(request, timeout=timeout) as response:
+        final_url = response.geturl()
+        body = response.read(max_bytes).decode('utf-8', errors='ignore')
+    return final_url, body
+
+
 def extract_greenhouse_metadata(metadata, keys: Iterable[str]) -> str:
     if isinstance(metadata, dict):
         for key in keys:
@@ -128,6 +167,22 @@ def extract_lever_salary(job: dict) -> tuple[int | None, int | None, str]:
     )
 
 
+def extract_ashby_salary(job: dict) -> tuple[int | None, int | None, str]:
+    compensation = job.get('compensation') or {}
+    summary_components = compensation.get('summaryComponents') or []
+    for item in summary_components:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get('compensationType')) != 'Salary':
+            continue
+        return (
+            int(item.get('minValue')) if item.get('minValue') is not None else None,
+            int(item.get('maxValue')) if item.get('maxValue') is not None else None,
+            str(item.get('currencyCode') or 'USD')[:10],
+        )
+    return None, None, 'USD'
+
+
 def sponsorship_signal_for_company(company: Company) -> str:
     if (company.total_h1b_filings or 0) >= 25:
         return 'historically_sponsors'
@@ -165,8 +220,12 @@ def infer_board_from_url(url: str) -> tuple[str, str] | None:
 
     patterns = [
         ('greenhouse', r'(?:job-boards|boards)\.greenhouse\.io/([^/?#]+)'),
+        ('greenhouse', r'greenhouse\.io/embed/job_board\?(?:[^#]*&)?for=([^&#]+)'),
+        ('greenhouse', r'greenhouse\.io/embed/job_app\?(?:[^#]*&)?for=([^&#]+)'),
         ('lever', r'jobs\.lever\.co/([^/?#]+)'),
+        ('lever', r'api\.lever\.co/v0/postings/([^/?#]+)'),
         ('ashby', r'jobs\.ashbyhq\.com/([^/?#]+)'),
+        ('ashby', r'api\.ashbyhq\.com/posting-api/job-board/([^/?#]+)'),
     ]
 
     for provider, pattern in patterns:
@@ -174,6 +233,73 @@ def infer_board_from_url(url: str) -> tuple[str, str] | None:
         if match:
             return provider, match.group(1).strip().lower()
     return None
+
+
+def url_candidates_from_text(text: str, base_url: str) -> list[str]:
+    candidates = []
+    seen = set()
+
+    def add(raw_value: str):
+        value = (raw_value or '').strip()
+        if not value:
+            return
+        if value.startswith(('mailto:', 'javascript:', 'tel:', '#', 'data:')):
+            return
+        resolved = urljoin(base_url, value)
+        if resolved not in seen:
+            seen.add(resolved)
+            candidates.append(resolved)
+
+    for match in re.findall(r'https?://[^\s"\'<>]+', text, flags=re.IGNORECASE):
+        add(match.rstrip('),.;'))
+
+    for match in re.findall(r'''(?:href|src)=["']([^"']+)["']''', text, flags=re.IGNORECASE):
+        add(match)
+
+    return candidates
+
+
+def looks_like_careers_link(url: str, company: Company) -> bool:
+    parsed = urlparse(url)
+    netloc = parsed.netloc.lower()
+    path = parsed.path.lower()
+    company_domain = (company.company_domain or '').lower()
+
+    if company_domain and company_domain not in netloc:
+        return False
+
+    return any(keyword in path for keyword in CAREER_LINK_KEYWORDS)
+
+
+def company_source_urls(company: Company) -> list[str]:
+    urls = []
+    seen = set()
+    company_domain = (company.company_domain or '').lower()
+
+    def add(url: str):
+        value = (url or '').strip()
+        if value and value not in seen:
+            seen.add(value)
+            urls.append(value)
+
+    add(company.website)
+
+    if company.careers_url:
+        careers_host = urlparse(company.careers_url).netloc.lower()
+        if not company_domain or company_domain in careers_host:
+            add(company.careers_url)
+
+    if company.company_domain:
+        roots = [
+            f'https://www.{company.company_domain}',
+            f'https://{company.company_domain}',
+        ]
+        for root in roots:
+            add(root)
+            for path in COMMON_CAREER_PATHS:
+                add(urljoin(root, path))
+
+    return urls[:6]
 
 
 @dataclass
@@ -291,41 +417,187 @@ class LeverAdapter(BaseAdapter):
         return jobs
 
 
+class AshbyAdapter(BaseAdapter):
+    provider = 'ashby'
+
+    def jobs_url(self, token: str) -> str:
+        return f'https://api.ashbyhq.com/posting-api/job-board/{token}?includeCompensation=true'
+
+    def board_url(self, token: str) -> str:
+        return f'https://jobs.ashbyhq.com/{token}'
+
+    def fetch_jobs(self, token: str) -> list[NormalizedJob]:
+        payload = fetch_json(self.jobs_url(token))
+        jobs = []
+        for job in payload.get('jobs', []):
+            salary_min, salary_max, currency = extract_ashby_salary(job)
+            location = str(job.get('location') or '')[:150]
+            if not location:
+                postal_address = ((job.get('address') or {}).get('postalAddress') or {})
+                location = ', '.join(
+                    part for part in [
+                        postal_address.get('addressLocality'),
+                        postal_address.get('addressRegion'),
+                    ]
+                    if part
+                )[:150]
+
+            workplace_type = str(job.get('workplaceType') or '')
+            jobs.append(
+                NormalizedJob(
+                    external_job_id=str(job.get('id') or job.get('jobUrl') or job.get('applyUrl')),
+                    title=str(job.get('title', ''))[:200],
+                    team=str(job.get('team') or job.get('department') or '')[:120],
+                    location=location,
+                    remote_policy=infer_remote_policy(workplace_type, location),
+                    employment_type=str(job.get('employmentType') or '')[:50],
+                    url=job.get('jobUrl') or job.get('applyUrl') or self.board_url(token),
+                    source=self.provider,
+                    source_board=token,
+                    description=strip_html(job.get('descriptionPlain') or job.get('descriptionHtml') or ''),
+                    salary_min=salary_min,
+                    salary_max=salary_max,
+                    currency=currency,
+                    posted_at=parse_datetime_value(job.get('publishedAt')),
+                )
+            )
+        return jobs
+
+
 ADAPTERS = {
     'greenhouse': GreenhouseAdapter(),
     'lever': LeverAdapter(),
+    'ashby': AshbyAdapter(),
 }
+
+
+def validate_discovered_source(provider: str, token: str) -> bool:
+    adapter = ADAPTERS.get(provider)
+    if not adapter:
+        return False
+    try:
+        adapter.fetch_jobs(token)
+        return True
+    except (HTTPError, URLError, TimeoutError, ValueError):
+        return False
+
+
+def discover_job_source_from_html(company: Company) -> tuple[str, str] | None:
+    queue = company_source_urls(company)
+    visited = set()
+
+    while queue and len(visited) < 4:
+        url = queue.pop(0)
+        if url in visited:
+            continue
+        visited.add(url)
+
+        try:
+            final_url, body = fetch_text(url)
+        except (HTTPError, URLError, TimeoutError, ValueError):
+            continue
+
+        inferred = infer_board_from_url(final_url)
+        if inferred and validate_discovered_source(*inferred):
+            return inferred
+
+        child_links = []
+        for candidate_url in url_candidates_from_text(body, final_url):
+            inferred = infer_board_from_url(candidate_url)
+            if inferred and validate_discovered_source(*inferred):
+                return inferred
+
+            if looks_like_careers_link(candidate_url, company):
+                child_links.append(candidate_url)
+
+        for child in child_links[:1]:
+            if child not in visited and child not in queue:
+                queue.append(child)
+
+    return None
+
+
+def jobs_sync_queryset():
+    return Company.objects.filter(jobs_sync_enabled=True).annotate(
+        has_provider=Case(
+            When(jobs_provider__gt='', then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+        has_careers_url=Case(
+            When(careers_url__gt='', then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+        has_website=Case(
+            When(website__gt='', then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+        has_domain=Case(
+            When(company_domain__gt='', then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+    ).order_by(
+        '-has_provider',
+        '-has_careers_url',
+        '-has_website',
+        '-has_domain',
+        '-total_h1b_filings',
+        'name',
+    )
+
+
+def preferred_board_owner(*companies: Company) -> Company:
+    ranked = sorted(
+        companies,
+        key=lambda item: (
+            -(item.total_h1b_filings or 0),
+            len(item.name or ''),
+            item.id or 0,
+        ),
+    )
+    return ranked[0]
 
 
 def discover_job_source_for_company(company: Company, probe_network: bool = True) -> tuple[str, str] | None:
     if company.jobs_provider and company.jobs_board_token:
-        return company.jobs_provider, company.jobs_board_token
+        if not probe_network or validate_discovered_source(company.jobs_provider, company.jobs_board_token):
+            return company.jobs_provider, company.jobs_board_token
 
     known_hint = KNOWN_JOB_BOARD_HINTS.get(company.slug)
-    if known_hint:
+    if known_hint and (not probe_network or validate_discovered_source(*known_hint)):
         return known_hint
 
-    for url in [company.careers_url, company.website]:
+    direct_urls = [company.website]
+    company_domain = (company.company_domain or '').lower()
+    if company.careers_url:
+        careers_host = urlparse(company.careers_url).netloc.lower()
+        if not company_domain or company_domain in careers_host:
+            direct_urls.append(company.careers_url)
+
+    for url in direct_urls:
         inferred = infer_board_from_url(url)
-        if inferred:
+        if inferred and (not probe_network or validate_discovered_source(*inferred)):
             return inferred
 
     if not probe_network:
         return None
+
+    html_discovery = discover_job_source_from_html(company)
+    if html_discovery:
+        return html_discovery
 
     for token in board_token_candidates(company):
         if len(token) < 5:
             continue
         for provider, adapter in ADAPTERS.items():
             try:
-                payload = fetch_json(adapter.jobs_url(token), timeout=8)
+                adapter.fetch_jobs(token)
             except (HTTPError, URLError, TimeoutError, ValueError):
                 continue
-
-            if provider == 'greenhouse' and isinstance(payload, dict) and payload.get('jobs'):
-                return provider, token
-            if provider == 'lever' and isinstance(payload, list) and payload:
-                return provider, token
+            return provider, token
 
     return None
 
@@ -336,6 +608,28 @@ def bootstrap_job_source(company: Company, probe_network: bool = True) -> bool:
         return False
 
     provider, token = discovered
+    conflicting_company = Company.objects.filter(
+        jobs_provider=provider,
+        jobs_board_token=token,
+    ).exclude(pk=company.pk).order_by('-total_h1b_filings', 'id').first()
+
+    if conflicting_company:
+        winner = preferred_board_owner(company, conflicting_company)
+        if winner.pk != company.pk:
+            company.jobs_sync_error = f'Board claimed by {conflicting_company.name}'
+            company.save(update_fields=['jobs_sync_error'])
+            return False
+
+        conflicting_company.jobs_provider = ''
+        conflicting_company.jobs_board_token = ''
+        conflicting_company.jobs_sync_error = f'Board reassigned to {company.name}'
+        conflicting_company.save(update_fields=['jobs_provider', 'jobs_board_token', 'jobs_sync_error'])
+        JobPosting.objects.filter(
+            company=conflicting_company,
+            source=provider,
+            source_board=token,
+        ).update(is_active=False)
+
     company.jobs_provider = provider
     company.jobs_board_token = token
     company.jobs_last_discovered_at = timezone.now()
@@ -356,7 +650,7 @@ def bootstrap_job_source(company: Company, probe_network: bool = True) -> bool:
 
 def bootstrap_job_sources(limit: int = 250, probe_network: bool = True) -> int:
     updated = 0
-    queryset = Company.objects.filter(jobs_sync_enabled=True).order_by('-total_h1b_filings', 'name')[:limit]
+    queryset = jobs_sync_queryset()[:limit]
     for company in queryset:
         if bootstrap_job_source(company, probe_network=probe_network):
             updated += 1
@@ -369,6 +663,20 @@ def sync_company_jobs(company: Company, discover_if_missing: bool = True) -> int
         company.refresh_from_db()
 
     if not company.jobs_provider or not company.jobs_board_token:
+        return 0
+
+    conflicting_company = Company.objects.filter(
+        jobs_provider=company.jobs_provider,
+        jobs_board_token=company.jobs_board_token,
+    ).exclude(pk=company.pk).order_by('-total_h1b_filings', 'id').first()
+    if conflicting_company and preferred_board_owner(company, conflicting_company).pk != company.pk:
+        company.jobs_sync_error = f'Board claimed by {conflicting_company.name}'
+        company.save(update_fields=['jobs_sync_error'])
+        JobPosting.objects.filter(
+            company=company,
+            source=company.jobs_provider,
+            source_board=company.jobs_board_token,
+        ).update(is_active=False)
         return 0
 
     adapter = ADAPTERS.get(company.jobs_provider)
@@ -423,7 +731,7 @@ def sync_company_jobs(company: Company, discover_if_missing: bool = True) -> int
 
 
 def sync_all_company_jobs(limit: int = 250, providers: Iterable[str] | None = None) -> dict:
-    queryset = Company.objects.filter(jobs_sync_enabled=True).order_by('-total_h1b_filings', 'name')
+    queryset = jobs_sync_queryset()
     if providers:
         queryset = queryset.filter(jobs_provider__in=list(providers))
 

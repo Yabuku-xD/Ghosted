@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-03-18
+
+### Added
+- Added Ashby public job-board support alongside the existing Greenhouse and Lever ingestion paths.
+- Added careers-page and website-based board discovery so job sources can be found from company domains instead of depending almost entirely on hardcoded hints.
+
+### Changed
+- Aligned Jobs pagination with the Companies and Offers pages so the browse experience consistently serves 15 items per page with the same pagination layout.
+- Tuned background job discovery batches for automated deployment use so recurring sync stays practical without manual babysitting.
+- Updated the README to document the broader ATS coverage and automated discovery behavior.
+
+### Fixed
+- Reworked the jobs filter bar into a roomier responsive grid so the search and filter controls stay readable on desktop instead of collapsing into tiny columns.
+- Increased the jobs filter control height and spacing so inputs, selects, and the salary toggle feel consistent across desktop and mobile layouts.
+- Prevented duplicate company records from claiming the same ATS board token, which avoids double-counting jobs across near-duplicate employers.
+
 ## [0.4.1] - 2026-03-18
 
 ### Fixed

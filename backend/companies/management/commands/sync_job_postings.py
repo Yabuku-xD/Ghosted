@@ -11,7 +11,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--providers',
             nargs='*',
-            help='Optional subset of providers to sync (greenhouse lever)',
+            help='Optional subset of providers to sync (greenhouse lever ashby)',
         )
         parser.add_argument(
             '--skip-discovery',

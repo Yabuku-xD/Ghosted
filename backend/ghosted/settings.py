@@ -147,12 +147,12 @@ CELERY_BEAT_SCHEDULE = {
     'discover-job-sources-nightly': {
         'task': 'companies.tasks.discover_job_sources_task',
         'schedule': crontab(minute=15, hour=2),
-        'args': (250,),
+        'args': (100,),
     },
     'sync-job-postings-hourly': {
         'task': 'companies.tasks.sync_job_postings_task',
         'schedule': crontab(minute=5),
-        'args': (250,),
+        'args': (100,),
     },
     'deactivate-stale-jobs-nightly': {
         'task': 'companies.tasks.deactivate_stale_jobs_task',

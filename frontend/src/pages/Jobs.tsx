@@ -515,31 +515,36 @@ function Jobs() {
               })}
             </div>
 
-            <div className="pagination-bar mt-6 sm:mt-8">
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={!hasPrevious}
-                className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </button>
+            {totalPages > 1 ? (
+              <div className="flex flex-col items-center justify-center gap-3 pt-8 mt-8 border-t-2 border-border sm:flex-row sm:gap-4">
+                <button
+                  type="button"
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  disabled={!hasPrevious}
+                  className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </button>
 
-              <div className="pagination-meta">
-                Page {page} of {totalPages}
+                <div className="flex items-center gap-2 font-mono text-sm">
+                  <span className="text-secondary">Page</span>
+                  <span className="font-bold text-primary">{page}</span>
+                  <span className="text-secondary">of</span>
+                  <span className="font-bold text-primary">{totalPages}</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  disabled={!hasNext}
+                  className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setPage((current) => current + 1)}
-                disabled={!hasNext}
-                className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
+            ) : null}
           </>
         )}
       </div>

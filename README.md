@@ -17,7 +17,7 @@ Visa-aware job intelligence platform with H-1B data, live jobs, salary insights,
 
 Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is now built around five public workflows: company discovery, live jobs, salary intelligence, company comparison, and prediction tools for compensation and sponsorship odds.
 
-Current tracked release: `v0.4.0`
+Current tracked release: `v0.5.0`
 
 ![Ghosted homepage](assets/home.png)
 
@@ -49,7 +49,7 @@ Core product capabilities:
 - Live jobs browsing with source-linked outbound apply flows
 - Offer browsing with trust metadata and responsive pagination
 - Domain and logo enrichment with graceful fallback rendering
-- Automated ATS sync from supported public job boards
+- Automated ATS sync and discovery from supported public job boards
 - Side-by-side company comparison
 - Salary prediction and sponsorship-odds tools
 
@@ -141,7 +141,8 @@ These commands are useful when you want to:
 
 - load multiple DOL disclosure files
 - enrich company domains and branding metadata
-- discover and refresh jobs from supported public ATS boards
+- discover and refresh jobs from supported Greenhouse, Lever, and Ashby boards
+- let the app infer public job boards from company websites and careers pages
 
 After deployment, recurring job discovery and refresh are scheduled through Celery Beat so the jobs surface can keep itself fresh without manual reruns.
 
