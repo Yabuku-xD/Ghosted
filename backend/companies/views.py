@@ -5,8 +5,8 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Case, Count, IntegerField, Max, Min, Q, Value, When
-from django.db.models.functions import Lower
+from django.db.models import Case, Count, IntegerField, Max, Min, OuterRef, Q, Subquery, Value, When
+from django.db.models.functions import Coalesce, Lower
 from django.utils import timezone
 from .models import Company, CompanyBenefit, CompanyReview, JobPosting
 from .serializers import (
@@ -27,9 +27,9 @@ def is_truthy(value):
 
 class CompanyViewSet(viewsets.ModelViewSet):
     class CompanyPagination(PageNumberPagination):
-        page_size = 15
+        page_size = 10
         page_size_query_param = 'page_size'
-        max_page_size = 15
+        max_page_size = 10
 
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
@@ -84,11 +84,55 @@ class CompanyViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(job_postings__is_active=True).distinct()
 
         if self.action == 'list' or 'offer_count' in ordering or 'review_count' in ordering or 'active_job_count' in ordering:
+            offer_count_subquery = (
+                Offer.objects.filter(company_id=OuterRef('pk'))
+                .values('company_id')
+                .annotate(total=Count('id'))
+                .values('total')[:1]
+            )
+            review_count_subquery = (
+                CompanyReview.objects.filter(company_id=OuterRef('pk'))
+                .values('company_id')
+                .annotate(total=Count('id'))
+                .values('total')[:1]
+            )
+            active_job_count_subquery = (
+                JobPosting.objects.filter(company_id=OuterRef('pk'), is_active=True)
+                .values('company_id')
+                .annotate(total=Count('id'))
+                .values('total')[:1]
+            )
+            benefit_count_subquery = (
+                CompanyBenefit.objects.filter(company_id=OuterRef('pk'))
+                .values('company_id')
+                .annotate(total=Count('id'))
+                .values('total')[:1]
+            )
+
             queryset = queryset.annotate(
-                offer_count=Count('offers', distinct=True),
-                review_count=Count('reviews', distinct=True),
-                active_job_count=Count('job_postings', filter=Q(job_postings__is_active=True), distinct=True),
-                benefit_count=Count('benefits', distinct=True),
+                offer_count=Coalesce(Subquery(offer_count_subquery, output_field=IntegerField()), Value(0)),
+                review_count=Coalesce(Subquery(review_count_subquery, output_field=IntegerField()), Value(0)),
+                active_job_count=Coalesce(Subquery(active_job_count_subquery, output_field=IntegerField()), Value(0)),
+                benefit_count=Coalesce(Subquery(benefit_count_subquery, output_field=IntegerField()), Value(0)),
+            ).only(
+                'id',
+                'name',
+                'slug',
+                'logo_url',
+                'logo_provider',
+                'logo_confidence',
+                'website',
+                'company_domain',
+                'careers_url',
+                'jobs_provider',
+                'visa_fair_score',
+                'h1b_approval_rate',
+                'industry',
+                'headquarters',
+                'company_size',
+                'total_h1b_filings',
+                'first_filing_year',
+                'last_filing_year',
             )
 
         ordering_map = {
@@ -332,9 +376,9 @@ class CompanyReviewViewSet(viewsets.ModelViewSet):
 
 class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
     class JobPagination(PageNumberPagination):
-        page_size = 15
+        page_size = 10
         page_size_query_param = 'page_size'
-        max_page_size = 15
+        max_page_size = 10
 
     serializer_class = JobPostingSerializer
     pagination_class = JobPagination
@@ -342,9 +386,42 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ['source', 'remote_policy', 'visa_sponsorship_signal', 'company']
 
     def get_queryset(self):
-        queryset = JobPosting.objects.filter(is_active=True).select_related('company').annotate(
+        offer_count_subquery = (
+            Offer.objects.filter(company_id=OuterRef('company_id'), is_verified=True)
+            .values('company_id')
+            .annotate(total=Count('id'))
+            .values('total')[:1]
+        )
+
+        queryset = JobPosting.objects.filter(is_active=True).select_related('company').only(
+            'id',
+            'company_id',
+            'title',
+            'team',
+            'location',
+            'remote_policy',
+            'employment_type',
+            'url',
+            'source',
+            'source_board',
+            'description',
+            'salary_min',
+            'salary_max',
+            'currency',
+            'posted_at',
+            'last_seen_at',
+            'visa_sponsorship_signal',
+            'is_active',
+            'company__name',
+            'company__slug',
+            'company__logo_url',
+            'company__company_domain',
+            'company__visa_fair_score',
+            'company__h1b_approval_rate',
+            'company__total_h1b_filings',
+        ).annotate(
             company_name_lower=Lower('company__name'),
-            company_offer_count=Count('company__offers', filter=Q(company__offers__is_verified=True), distinct=True),
+            company_offer_count=Coalesce(Subquery(offer_count_subquery, output_field=IntegerField()), Value(0)),
         )
 
         params = self.request.query_params

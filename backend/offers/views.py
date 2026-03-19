@@ -15,9 +15,9 @@ def is_truthy(value):
 
 class OfferViewSet(viewsets.ModelViewSet):
     class OfferPagination(PageNumberPagination):
-        page_size = 15
+        page_size = 10
         page_size_query_param = 'page_size'
-        max_page_size = 15
+        max_page_size = 10
 
     queryset = Offer.objects.filter(is_verified=True)
     pagination_class = OfferPagination

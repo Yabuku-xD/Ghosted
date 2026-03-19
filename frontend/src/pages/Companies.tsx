@@ -1,5 +1,5 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -18,9 +18,10 @@ import { Badge, CompanyLogo, EmptyState, Select } from '../components/ui';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import type { Company } from '../types';
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
 
 function Companies() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [minScore, setMinScore] = useState('');
   const [sponsorsOnly, setSponsorsOnly] = useState(false);
@@ -65,6 +66,44 @@ function Companies() {
   const totalCountLabel = isLoading && !data
     ? 'Loading companies...'
     : `${totalCount.toLocaleString()} matching companies`;
+
+  useEffect(() => {
+    if (hasNext) {
+      const nextParams = { ...queryParams, page: page + 1 };
+      void queryClient.prefetchQuery({
+        queryKey: ['companies', nextParams],
+        queryFn: () => companiesApi.list(nextParams),
+      });
+    }
+
+    if (hasPrevious && page > 1) {
+      const previousParams = { ...queryParams, page: page - 1 };
+      void queryClient.prefetchQuery({
+        queryKey: ['companies', previousParams],
+        queryFn: () => companiesApi.list(previousParams),
+      });
+    }
+  }, [hasNext, hasPrevious, page, queryClient, queryParams]);
+
+  const goToPreviousPage = () => {
+    if (!hasPrevious) {
+      return;
+    }
+
+    startTransition(() => {
+      setPage((current) => Math.max(1, current - 1));
+    });
+  };
+
+  const goToNextPage = () => {
+    if (!hasNext) {
+      return;
+    }
+
+    startTransition(() => {
+      setPage((current) => Math.min(totalPages, current + 1));
+    });
+  };
 
   const getScoreBadge = (score: number) => {
     if (score >= 80) return { variant: 'accent' as const, label: 'Excellent' };
@@ -383,7 +422,7 @@ function Companies() {
             {totalPages > 1 ? (
               <div className="flex flex-col items-center justify-center gap-3 mt-8 pt-8 border-t-2 border-border sm:flex-row sm:gap-4">
                 <button
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  onClick={goToPreviousPage}
                   disabled={!hasPrevious}
                   className="btn btn-secondary flex w-full items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >
@@ -399,7 +438,7 @@ function Companies() {
                 </div>
 
                 <button
-                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  onClick={goToNextPage}
                   disabled={!hasNext}
                   className="btn btn-secondary flex w-full items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.3] - 2026-03-18
+
+### Changed
+- Standardized the paginated list surfaces to 10 items per page across Companies, Offers, and Jobs.
+
+### Fixed
+- Added next-page and previous-page prefetching plus non-blocking page transitions on the main paginated pages so clicking `Next` feels much faster once the current page settles.
+- Reworked the Companies list query to use lighter company-level subqueries instead of heavier multi-join count annotations, which substantially improves directory pagination responsiveness.
+- Trimmed the Jobs list query and replaced the expensive salary-record join count with a cheaper company-level subquery to reduce page-fetch overhead while keeping the ranking data intact.
+
 ## [0.5.2] - 2026-03-18
 
 ### Fixed

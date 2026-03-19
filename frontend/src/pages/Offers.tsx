@@ -1,5 +1,5 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Building2,
   ChevronLeft,
@@ -18,9 +18,10 @@ import { Badge, CompanyLogo, EmptyState, Select } from '../components/ui';
 import { StatBoxSkeleton, TableRowSkeleton } from '../components/ui/Skeleton';
 import type { Offer } from '../types';
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
 
 function Offers() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [minSalary, setMinSalary] = useState('');
   const [visaType, setVisaType] = useState('');
@@ -72,6 +73,44 @@ function Offers() {
   const totalCountLabel = isLoading && !data
     ? 'Loading offers...'
     : `${totalCount.toLocaleString()} matching offers`;
+
+  useEffect(() => {
+    if (hasNext) {
+      const nextParams = { ...listParams, page: page + 1 };
+      void queryClient.prefetchQuery({
+        queryKey: ['offers', nextParams],
+        queryFn: () => offersApi.list(nextParams),
+      });
+    }
+
+    if (hasPrevious && page > 1) {
+      const previousParams = { ...listParams, page: page - 1 };
+      void queryClient.prefetchQuery({
+        queryKey: ['offers', previousParams],
+        queryFn: () => offersApi.list(previousParams),
+      });
+    }
+  }, [hasNext, hasPrevious, listParams, page, queryClient]);
+
+  const goToPreviousPage = () => {
+    if (!hasPrevious) {
+      return;
+    }
+
+    startTransition(() => {
+      setPage((current) => Math.max(1, current - 1));
+    });
+  };
+
+  const goToNextPage = () => {
+    if (!hasNext) {
+      return;
+    }
+
+    startTransition(() => {
+      setPage((current) => Math.min(totalPages, current + 1));
+    });
+  };
 
   const visaTypes = [
     { value: '', label: 'All Visa Types' },
@@ -444,7 +483,7 @@ function Offers() {
             {totalPages > 1 ? (
               <div className="flex flex-col items-center justify-center gap-3 pt-8 mt-8 border-t-2 border-border sm:flex-row sm:gap-4">
                 <button
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  onClick={goToPreviousPage}
                   disabled={!hasPrevious}
                   className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >
@@ -460,7 +499,7 @@ function Offers() {
                 </div>
 
                 <button
-                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  onClick={goToNextPage}
                   disabled={!hasNext}
                   className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >

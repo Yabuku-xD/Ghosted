@@ -1,6 +1,6 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -19,9 +19,10 @@ import { jobsApi } from '../api/services';
 import { Badge, Card, CardBody, CompanyLogo, EmptyState, Select, Spinner } from '../components/ui';
 import type { JobPosting } from '../types';
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
 
 function Jobs() {
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [location, setLocation] = useState(searchParams.get('location') || '');
@@ -130,6 +131,24 @@ function Jobs() {
   const hasNext = !!data?.next;
   const hasPrevious = !!data?.previous;
 
+  useEffect(() => {
+    if (hasNext) {
+      const nextParams = { ...listParams, page: page + 1 };
+      void queryClient.prefetchQuery({
+        queryKey: ['jobs', nextParams],
+        queryFn: () => jobsApi.list(nextParams),
+      });
+    }
+
+    if (hasPrevious && page > 1) {
+      const previousParams = { ...listParams, page: page - 1 };
+      void queryClient.prefetchQuery({
+        queryKey: ['jobs', previousParams],
+        queryFn: () => jobsApi.list(previousParams),
+      });
+    }
+  }, [hasNext, hasPrevious, listParams, page, queryClient]);
+
   const sourceOptions = [
     { value: '', label: 'All Sources' },
     ...(statistics?.by_source || []).map((entry) => ({
@@ -149,6 +168,26 @@ function Jobs() {
     setPostedWithinDays('');
     setCompanySlug('');
     setPage(1);
+  };
+
+  const goToPreviousPage = () => {
+    if (!hasPrevious) {
+      return;
+    }
+
+    startTransition(() => {
+      setPage((current) => Math.max(1, current - 1));
+    });
+  };
+
+  const goToNextPage = () => {
+    if (!hasNext) {
+      return;
+    }
+
+    startTransition(() => {
+      setPage((current) => Math.min(totalPages, current + 1));
+    });
   };
 
   const formatMoney = (value?: number | null) => {
@@ -528,7 +567,7 @@ function Jobs() {
               <div className="flex flex-col items-center justify-center gap-3 pt-8 mt-8 border-t-2 border-border sm:flex-row sm:gap-4">
                 <button
                   type="button"
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  onClick={goToPreviousPage}
                   disabled={!hasPrevious}
                   className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >
@@ -545,7 +584,7 @@ function Jobs() {
 
                 <button
                   type="button"
-                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  onClick={goToNextPage}
                   disabled={!hasNext}
                   className="flex w-full items-center justify-center gap-2 btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                 >
