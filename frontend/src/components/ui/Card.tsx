@@ -5,6 +5,7 @@ interface CardProps {
   className?: string;
   static?: boolean;
   bento?: boolean;
+  glass?: boolean;
   onClick?: () => void;
   as?: 'div' | 'article' | 'section';
 }
@@ -14,10 +15,14 @@ export function Card({
   className = '',
   static: isStatic = false,
   bento = false,
+  glass = false,
   onClick,
   as: Component = 'div',
 }: CardProps) {
-  const baseClass = bento ? 'card-bento' : isStatic ? 'card-static' : 'card';
+  let baseClass = 'card';
+  if (bento) baseClass = 'card-bento';
+  else if (glass) baseClass = 'card-glass';
+  else if (isStatic) baseClass = 'card-static';
 
   return (
     <Component
@@ -39,7 +44,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className = '' }: CardHeaderProps) {
   return (
-    <div className={`p-6 border-b-2 border-border-light ${className}`}>
+    <div className={`p-6 sm:p-8 border-b border-border ${className}`}>
       {children}
     </div>
   );
@@ -51,7 +56,7 @@ interface CardBodyProps {
 }
 
 export function CardBody({ children, className = '' }: CardBodyProps) {
-  return <div className={`p-6 ${className}`}>{children}</div>;
+  return <div className={`p-6 sm:p-8 ${className}`}>{children}</div>;
 }
 
 interface CardFooterProps {
@@ -61,7 +66,7 @@ interface CardFooterProps {
 
 export function CardFooter({ children, className = '' }: CardFooterProps) {
   return (
-    <div className={`p-6 border-t-2 border-border-light ${className}`}>
+    <div className={`p-6 sm:p-8 border-t border-border ${className}`}>
       {children}
     </div>
   );

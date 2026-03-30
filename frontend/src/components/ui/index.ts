@@ -16,12 +16,26 @@ export { Avatar } from './Avatar';
 export { Progress } from './Progress';
 export { Alert } from './Alert';
 export { CompanyLogo } from './CompanyLogo';
+export { getCompanyLogoUrl } from './logoUtils';
 
 // Feedback components
-export { ToastProvider, useToast } from './Toast';
+export { ToastProvider } from './Toast';
+export { useToast } from './useToast';
 export { Spinner, LoadingOverlay } from './Spinner';
 export { Skeleton, CardSkeleton, TableRowSkeleton, StatBoxSkeleton } from './Skeleton';
 export { EmptyState } from './EmptyState';
 
 // Navigation
 export { Tabs, TabList, Tab, TabPanel } from './Tabs';
+
+// Animations
+export {
+  AnimatedCard,
+  StaggerContainer,
+  StaggerItem,
+  AnimatedNumber,
+  LiveIndicator,
+  PageTransition,
+  MagneticButton,
+  HoverLift,
+} from './animations';

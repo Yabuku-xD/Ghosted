@@ -1,41 +1,80 @@
-# OS and editor files
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-.playwright-mcp/
-
-# Environment files
+# Environment variables
 .env
 .env.local
 .env.*.local
-backend/.env
-frontend/.env
+*.env
 
-# Python artifacts
-**/__pycache__/
+# Python
+__pycache__/
 *.py[cod]
-*.sqlite3
-.pytest_cache/
-.mypy_cache/
-htmlcov/
-.coverage
-backend/venv/
-.venv/
-venv/
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+*.egg
 
-# Node artifacts
-frontend/node_modules/
-frontend/dist/
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/mediafiles/
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.npm
+.yarn-integrity
 
-# Local data and logs
-backend/data/*.csv
-backend/data/*.xlsx
-!backend/data/README.md
-backend/celerybeat-schedule
-backend/gunicorn.ctl
-*.log
+# Frontend build
+frontend/dist/
+frontend/.svelte-kit/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Local data (should contain actual H1B data, credentials)
+backend/data/
+
+# Temporary files and sessions
 tmp/
+*.tmp
+*.temp
+*.swp
+
+# Database files
+*.db
+*.sqlite
+.chunkhound.db
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Backup files
+*.bak
+*.backup

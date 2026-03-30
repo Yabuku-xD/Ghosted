@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 interface SEOProps {
   title?: string;
@@ -26,7 +26,7 @@ function SEO({
   url,
   type = 'website',
 }: SEOProps) {
-  const seo = {
+  const seo = useMemo(() => ({
     browserTitle: defaultSEO.title,
     metaTitle: title ? `${title} | Ghosted` : defaultSEO.title,
     description: description || defaultSEO.description,
@@ -34,11 +34,11 @@ function SEO({
     image: image || defaultSEO.image,
     url: url || defaultSEO.url,
     type,
-  };
+  }), [description, image, keywords, title, type, url]);
 
   useEffect(() => {
     // Update document title
-    document.title = seo.browserTitle;
+    document.title = seo.metaTitle;
 
     // Update or create meta tags
     const updateMeta = (name: string, content: string, property = false) => {

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Calculator, MapPin, Briefcase, GraduationCap, TrendingUp } from 'lucide-react';
 import { predictionsApi } from '../api/services';
 import { Button, Card, CardBody, Progress } from '../components/ui';
-import { useToast } from '../components/ui/Toast';
+import { useToast } from '../components/ui/useToast';
 import type { PredictionResult, SalaryPredictionInput } from '../types';
 
 const salarySchema = z.object({
@@ -49,7 +49,7 @@ function SalaryPredictor() {
       const result = await predictionsApi.predict(data as SalaryPredictionInput);
       setPrediction(result);
       toast.success('Salary prediction calculated!', 'Results ready');
-    } catch (error) {
+    } catch {
       toast.error('Failed to calculate prediction. Please try again.', 'Error');
     }
   };

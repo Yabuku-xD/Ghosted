@@ -1,4 +1,4 @@
-import { startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Building2,
@@ -33,7 +33,9 @@ function Offers() {
   const deferredLocation = useDeferredValue(location.trim());
 
   useEffect(() => {
-    setPage(1);
+    startTransition(() => {
+      setPage(1);
+    });
   }, [deferredLocation, deferredSearch, minSalary, source, visaType]);
 
   const listParams = useMemo(() => ({
@@ -74,7 +76,7 @@ function Offers() {
     ? 'Loading offers...'
     : `${totalCount.toLocaleString()} matching offers`;
 
-  const prefetchPage = (targetPage: number) => {
+  const prefetchPage = useCallback((targetPage: number) => {
     if (targetPage < 1 || targetPage > totalPages || targetPage === page) {
       return;
     }
@@ -84,7 +86,7 @@ function Offers() {
       queryKey: ['offers', targetParams],
       queryFn: () => offersApi.list(targetParams),
     });
-  };
+  }, [page, queryClient, listParams, totalPages]);
 
   useEffect(() => {
     if (hasNext) {
@@ -94,7 +96,7 @@ function Offers() {
     if (hasPrevious && page > 1) {
       prefetchPage(page - 1);
     }
-  }, [hasNext, hasPrevious, listParams, page, queryClient, totalPages]);
+  }, [hasNext, hasPrevious, page, prefetchPage]);
 
   const goToPreviousPage = () => {
     if (!hasPrevious) {
@@ -166,7 +168,9 @@ function Offers() {
 
   useEffect(() => {
     if (!hasCommunityData && source === 'community') {
-      setSource('');
+      startTransition(() => {
+        setSource('');
+      });
     }
   }, [hasCommunityData, source]);
 

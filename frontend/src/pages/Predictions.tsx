@@ -7,12 +7,20 @@ import {
   Sparkles,
   TrendingUp,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import SalaryPredictor from '../components/SalaryPredictor';
 import SponsorshipOdds from '../components/SponsorshipOdds';
 import { Tabs, TabList, Tab, TabPanel } from '../components/ui';
+import { companiesApi } from '../api/services';
 
 function Predictions() {
   const [activeTab, setActiveTab] = useState('salary');
+
+  const { data: insights } = useQuery({
+    queryKey: ['insights'],
+    queryFn: () => companiesApi.getInsights(),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const heroContent = {
     salary: {
@@ -29,7 +37,7 @@ function Predictions() {
       metrics: [
         {
           label: 'Ground Truth',
-          value: '119K+',
+          value: insights ? `${(insights.total_offers / 1000).toFixed(0)}K+` : '—',
           detail: 'historical salary filings behind the current pay model',
           icon: Database,
           toneClassName: 'text-accent bg-accent-light',

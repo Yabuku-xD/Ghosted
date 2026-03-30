@@ -65,7 +65,7 @@ function OfferForm({ onClose, onSubmit }: OfferFormProps) {
     onSubmit(formData);
   };
 
-  const updateField = (field: keyof OfferFormData, value: any) => {
+  const updateField = (field: keyof OfferFormData, value: string | number | boolean | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

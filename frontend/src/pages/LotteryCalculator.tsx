@@ -1,32 +1,95 @@
 import { useState } from 'react';
 import { Calculator, AlertCircle, CheckCircle, Info, GraduationCap, Globe } from 'lucide-react';
-import { Button, Card, CardBody } from '../components/ui';
+import { useMutation } from '@tanstack/react-query';
+import { lotteryApi } from '../api/services';
+import { Button, Card, CardBody, useToast } from '../components/ui';
+import type { LotteryInput, LotteryResult } from '../types';
+
+const JOB_CATEGORIES = [
+  { value: 'stem', label: 'STEM Occupation' },
+  { value: 'healthcare', label: 'Healthcare' },
+  { value: 'business', label: 'Business/Finance' },
+  { value: 'education', label: 'Education' },
+  { value: 'other', label: 'Other' },
+];
+
+const EMPLOYER_TYPES = [
+  { value: 'large_cap', label: 'Large Cap (Fortune 500)' },
+  { value: 'mid_cap', label: 'Mid Cap' },
+  { value: 'startup', label: 'Startup' },
+  { value: 'nonprofit', label: 'Non-Profit/Academic' },
+];
+
+const COUNTRY_WAIT_TIMES: Record<string, string> = {
+  india: '8-10 years',
+  china: '4-6 years',
+  canada: 'Current',
+  mexico: 'Current',
+  uk: 'Current',
+  other: 'Current',
+};
+
+const COUNTRIES = [
+  { value: 'india', label: 'India' },
+  { value: 'china', label: 'China' },
+  { value: 'canada', label: 'Canada' },
+  { value: 'mexico', label: 'Mexico' },
+  { value: 'uk', label: 'United Kingdom' },
+  { value: 'other', label: 'Other/Rest of World' },
+];
 
 function LotteryCalculator() {
+  const toast = useToast();
   const [formData, setFormData] = useState({
     country: '',
     hasMasters: false,
     usMasters: false,
-    fiscalYear: '2026',
+    jobCategory: 'stem',
+    employerType: 'large_cap',
   });
 
   const [showResults, setShowResults] = useState(false);
+  const [lotteryResult, setLotteryResult] = useState<LotteryResult | null>(null);
 
-  const countries = [
-    { value: 'india', label: 'India', waitTime: '8-10 years' },
-    { value: 'china', label: 'China', waitTime: '4-6 years' },
-    { value: 'canada', label: 'Canada', waitTime: 'Current' },
-    { value: 'mexico', label: 'Mexico', waitTime: 'Current' },
-    { value: 'uk', label: 'United Kingdom', waitTime: 'Current' },
-    { value: 'other', label: 'Other/Rest of World', waitTime: 'Current' },
-  ];
+  const mutation = useMutation({
+    mutationFn: (data: LotteryInput) => lotteryApi.calculate(data),
+    onSuccess: (result) => {
+      setLotteryResult(result);
+      setShowResults(true);
+      toast.success('Lottery odds calculated!', 'Results ready');
+    },
+    onError: () => {
+      toast.error('Failed to calculate lottery odds. Please try again.', 'Calculation Error');
+    },
+  });
 
   const handleCalculate = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowResults(true);
+    if (!formData.country) {
+      toast.error('Please select your country of birth.', 'Country Required');
+      return;
+    }
+    
+    const input: LotteryInput = {
+      country_of_chargeability: formData.country,
+      has_masters: formData.hasMasters,
+      job_category: formData.jobCategory,
+      employer_type: formData.employerType,
+    };
+    
+    mutation.mutate(input);
   };
 
-  const country = countries.find((c) => c.value === formData.country);
+  const waitTime = COUNTRY_WAIT_TIMES[formData.country] || 'Current';
+  const overallProbability = lotteryResult?.overall_probability 
+    ? (lotteryResult.overall_probability * 100).toFixed(1) 
+    : null;
+  const mastersProbability = lotteryResult?.masters_cap_probability 
+    ? (lotteryResult.masters_cap_probability * 100).toFixed(1) 
+    : null;
+  const regularProbability = lotteryResult?.regular_cap_probability 
+    ? (lotteryResult.regular_cap_probability * 100).toFixed(1) 
+    : null;
 
   return (
     <div className="bg-bg-primary min-h-screen">
@@ -66,25 +129,11 @@ function LotteryCalculator() {
                     required
                   >
                     <option value="">Select your country</option>
-                    {countries.map((c) => (
+                    {COUNTRIES.map((c) => (
                       <option key={c.value} value={c.value}>
                         {c.label}
                       </option>
                     ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="fiscalYear" className="label">Fiscal Year</label>
-                  <select
-                    id="fiscalYear"
-                    value={formData.fiscalYear}
-                    onChange={(e) => setFormData({ ...formData, fiscalYear: e.target.value })}
-                    className="select"
-                  >
-                    <option value="2026">FY 2026 (2025 Lottery)</option>
-                    <option value="2025">FY 2025</option>
-                    <option value="2024">FY 2024</option>
                   </select>
                 </div>
 
@@ -115,7 +164,42 @@ function LotteryCalculator() {
                   </Card>
                 )}
 
-                <Button type="submit" variant="primary" fullWidth size="lg">
+                <div>
+                  <label htmlFor="jobCategory" className="label">Job Category</label>
+                  <select
+                    id="jobCategory"
+                    value={formData.jobCategory}
+                    onChange={(e) => setFormData({ ...formData, jobCategory: e.target.value })}
+                    className="select"
+                  >
+                    {JOB_CATEGORIES.map((cat) => (
+                      <option key={cat.value} value={cat.value}>{cat.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="employerType" className="label">Employer Type</label>
+                  <select
+                    id="employerType"
+                    value={formData.employerType}
+                    onChange={(e) => setFormData({ ...formData, employerType: e.target.value })}
+                    className="select"
+                  >
+                    {EMPLOYER_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  fullWidth 
+                  size="lg"
+                  loading={mutation.isPending}
+                  disabled={!formData.country}
+                >
                   Calculate My Odds
                 </Button>
               </form>
@@ -123,31 +207,53 @@ function LotteryCalculator() {
           </Card>
 
           {/* Results */}
-          {showResults && country ? (
+          {showResults && lotteryResult ? (
             <div className="space-y-6">
               <Card static>
                 <CardBody className="p-6 bg-accent-light">
                   <h3 className="headline-sm mb-4">Your Lottery Odds</h3>
 
                   <div className="text-center mb-6">
-                    <div className="headline-xl text-accent mb-2">25.6%</div>
+                    <div className="headline-xl text-accent mb-2">{overallProbability}%</div>
                     <div className="font-mono text-sm text-secondary uppercase">Overall Selection Probability</div>
                   </div>
 
                   <div className="space-y-3">
-                    {formData.usMasters && (
+                    {formData.hasMasters && mastersProbability && (
                       <div className="flex justify-between items-center p-3 bg-white border-2 border-border">
                         <span className="text-primary">Masters Cap</span>
-                        <span className="font-mono font-bold text-success">35.2%</span>
+                        <span className="font-mono font-bold text-success">{mastersProbability}%</span>
                       </div>
                     )}
-                    <div className="flex justify-between items-center p-3 bg-white border-2 border-border">
-                      <span className="text-primary">Regular Cap</span>
-                      <span className="font-mono font-bold text-warning">20.8%</span>
-                    </div>
+                    {regularProbability && (
+                      <div className="flex justify-between items-center p-3 bg-white border-2 border-border">
+                        <span className="text-primary">Regular Cap</span>
+                        <span className="font-mono font-bold text-warning">{regularProbability}%</span>
+                      </div>
+                    )}
                   </div>
                 </CardBody>
               </Card>
+
+              {lotteryResult.notes && lotteryResult.notes.length > 0 && (
+                <Card static>
+                  <CardBody className="p-6">
+                    <div className="flex items-start gap-3">
+                      <Info className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold mb-3 text-primary">Notes</h4>
+                        <ul className="space-y-2 text-sm text-secondary">
+                          {lotteryResult.notes.map((note, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span>{note}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </CardBody>
+                </Card>
+              )}
 
               <Card static>
                 <CardBody className="p-6">
@@ -156,12 +262,12 @@ function LotteryCalculator() {
                     <Globe className="w-8 h-8 text-accent" />
                     <div>
                       <div className="font-mono text-sm uppercase text-secondary">Priority Date Wait Time</div>
-                      <div className="headline-md text-accent">{country.waitTime}</div>
+                      <div className="headline-md text-accent">{waitTime}</div>
                     </div>
                   </Card>
                   <p className="mt-4 text-sm text-secondary">
                     This is the current estimated wait time for employment-based green cards
-                    for {country.label}. Times vary by category (EB-1, EB-2, EB-3).
+                    for {formData.country === 'india' ? 'India' : formData.country === 'china' ? 'China' : 'your country'}. Times vary by category (EB-1, EB-2, EB-3).
                   </p>
                 </CardBody>
               </Card>
@@ -191,7 +297,7 @@ function LotteryCalculator() {
                 </CardBody>
               </Card>
             </div>
-          ) : (
+          ) : !mutation.isPending ? (
             <Card static>
               <div className="flex items-center justify-center min-h-96">
                 <div className="text-center">
@@ -200,7 +306,7 @@ function LotteryCalculator() {
                 </div>
               </div>
             </Card>
-          )}
+          ) : null}
         </div>
 
         {/* Historical Data */}

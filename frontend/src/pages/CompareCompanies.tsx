@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useId, useRef, useState } from 'react';
+import { startTransition, useDeferredValue, useEffect, useId, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeftRight, ArrowRight, Building2, Search, Scale, Sparkles } from 'lucide-react';
@@ -218,37 +218,49 @@ function CompareCompanies() {
 
   useEffect(() => {
     if (selectedLeftCompany && !leftSearch.trim()) {
-      setLeftSearch(selectedLeftCompany.name);
+      startTransition(() => {
+        setLeftSearch(selectedLeftCompany.name);
+      });
     }
   }, [leftSearch, selectedLeftCompany]);
 
   useEffect(() => {
     if (selectedRightCompany && !rightSearch.trim()) {
-      setRightSearch(selectedRightCompany.name);
+      startTransition(() => {
+        setRightSearch(selectedRightCompany.name);
+      });
     }
   }, [rightSearch, selectedRightCompany]);
 
   useEffect(() => {
     if (!leftSlug) {
-      setLeftPreview(null);
+      startTransition(() => {
+        setLeftPreview(null);
+      });
     }
   }, [leftSlug]);
 
   useEffect(() => {
     if (!rightSlug) {
-      setRightPreview(null);
+      startTransition(() => {
+        setRightPreview(null);
+      });
     }
   }, [rightSlug]);
 
   useEffect(() => {
     if (leftCompany) {
-      setLeftPreview(leftCompany);
+      startTransition(() => {
+        setLeftPreview(leftCompany);
+      });
     }
   }, [leftCompany]);
 
   useEffect(() => {
     if (rightCompany) {
-      setRightPreview(rightCompany);
+      startTransition(() => {
+        setRightPreview(rightCompany);
+      });
     }
   }, [rightCompany]);
 

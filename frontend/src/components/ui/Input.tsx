@@ -36,7 +36,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           </div>
         )}
         {helperText && !error && !success && (
-          <p className="mt-2 text-sm text-muted">{helperText}</p>
+          <p className="mt-2 text-sm text-text-muted">{helperText}</p>
         )}
       </div>
     );

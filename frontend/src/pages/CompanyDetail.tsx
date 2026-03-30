@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   Award,
@@ -15,10 +16,47 @@ import {
   MessageSquare,
   Scale,
   TrendingUp,
+  Users,
+  Target,
+  Sparkles,
+  ChevronRight,
+  Star,
+  BarChart3,
+  BriefcaseBusiness,
+  Shield,
+  Zap,
+  Calendar,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { companiesApi, offersApi } from '../api/services';
-import { Badge, Card, CardBody, Progress, EmptyState, Spinner, CompanyLogo } from '../components/ui';
+import { Badge, Progress, CompanyLogo } from '../components/ui';
 import type { CompanyBenefit, JobPosting, Offer } from '../types';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
+const bentoItemVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+  },
+};
 
 function CompanyDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -54,9 +92,9 @@ function CompanyDetail() {
   });
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-success';
-    if (score >= 60) return 'text-warning';
-    return 'text-secondary';
+    if (score >= 80) return 'text-emerald-400';
+    if (score >= 60) return 'text-amber-400';
+    return 'text-text-muted';
   };
 
   const getScoreBadge = (score: number) => {
@@ -80,10 +118,7 @@ function CompanyDetail() {
   };
 
   const formatDate = (value?: string | null) => {
-    if (!value) {
-      return 'Unavailable';
-    }
-
+    if (!value) return 'Unavailable';
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
@@ -94,7 +129,7 @@ function CompanyDetail() {
   if (companyLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg-primary">
-        <Spinner size="lg" />
+        <div className="w-12 h-12 border-2 border-bg-tertiary border-t-accent rounded-full animate-spin" />
       </div>
     );
   }
@@ -102,15 +137,13 @@ function CompanyDetail() {
   if (!company) {
     return (
       <div className="container py-20">
-        <EmptyState
-          icon={Building2}
-          title="Company not found"
-          action={
-            <Link to="/companies">
-              <Badge variant="accent">Back to Companies</Badge>
-            </Link>
-          }
-        />
+        <div className="card-static py-16 text-center">
+          <Building2 className="w-16 h-16 mx-auto mb-4 text-text-muted" />
+          <h2 className="text-xl font-semibold text-text-primary mb-2">Company not found</h2>
+          <Link to="/companies" className="btn btn-secondary mt-4">
+            Back to Companies
+          </Link>
+        </div>
       </div>
     );
   }
@@ -121,18 +154,19 @@ function CompanyDetail() {
   const industryLabel = company.industry_display || company.industry;
   const companySizeLabel = company.company_size_display || company.company_size;
   const hasBenefitsData = (company.benefit_count || 0) > 0;
+  
   const coverageLabel = company.first_filing_year && company.last_filing_year
     ? company.first_filing_year === company.last_filing_year
       ? `FY${company.last_filing_year}`
       : `FY${company.first_filing_year}-FY${company.last_filing_year}`
     : 'Coverage pending';
+
   const activeYearsLabel = company.first_filing_year && company.last_filing_year
     ? company.first_filing_year === company.last_filing_year
       ? `${company.last_filing_year}`
       : `${company.first_filing_year}-${company.last_filing_year}`
-    : company.last_filing_year
-      ? `${company.last_filing_year}`
-      : 'N/A';
+    : company.last_filing_year || 'N/A';
+
   const applicantInsights = (company.actionable_insights && company.actionable_insights.length > 0)
     ? company.actionable_insights
     : [
@@ -141,490 +175,495 @@ function CompanyDetail() {
     ];
 
   return (
-    <div className="bg-bg-primary min-h-screen">
-      {/* Header */}
-      <div className="bg-secondary border-b-3 border-border">
-        <div className="container py-6 sm:py-8">
-          <Link
-            to="/companies"
-            className="inline-flex items-center gap-2 font-mono text-xs sm:text-sm text-secondary hover:text-accent transition-colors mb-4 sm:mb-6"
+    <div className="min-h-screen bg-bg-primary">
+      {/* Header Section */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="border-b border-white/5 bg-bg-secondary/30"
+      >
+        <div className="container py-8">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Companies
-          </Link>
+            <Link
+              to="/companies"
+              className="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Companies
+            </Link>
+          </motion.div>
 
-          <div className="flex flex-col sm:flex-row flex-wrap items-start gap-4 sm:gap-6">
-            <CompanyLogo
-              companyName={company.name}
-              logoUrl={company.logo_url}
-              companyDomain={company.company_domain}
-              website={company.website}
-              size="lg"
-            />
-            <div className="flex-1 min-w-0">
-              <h1 className="headline-lg mb-2">{company.name}</h1>
-
-              <div className="flex flex-wrap items-center gap-3 sm:gap-4 font-mono text-xs sm:text-sm text-secondary">
-                {industryLabel && (
-                  <span className="flex items-center gap-1">
-                    <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                    {industryLabel}
-                  </span>
-                )}
-                {company.headquarters && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                    {company.headquarters}
-                  </span>
-                )}
-                {company.website && (
-                  <a
-                    href={company.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-accent hover-underline"
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            {/* Company Info */}
+            <div className="flex-1">
+              <div className="flex items-start gap-6">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                >
+                  <CompanyLogo
+                    companyName={company.name}
+                    logoUrl={company.logo_url}
+                    companyDomain={company.company_domain}
+                    website={company.website}
+                    size="lg"
+                  />
+                </motion.div>
+                
+                <div className="flex-1 min-w-0">
+                  <motion.h1
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-3xl sm:text-4xl font-bold text-text-primary mb-3"
                   >
-                    <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Website
-                    <ExternalLink className="w-2 h-2 sm:w-3 sm:h-3" />
-                  </a>
-                )}
-                {company.careers_url && (
-                  <a
-                    href={company.careers_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-accent hover-underline"
+                    {company.name}
+                  </motion.h1>
+                  
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="flex flex-wrap items-center gap-4 text-sm text-text-secondary"
                   >
-                    <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Careers
-                    <ExternalLink className="w-2 h-2 sm:w-3 sm:h-3" />
-                  </a>
-                )}
+                    {industryLabel && (
+                      <span className="flex items-center gap-1.5">
+                        <Building2 className="w-4 h-4" />
+                        {industryLabel}
+                      </span>
+                    )}
+                    {company.headquarters && (
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4" />
+                        {company.headquarters}
+                      </span>
+                    )}
+                    {company.website && (
+                      <a
+                        href={company.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-accent hover:underline"
+                      >
+                        <Globe className="w-4 h-4" />
+                        Website
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </motion.div>
+                </div>
               </div>
             </div>
 
-            <div className="company-score-card">
-              <div className="text-xs font-mono uppercase tracking-widest text-secondary">Visa Score</div>
-              <div className={`company-score-value ${getScoreColor(score)}`}>
+            {/* Score Card */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="card-glass p-6 min-w-[180px] text-center"
+            >
+              <div className="text-xs font-medium uppercase tracking-wider text-text-muted mb-2">Visa Score</div>
+              <div className={`text-5xl font-bold ${getScoreColor(score)} mb-3`}>
                 {score.toFixed(1)}
               </div>
-              <div className="flex flex-col items-center gap-2">
-                <Badge variant={badge.variant}>{badge.label}</Badge>
-                <Badge variant={confidenceBadge.variant} size="sm">{confidenceBadge.label}</Badge>
-              </div>
-              <div className="w-full pt-1">
-                <Link to={`/compare?left=${company.slug}`} className="btn btn-secondary w-full justify-center text-xs sm:text-sm">
-                  <Scale className="w-4 h-4" />
-                  Compare
-                </Link>
-              </div>
-            </div>
+              <Badge variant={badge.variant} className="mb-3">
+                {badge.label}
+              </Badge>
+              <Link
+                to={`/compare?left=${company.slug}`}
+                className="btn btn-secondary btn-full btn-sm"
+              >
+                <Scale className="w-4 h-4" />
+                Compare
+              </Link>
+            </motion.div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="container py-6 sm:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-          {/* Left Column - Stats */}
-          <div className="lg:col-span-2 space-y-6 sm:space-y-8">
-            {/* Score Breakdown */}
-            <Card static>
-              <CardBody className="p-4 sm:p-6">
-                <h2 className="headline-sm mb-4 sm:mb-6 flex items-center gap-2">
-                  <Award className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
-                  Visa Fair Score Breakdown
-                </h2>
-
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6">
-                  <div className={`text-4xl sm:text-5xl font-bold font-display ${getScoreColor(score)}`}>
-                    {score.toFixed(1)}
-                  </div>
-                  <div>
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
-                    <p className="text-xs sm:text-sm text-secondary mt-2">
-                      Based on {company.total_h1b_filings?.toLocaleString() || 0} H-1B filings
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3 sm:space-y-4">
-                  {[
-                    { label: 'Approval Rate', value: parseFloat(String(company.h1b_approval_rate || 0)), icon: CheckCircle },
-                    { label: 'Average Salary vs Market', value: company.avg_salary_percentile || 0, icon: DollarSign },
-                    { label: 'Consistency Score', value: parseFloat(String(company.sponsorship_consistency_score || 0)), icon: TrendingUp },
-                  ].map((item) => (
-                    <div key={item.label} className="flex items-center gap-3 sm:gap-4">
-                      <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-secondary flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-mono uppercase text-secondary mb-1">{item.label}</div>
-                        <Progress value={item.value} showLabel />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardBody>
-            </Card>
-
-            {/* H-1B Stats */}
-            <Card static>
-              <CardBody className="p-4 sm:p-6">
-                <h2 className="headline-sm mb-4 sm:mb-6">H-1B Sponsorship History</h2>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-                  <div className="stat-box-responsive">
-                    <div className="stat-label">Total Filings</div>
-                    <div className="stat-value-responsive">{company.total_h1b_filings?.toLocaleString() || 0}</div>
-                  </div>
-                  <div className="stat-box-responsive">
-                    <div className="stat-label text-success">Approved</div>
-                    <div className="stat-value-responsive text-success">{company.total_h1b_approvals?.toLocaleString() || 0}</div>
-                  </div>
-                  <div className="stat-box-responsive">
-                    <div className="stat-label text-danger">Approval Rate</div>
-                    <div className="stat-value-responsive text-success">{parseFloat(String(company.h1b_approval_rate || 0)).toFixed(1)}%</div>
-                  </div>
-                  <div className="stat-box-responsive">
-                    <div className="stat-label">Active Years</div>
-                    <div className="stat-value-responsive">{activeYearsLabel}</div>
-                  </div>
-                </div>
-
-                <Progress value={parseFloat(String(company.h1b_approval_rate || 0))} showLabel />
-              </CardBody>
-            </Card>
-
-            {/* Recent Offers */}
-            {offers && offers.length > 0 && (
-              <Card static>
-                <CardBody className="p-4 sm:p-6">
-                  <h2 className="headline-sm mb-4 sm:mb-6">Recent Salary Data</h2>
-
-                  {/* Mobile View */}
-                  <div className="lg:hidden space-y-3">
-                    {offers.slice(0, 5).map((offer: Offer) => (
-                      <div key={offer.id} className="bg-secondary border-2 border-border p-3 space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <CompanyLogo
-                              companyName={company.name}
-                              logoUrl={company.logo_url}
-                              companyDomain={company.company_domain}
-                              website={company.website}
-                              size="sm"
-                            />
-                            <span className="font-semibold text-primary text-sm truncate">{offer.position_title}</span>
-                            <span className="text-secondary hidden sm:inline">•</span>
-                            <span className="text-secondary text-sm truncate hidden sm:inline">
-                              {offer.location || 'USA'}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 flex-wrap justify-end">
-                            <Badge variant="outline" size="sm">{offer.visa_type_display || offer.visa_type || 'N/A'}</Badge>
-                            <Badge variant="ghost" size="sm">
-                              {offer.data_source === 'community_submission' ? 'Community' : 'Gov Data'}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-secondary sm:hidden">{offer.location || 'USA'}</span>
-                          <span className="font-mono font-bold text-accent">
-                            ${(offer.base_salary || 0).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Desktop View */}
-                  <div className="hidden lg:block divide-y-2 divide-border-light">
-                    {offers.slice(0, 5).map((offer: Offer) => (
-                      <div
-                        key={offer.id}
-                        className="flex items-center justify-between py-4 first:pt-0 last:pb-0"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-primary">{offer.position_title}</span>
-                          <span className="text-secondary">•</span>
-                          <span className="text-sm text-secondary">
-                            {offer.location || 'USA'}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-mono font-bold text-accent">
-                            ${(offer.base_salary || 0).toLocaleString()}
-                          </div>
-                          <div className="flex items-center gap-2 justify-end mt-1">
-                            <Badge variant="outline">{offer.visa_type_display || offer.visa_type || 'N/A'}</Badge>
-                            <Badge variant="ghost">
-                              {offer.data_source === 'community_submission' ? 'Community' : 'Gov Data'}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Link to="/offers" className="btn btn-secondary btn-full mt-4 sm:mt-6">
-                    View All Offers
-                  </Link>
-                </CardBody>
-              </Card>
-            )}
-
-            <section className="company-story-section">
-              <div className="company-story-header">
-                <div>
-                  <div className="section-marker mb-2">
-                    <span>Applicant Readout</span>
-                  </div>
-                  <h2 className="headline-sm">What This Means For Applicants</h2>
-                </div>
-                <p className="company-story-kicker">
-                  A quicker read on what the current filing, pay, and enrichment data actually suggests.
-                </p>
+      {/* Bento Grid Dashboard */}
+      <div className="container py-8">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          {/* Score Breakdown - Large */}
+          <motion.div variants={bentoItemVariants} className="lg:col-span-2">
+            <div className="card h-full">
+              <div className="flex items-center gap-2 mb-6">
+                <Award className="w-5 h-5 text-accent" />
+                <h2 className="text-lg font-semibold text-text-primary">Score Breakdown</h2>
               </div>
 
-              <div className="company-insight-stream">
-                {applicantInsights.map((insight, index) => (
-                  <div key={insight} className="company-insight-item">
-                    <div className="company-insight-index">{String(index + 1).padStart(2, '0')}</div>
-                    <p className="company-insight-copy">{insight}</p>
+              <div className="flex flex-col sm:flex-row items-start gap-6 mb-8">
+                <div className={`text-6xl font-bold ${getScoreColor(score)}`}>
+                  {score.toFixed(1)}
+                </div>
+                <div>
+                  <Badge variant={badge.variant} size="lg" className="mb-2">
+                    {badge.label}
+                  </Badge>
+                  <p className="text-sm text-text-muted">
+                    Based on {company.total_h1b_filings?.toLocaleString() || 0} H-1B filings
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                {[
+                  { 
+                    label: 'Approval Rate', 
+                    value: parseFloat(String(company.h1b_approval_rate || 0)),
+                    icon: CheckCircle,
+                    color: 'bg-emerald-500'
+                  },
+                  { 
+                    label: 'Salary Percentile', 
+                    value: company.avg_salary_percentile || 0,
+                    icon: DollarSign,
+                    color: 'bg-blue-500'
+                  },
+                  { 
+                    label: 'Consistency Score', 
+                    value: parseFloat(String(company.sponsorship_consistency_score || 0)),
+                    icon: TrendingUp,
+                    color: 'bg-violet-500'
+                  },
+                ].map((item) => (
+                  <div key={item.label} className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-text-secondary">
+                        <item.icon className="w-4 h-4" />
+                        {item.label}
+                      </div>
+                      <span className="font-medium text-text-primary">{item.value.toFixed(1)}%</span>
+                    </div>
+                    <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${item.value}%` }}
+                        transition={{ duration: 1, delay: 0.5 }}
+                        className={`h-full rounded-full ${item.color}`}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
-            </section>
+            </div>
+          </motion.div>
 
-            <section className="company-story-section company-story-section-light">
-              <div className="company-section-head">
-                <div>
-                  <div className="section-marker mb-2">
-                    <span>Hiring Signal</span>
-                  </div>
-                  <h2 className="headline-sm">Live Jobs</h2>
-                  <p className="company-section-copy">
-                    Public ATS roles appear here when this employer has a supported board we currently track.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">{(jobs || []).length.toLocaleString()} tracked</Badge>
-                  <Link to={`/jobs?company_slug=${company.slug}`} className="btn btn-secondary text-xs sm:text-sm">
-                    View All Jobs
-                  </Link>
-                </div>
+          {/* Quick Stats */}
+          <motion.div variants={bentoItemVariants}>
+            <div className="card h-full">
+              <div className="flex items-center gap-2 mb-6">
+                <BarChart3 className="w-5 h-5 text-accent" />
+                <h2 className="text-lg font-semibold text-text-primary">H-1B Stats</h2>
               </div>
 
-              {jobs && jobs.length > 0 ? (
-                <div className="company-open-list">
-                  {jobs.slice(0, 6).map((job: JobPosting) => (
-                    <a
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: 'Total Filings', value: company.total_h1b_filings || 0, color: 'text-text-primary' },
+                  { label: 'Approved', value: company.total_h1b_approvals || 0, color: 'text-emerald-400' },
+                  { label: 'Approval Rate', value: `${parseFloat(String(company.h1b_approval_rate || 0)).toFixed(1)}%`, color: 'text-emerald-400' },
+                  { label: 'Active Years', value: activeYearsLabel, color: 'text-text-primary' },
+                ].map((stat) => (
+                  <div key={stat.label} className="p-4 rounded-xl bg-bg-glass">
+                    <div className="text-xs text-text-muted mb-1">{stat.label}</div>
+                    <div className={`text-xl font-bold ${stat.color}`}>
+                      {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-white/5">
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="text-text-muted">Approval Progress</span>
+                  <span className="font-medium text-emerald-400">
+                    {parseFloat(String(company.h1b_approval_rate || 0)).toFixed(1)}%
+                  </span>
+                </div>
+                <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${company.h1b_approval_rate || 0}%` }}
+                    transition={{ duration: 1, delay: 0.6 }}
+                    className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Data Trust */}
+          <motion.div variants={bentoItemVariants}>
+            <div className="card h-full">
+              <div className="flex items-center gap-2 mb-6">
+                <Shield className="w-5 h-5 text-accent" />
+                <h2 className="text-lg font-semibold text-text-primary">Data Trust</h2>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  { label: 'Coverage', value: coverageLabel, icon: Calendar },
+                  { label: 'Salary Records', value: (company.offer_count || 0).toLocaleString(), icon: DollarSign },
+                  { label: 'Active Jobs', value: (company.active_job_count || 0).toLocaleString(), icon: BriefcaseBusiness },
+                  { label: 'Reviews', value: (company.review_count || 0).toLocaleString(), icon: MessageSquare },
+                  { label: 'Last H-1B', value: formatDate(company.latest_h1b_decision_date), icon: Clock3 },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2 text-text-secondary">
+                      <item.icon className="w-4 h-4" />
+                      <span className="text-sm">{item.label}</span>
+                    </div>
+                    <span className="font-medium text-text-primary text-sm">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-white/5">
+                <Badge variant={confidenceBadge.variant} size="lg" className="w-full justify-center">
+                  {confidenceBadge.label}
+                </Badge>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Company Info */}
+          <motion.div variants={bentoItemVariants}>
+            <div className="card h-full">
+              <div className="flex items-center gap-2 mb-6">
+                <Building2 className="w-5 h-5 text-accent" />
+                <h2 className="text-lg font-semibold text-text-primary">Company Info</h2>
+              </div>
+
+              <div className="space-y-4">
+                {industryLabel && (
+                  <div className="p-4 rounded-xl bg-bg-glass">
+                    <div className="text-xs text-text-muted uppercase tracking-wider mb-1">Industry</div>
+                    <div className="font-medium text-text-primary">{industryLabel}</div>
+                  </div>
+                )}
+                
+                {companySizeLabel && (
+                  <div className="p-4 rounded-xl bg-bg-glass">
+                    <div className="text-xs text-text-muted uppercase tracking-wider mb-1">Company Size</div>
+                    <div className="font-medium text-text-primary">{companySizeLabel}</div>
+                  </div>
+                )}
+                
+                {company.headquarters && (
+                  <div className="p-4 rounded-xl bg-bg-glass">
+                    <div className="text-xs text-text-muted uppercase tracking-wider mb-1">Headquarters</div>
+                    <div className="font-medium text-text-primary">{company.headquarters}</div>
+                  </div>
+                )}
+                
+                {company.company_domain && (
+                  <div className="p-4 rounded-xl bg-bg-glass">
+                    <div className="text-xs text-text-muted uppercase tracking-wider mb-1">Domain</div>
+                    <div className="font-medium text-text-primary flex items-center gap-2">
+                      <LinkIcon className="w-3 h-3" />
+                      {company.company_domain}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Salary Data */}
+          {offers && offers.length > 0 && (
+            <motion.div variants={bentoItemVariants} className="lg:col-span-2">
+              <div className="card h-full">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-accent" />
+                    <h2 className="text-lg font-semibold text-text-primary">Recent Salary Data</h2>
+                  </div>
+                  <Link to="/offers" className="text-sm text-accent hover:underline flex items-center gap-1">
+                    View all
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
+
+                <div className="space-y-3">
+                  {offers.slice(0, 5).map((offer: Offer, index) => (
+                    <motion.div
+                      key={offer.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 * index }}
+                      className="flex items-center justify-between p-4 rounded-xl bg-bg-glass hover:bg-bg-glass-hover transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-bg-tertiary flex items-center justify-center">
+                          <Briefcase className="w-5 h-5 text-text-muted" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-text-primary">{offer.position_title}</div>
+                          <div className="text-sm text-text-muted">{offer.location || 'USA'}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-emerald-400">
+                          ${(offer.base_salary || 0).toLocaleString()}
+                        </div>
+                        <Badge variant="outline" size="sm" className="mt-1">
+                          {offer.visa_type_display || offer.visa_type || 'N/A'}
+                        </Badge>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Live Jobs */}
+          {jobs && jobs.length > 0 && (
+            <motion.div variants={bentoItemVariants} className="lg:col-span-3">
+              <div className="card">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-accent" />
+                    <h2 className="text-lg font-semibold text-text-primary">Live Jobs</h2>
+                    <Badge variant="accent" size="sm">
+                      {jobs.length} open
+                    </Badge>
+                  </div>
+                  <Link
+                    to={`/jobs?company_slug=${company.slug}`}
+                    className="text-sm text-accent hover:underline flex items-center gap-1"
+                  >
+                    View all jobs
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {jobs.slice(0, 6).map((job: JobPosting, index) => (
+                    <motion.a
                       key={job.id}
                       href={job.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="company-open-row"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.05 * index }}
+                      className="p-4 rounded-xl bg-bg-glass hover:bg-bg-glass-hover border border-transparent hover:border-border-accent transition-all group"
                     >
-                      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
-                        <div className="min-w-0">
-                          <div className="font-semibold text-primary leading-snug">{job.title}</div>
-                          <div className="text-sm text-secondary mt-1 leading-relaxed">
-                            {[job.team, job.location].filter(Boolean).join(' • ') || 'Location pending'}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                          <Badge variant="outline" size="sm">{job.remote_policy || 'unknown'}</Badge>
-                          <Badge variant="ghost" size="sm">{job.source}</Badge>
-                        </div>
+                      <div className="font-medium text-text-primary group-hover:text-accent transition-colors line-clamp-2 mb-2">
+                        {job.title}
                       </div>
-                    </a>
+                      <div className="text-sm text-text-muted mb-3">
+                        {[job.team, job.location].filter(Boolean).join(' • ')}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {job.remote_policy && (
+                          <Badge variant="outline" size="sm">{job.remote_policy}</Badge>
+                        )}
+                        <Badge variant="ghost" size="sm">{job.source}</Badge>
+                      </div>
+                    </motion.a>
                   ))}
                 </div>
-              ) : (
-                <div className="company-empty-band">
-                  <div className="company-empty-band-icon">
-                    <Briefcase className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="company-empty-band-title">No live jobs tracked yet</h3>
-                    <p className="company-empty-band-description">
-                      This company will show public ATS roles once a supported board is imported.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </section>
+              </div>
+            </motion.div>
+          )}
 
-            {hasBenefitsData ? (
-              <section className="company-story-section company-story-section-light">
-                <div className="company-section-head">
-                  <div>
-                    <div className="section-marker mb-2">
-                      <span>Benefits Signal</span>
-                    </div>
-                    <h2 className="headline-sm">Benefits Coverage</h2>
-                    <p className="company-section-copy">
-                      This section turns real benefits data into a quick quality-of-life snapshot for applicants.
-                    </p>
-                  </div>
-                  <Badge variant="outline">{(benefits || []).length.toLocaleString()} items</Badge>
+          {/* Benefits */}
+          {hasBenefitsData && benefits && benefits.length > 0 && (
+            <motion.div variants={bentoItemVariants} className="lg:col-span-3">
+              <div className="card">
+                <div className="flex items-center gap-2 mb-6">
+                  <Sparkles className="w-5 h-5 text-accent" />
+                  <h2 className="text-lg font-semibold text-text-primary">Benefits</h2>
+                  <Badge variant="outline" size="sm">{benefits.length} items</Badge>
                 </div>
 
-                {benefits && benefits.length > 0 ? (
-                  <div className="company-benefit-grid">
-                    {benefits.slice(0, 6).map((benefit: CompanyBenefit) => (
-                      <div key={benefit.id} className="company-benefit-card">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span className="font-semibold text-primary">{benefit.title}</span>
-                          <Badge variant={benefit.is_verified ? 'accent' : 'ghost'} size="sm">
-                            {benefit.category_display || benefit.category}
-                          </Badge>
-                        </div>
-                        {benefit.value ? (
-                          <div className="font-mono text-xs uppercase text-accent mb-2">{benefit.value}</div>
-                        ) : null}
-                        {benefit.description ? (
-                          <p className="text-sm text-secondary leading-relaxed">{benefit.description}</p>
-                        ) : null}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {benefits.slice(0, 6).map((benefit: CompanyBenefit, index) => (
+                    <motion.div
+                      key={benefit.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.05 * index }}
+                      className="p-4 rounded-xl bg-bg-glass"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-text-primary">{benefit.title}</span>
+                        <Badge variant={benefit.is_verified ? 'accent' : 'ghost'} size="sm">
+                          {benefit.category_display || benefit.category}
+                        </Badge>
                       </div>
-                    ))}
-                  </div>
-                ) : null}
-              </section>
-            ) : null}
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-4 sm:space-y-6">
-            {/* Quick Actions */}
-            <Card static>
-              <CardBody className="p-4 sm:p-6">
-                <h3 className="font-semibold mb-4 text-primary">Quick Actions</h3>
-                <div className="space-y-3">
-                  <Link to="/predictions" className="btn btn-full text-sm">
-                    Check Sponsorship Odds
-                  </Link>
-                  <Link to="/offers" className="btn btn-secondary btn-full text-sm">
-                    Compare Salaries
-                  </Link>
+                      {benefit.value && (
+                        <div className="text-sm text-accent font-medium mb-2">{benefit.value}</div>
+                      )}
+                      {benefit.description && (
+                        <p className="text-sm text-text-secondary">{benefit.description}</p>
+                      )}
+                    </motion.div>
+                  ))}
                 </div>
-              </CardBody>
-            </Card>
+              </div>
+            </motion.div>
+          )}
 
-            {/* Company Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4">
-              {industryLabel && (
-                <Card bento>
-                  <h3 className="font-mono text-xs uppercase text-secondary mb-1">Industry</h3>
-                  <p className="font-semibold text-primary text-sm sm:text-base">{industryLabel}</p>
-                </Card>
-              )}
+          {/* Applicant Insights */}
+          <motion.div variants={bentoItemVariants} className="lg:col-span-2">
+            <div className="card">
+              <div className="flex items-center gap-2 mb-6">
+                <Target className="w-5 h-5 text-accent" />
+                <h2 className="text-lg font-semibold text-text-primary">What This Means For Applicants</h2>
+              </div>
 
-              {companySizeLabel && (
-                <Card bento>
-                  <h3 className="font-mono text-xs uppercase text-secondary mb-1">Company Size</h3>
-                  <p className="font-semibold text-primary text-sm sm:text-base">{companySizeLabel}</p>
-                </Card>
-              )}
-
-              {company.headquarters && (
-                <Card bento className="sm:col-span-2 lg:col-span-1">
-                  <h3 className="font-mono text-xs uppercase text-secondary mb-1">Headquarters</h3>
-                  <p className="font-semibold text-primary text-sm sm:text-base">{company.headquarters}</p>
-                </Card>
-              )}
+              <div className="space-y-4">
+                {applicantInsights.map((insight, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 * index }}
+                    className="flex gap-4 p-4 rounded-xl bg-bg-glass hover:bg-bg-glass-hover transition-colors"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
+                      <span className="text-sm font-bold text-accent">{String(index + 1).padStart(2, '0')}</span>
+                    </div>
+                    <p className="text-text-secondary leading-relaxed">{insight}</p>
+                  </motion.div>
+                ))}
+              </div>
             </div>
+          </motion.div>
 
-            <Card static>
-              <CardBody className="p-4 sm:p-6">
-                <h3 className="font-semibold mb-4 text-primary">Data Trust</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-secondary text-sm">
-                      <Database className="w-4 h-4" />
-                      Coverage
-                    </div>
-                    <span className="font-semibold text-primary text-sm">{coverageLabel}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-secondary text-sm">
-                      <DollarSign className="w-4 h-4" />
-                      Salary Records
-                    </div>
-                    <span className="font-semibold text-primary text-sm">
-                      {(company.offer_count || 0).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-secondary text-sm">
-                      <MessageSquare className="w-4 h-4" />
-                      Reviews
-                    </div>
-                    <span className="font-semibold text-primary text-sm">
-                      {(company.review_count || 0).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-secondary text-sm">
-                      <Clock3 className="w-4 h-4" />
-                      Last H-1B Decision
-                    </div>
-                    <span className="font-semibold text-primary text-sm text-right">
-                      {formatDate(company.latest_h1b_decision_date)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-secondary text-sm">
-                      <Globe className="w-4 h-4" />
-                      Domain
-                    </div>
-                    <span className="font-semibold text-primary text-sm text-right">
-                      {company.company_domain || 'Pending'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-secondary text-sm">
-                      <Briefcase className="w-4 h-4" />
-                      Active Jobs
-                    </div>
-                    <span className="font-semibold text-primary text-sm">
-                      {(company.active_job_count || 0).toLocaleString()}
-                    </span>
-                  </div>
-                  {hasBenefitsData ? (
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 text-secondary text-sm">
-                        <Building2 className="w-4 h-4" />
-                        Benefits
-                      </div>
-                      <span className="font-semibold text-primary text-sm">
-                        {(company.benefit_count || 0).toLocaleString()}
-                      </span>
-                    </div>
-                  ) : null}
-                  <div className="pt-2">
-                    <Badge variant={confidenceBadge.variant}>{confidenceBadge.label}</Badge>
-                  </div>
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {(company.data_sources || []).map((source) => (
-                      <Badge key={source} variant="outline" size="sm">
-                        {source}
-                      </Badge>
-                    ))}
-                  </div>
+          {/* Similar Companies */}
+          {similarCompanies && similarCompanies.length > 0 && (
+            <motion.div variants={bentoItemVariants}>
+              <div className="card h-full">
+                <div className="flex items-center gap-2 mb-6">
+                  <Users className="w-5 h-5 text-accent" />
+                  <h2 className="text-lg font-semibold text-text-primary">Similar Companies</h2>
                 </div>
-              </CardBody>
-            </Card>
 
-            {similarCompanies && similarCompanies.length > 0 ? (
-              <Card static>
-                <CardBody className="p-4 sm:p-6">
-                  <h3 className="font-semibold mb-4 text-primary">Similar Companies</h3>
-                  <div className="space-y-3">
-                    {similarCompanies.slice(0, 4).map((similar) => (
+                <div className="space-y-3">
+                  {similarCompanies.slice(0, 4).map((similar, index) => (
+                    <motion.div
+                      key={similar.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 * index }}
+                    >
                       <Link
-                        key={similar.id}
                         to={`/companies/${similar.slug}`}
-                        className="flex items-center gap-3 border-2 border-border p-3 hover:bg-secondary transition-colors"
+                        className="flex items-center gap-3 p-3 rounded-xl bg-bg-glass hover:bg-bg-glass-hover transition-all group"
                       >
                         <CompanyLogo
                           companyName={similar.name}
@@ -633,20 +672,23 @@ function CompanyDetail() {
                           website={similar.website}
                           size="sm"
                         />
-                        <div className="min-w-0">
-                          <div className="font-semibold text-primary truncate">{similar.name}</div>
-                          <div className="text-xs text-secondary truncate">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-text-primary truncate group-hover:text-accent transition-colors">
+                            {similar.name}
+                          </div>
+                          <div className="text-xs text-text-muted truncate">
                             {similar.industry_display || similar.industry || 'Industry pending'}
                           </div>
                         </div>
+                        <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-accent transition-colors" />
                       </Link>
-                    ))}
-                  </div>
-                </CardBody>
-              </Card>
-            ) : null}
-          </div>
-        </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
       </div>
     </div>
   );

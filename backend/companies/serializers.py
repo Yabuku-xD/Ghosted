@@ -4,8 +4,12 @@ from .models import Company, CompanyBenefit, CompanyReview, JobPosting
 
 
 class CompanySerializer(serializers.ModelSerializer):
-    industry_display = serializers.CharField(source='get_industry_display', read_only=True)
-    company_size_display = serializers.CharField(source='get_company_size_display', read_only=True)
+    industry_display = serializers.CharField(
+        source="get_industry_display", read_only=True
+    )
+    company_size_display = serializers.CharField(
+        source="get_company_size_display", read_only=True
+    )
     offer_count = serializers.SerializerMethodField()
     verified_offer_count = serializers.SerializerMethodField()
     community_offer_count = serializers.SerializerMethodField()
@@ -28,28 +32,36 @@ class CompanySerializer(serializers.ModelSerializer):
         return fallback_queryset.count()
 
     def get_offer_count(self, obj):
-        return self._get_count(obj, 'offer_count', obj.offers.all())
+        return self._get_count(obj, "offer_count", obj.offers.all())
 
     def get_verified_offer_count(self, obj):
-        return self._get_count(obj, 'verified_offer_count', obj.offers.filter(is_verified=True))
+        return self._get_count(
+            obj, "verified_offer_count", obj.offers.filter(is_verified=True)
+        )
 
     def get_community_offer_count(self, obj):
-        return self._get_count(obj, 'community_offer_count', obj.offers.filter(submitted_by__isnull=False))
+        return self._get_count(
+            obj, "community_offer_count", obj.offers.filter(submitted_by__isnull=False)
+        )
 
     def get_imported_offer_count(self, obj):
-        return self._get_count(obj, 'imported_offer_count', obj.offers.filter(submitted_by__isnull=True))
+        return self._get_count(
+            obj, "imported_offer_count", obj.offers.filter(submitted_by__isnull=True)
+        )
 
     def get_review_count(self, obj):
-        return self._get_count(obj, 'review_count', obj.reviews.all())
+        return self._get_count(obj, "review_count", obj.reviews.all())
 
     def get_h1b_record_count(self, obj):
-        return self._get_count(obj, 'h1b_record_count', obj.h1b_applications.all())
+        return self._get_count(obj, "h1b_record_count", obj.h1b_applications.all())
 
     def get_active_job_count(self, obj):
-        return self._get_count(obj, 'active_job_count', obj.job_postings.filter(is_active=True))
+        return self._get_count(
+            obj, "active_job_count", obj.job_postings.filter(is_active=True)
+        )
 
     def get_benefit_count(self, obj):
-        return self._get_count(obj, 'benefit_count', obj.benefits.all())
+        return self._get_count(obj, "benefit_count", obj.benefits.all())
 
     def get_data_coverage_years(self, obj):
         if obj.first_filing_year and obj.last_filing_year:
@@ -60,7 +72,9 @@ class CompanySerializer(serializers.ModelSerializer):
         filings = obj.total_h1b_filings or self.get_h1b_record_count(obj)
         coverage_years = self.get_data_coverage_years(obj)
         verified_offers = self.get_verified_offer_count(obj)
-        community_signals = self.get_community_offer_count(obj) + self.get_review_count(obj)
+        community_signals = self.get_community_offer_count(obj) + self.get_review_count(
+            obj
+        )
 
         confidence_score = 0
 
@@ -83,43 +97,51 @@ class CompanySerializer(serializers.ModelSerializer):
             confidence_score += 1
 
         if confidence_score >= 5:
-            return 'high'
+            return "high"
         if confidence_score >= 3:
-            return 'good'
+            return "good"
         if confidence_score >= 1:
-            return 'emerging'
-        return 'limited'
+            return "emerging"
+        return "limited"
 
     def get_data_sources(self, obj):
         sources = []
 
         if (obj.total_h1b_filings or self.get_h1b_record_count(obj)) > 0:
-            sources.append('Department of Labor filings')
+            sources.append("Department of Labor filings")
         if self.get_imported_offer_count(obj) > 0:
-            sources.append('Government-derived salary records')
+            sources.append("Government-derived salary records")
         if self.get_community_offer_count(obj) > 0:
-            sources.append('Community salary submissions')
+            sources.append("Community salary submissions")
         if self.get_review_count(obj) > 0:
-            sources.append('Community reviews')
+            sources.append("Community reviews")
         if self.get_active_job_count(obj) > 0:
-            sources.append('Live job board data')
+            sources.append("Live job board data")
         if self.get_benefit_count(obj) > 0:
-            sources.append('Benefits coverage')
+            sources.append("Benefits coverage")
 
         return sources
 
     def get_latest_offer_at(self, obj):
-        annotated_value = getattr(obj, 'latest_offer_at', None)
+        annotated_value = getattr(obj, "latest_offer_at", None)
         if annotated_value is not None:
             return annotated_value
-        latest_offer = obj.offers.order_by('-submitted_at').values_list('submitted_at', flat=True).first()
+        latest_offer = (
+            obj.offers.order_by("-submitted_at")
+            .values_list("submitted_at", flat=True)
+            .first()
+        )
         return latest_offer
 
     def get_latest_h1b_decision_date(self, obj):
-        annotated_value = getattr(obj, 'latest_h1b_decision_date', None)
+        annotated_value = getattr(obj, "latest_h1b_decision_date", None)
         if annotated_value is not None:
             return annotated_value
-        latest_decision = obj.h1b_applications.order_by('-decision_date').values_list('decision_date', flat=True).first()
+        latest_decision = (
+            obj.h1b_applications.order_by("-decision_date")
+            .values_list("decision_date", flat=True)
+            .first()
+        )
         return latest_decision
 
     def get_actionable_insights(self, obj):
@@ -138,7 +160,9 @@ class CompanySerializer(serializers.ModelSerializer):
                 f"Established sponsor with {filings:,} filings across {self.get_data_coverage_years(obj)} fiscal years."
             )
         else:
-            insights.append('Sponsorship footprint is still limited, so treat employer trends as directional.')
+            insights.append(
+                "Sponsorship footprint is still limited, so treat employer trends as directional."
+            )
 
         if active_jobs > 0:
             insights.append(
@@ -154,28 +178,64 @@ class CompanySerializer(serializers.ModelSerializer):
                 f"Salary data exists, but the sample is still small at {salary_records:,} record{'s' if salary_records != 1 else ''}."
             )
         else:
-            insights.append('No salary records yet, so compensation guidance is still thin.')
+            insights.append(
+                "No salary records yet, so compensation guidance is still thin."
+            )
 
         return insights[:3]
 
     class Meta:
         model = Company
-        fields = ['id', 'name', 'slug', 'description', 'website', 'company_domain',
-                  'domain_source', 'domain_confidence', 'logo_url', 'logo_provider',
-                  'logo_confidence', 'logo_last_checked_at', 'linkedin_url', 'careers_url',
-                  'jobs_provider', 'jobs_board_token', 'jobs_last_synced_at',
-                  'headquarters', 'company_size', 'company_size_display', 'industry',
-                  'industry_display', 'visa_fair_score',
-                  'h1b_approval_rate', 'avg_salary_percentile', 'sponsorship_consistency_score',
-                  'year_founded', 'employee_count_estimate',
-                  'total_h1b_filings', 'total_h1b_approvals', 'first_filing_year',
-                  'last_filing_year', 'offer_count', 'verified_offer_count',
-                  'community_offer_count', 'imported_offer_count', 'review_count',
-                  'h1b_record_count', 'active_job_count', 'benefit_count',
-                  'data_coverage_years', 'data_confidence',
-                  'data_sources', 'latest_offer_at', 'latest_h1b_decision_date',
-                  'actionable_insights', 'created_at']
-        read_only_fields = ['id', 'slug', 'created_at']
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "description",
+            "website",
+            "company_domain",
+            "domain_source",
+            "domain_confidence",
+            "logo_url",
+            "logo_provider",
+            "logo_confidence",
+            "logo_last_checked_at",
+            "linkedin_url",
+            "careers_url",
+            "jobs_provider",
+            "jobs_board_token",
+            "jobs_last_synced_at",
+            "headquarters",
+            "company_size",
+            "company_size_display",
+            "industry",
+            "industry_display",
+            "visa_fair_score",
+            "h1b_approval_rate",
+            "avg_salary_percentile",
+            "sponsorship_consistency_score",
+            "year_founded",
+            "employee_count_estimate",
+            "total_h1b_filings",
+            "total_h1b_approvals",
+            "first_filing_year",
+            "last_filing_year",
+            "offer_count",
+            "verified_offer_count",
+            "community_offer_count",
+            "imported_offer_count",
+            "review_count",
+            "h1b_record_count",
+            "active_job_count",
+            "benefit_count",
+            "data_coverage_years",
+            "data_confidence",
+            "data_sources",
+            "latest_offer_at",
+            "latest_h1b_decision_date",
+            "actionable_insights",
+            "created_at",
+        ]
+        read_only_fields = ["id", "slug", "created_at"]
 
 
 class CompanyListSerializer(CompanySerializer):
@@ -206,43 +266,64 @@ class CompanyListSerializer(CompanySerializer):
             confidence_score += 1
 
         if confidence_score >= 5:
-            return 'high'
+            return "high"
         if confidence_score >= 3:
-            return 'good'
+            return "good"
         if confidence_score >= 1:
-            return 'emerging'
-        return 'limited'
+            return "emerging"
+        return "limited"
 
     def get_data_sources(self, obj):
         sources = []
         if (obj.total_h1b_filings or 0) > 0:
-            sources.append('Department of Labor filings')
+            sources.append("Department of Labor filings")
         if self.get_offer_count(obj) > 0:
-            sources.append('Salary records')
+            sources.append("Salary records")
         if self.get_review_count(obj) > 0:
-            sources.append('Community reviews')
+            sources.append("Community reviews")
         if self.get_active_job_count(obj) > 0:
-            sources.append('Live jobs')
+            sources.append("Live jobs")
         return sources
 
-    class Meta:
-        model = Company
-        fields = ['id', 'name', 'slug', 'logo_url', 'logo_provider', 'logo_confidence',
-                  'website', 'company_domain', 'careers_url', 'jobs_provider',
-                  'visa_fair_score', 'h1b_approval_rate',
-                  'industry', 'industry_display', 'headquarters', 'company_size',
-                  'company_size_display', 'total_h1b_filings', 'first_filing_year',
-                  'last_filing_year', 'offer_count', 'review_count',
-                  'active_job_count', 'benefit_count',
-                  'data_coverage_years', 'data_confidence',
-                  'data_sources']
+    class Meta(CompanySerializer.Meta):
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "logo_url",
+            "logo_provider",
+            "logo_confidence",
+            "website",
+            "company_domain",
+            "careers_url",
+            "jobs_provider",
+            "visa_fair_score",
+            "h1b_approval_rate",
+            "industry",
+            "industry_display",
+            "headquarters",
+            "company_size",
+            "company_size_display",
+            "total_h1b_filings",
+            "first_filing_year",
+            "last_filing_year",
+            "offer_count",
+            "review_count",
+            "active_job_count",
+            "benefit_count",
+            "data_coverage_years",
+            "data_confidence",
+            "data_sources",
+        ]
 
 
 class JobPostingSerializer(serializers.ModelSerializer):
-    company_name = serializers.CharField(source='company.name', read_only=True)
-    company_slug = serializers.CharField(source='company.slug', read_only=True)
-    company_logo_url = serializers.CharField(source='company.logo_url', read_only=True)
-    company_domain = serializers.CharField(source='company.company_domain', read_only=True)
+    company_name = serializers.CharField(source="company.name", read_only=True)
+    company_slug = serializers.CharField(source="company.slug", read_only=True)
+    company_logo_url = serializers.CharField(source="company.logo_url", read_only=True)
+    company_domain = serializers.CharField(
+        source="company.company_domain", read_only=True
+    )
     company_visa_fair_score = serializers.SerializerMethodField()
     company_h1b_approval_rate = serializers.SerializerMethodField()
     company_offer_count = serializers.SerializerMethodField()
@@ -250,111 +331,137 @@ class JobPostingSerializer(serializers.ModelSerializer):
     match_reasons = serializers.SerializerMethodField()
 
     def get_company_visa_fair_score(self, obj):
-        return float(obj.company.visa_fair_score) if obj.company.visa_fair_score is not None else None
+        return (
+            float(obj.company.visa_fair_score)
+            if obj.company.visa_fair_score is not None
+            else None
+        )
 
     def get_company_h1b_approval_rate(self, obj):
-        return float(obj.company.h1b_approval_rate) if obj.company.h1b_approval_rate is not None else None
+        return (
+            float(obj.company.h1b_approval_rate)
+            if obj.company.h1b_approval_rate is not None
+            else None
+        )
 
     def get_company_offer_count(self, obj):
-        annotated = getattr(obj, 'company_offer_count', None)
+        annotated = getattr(obj, "company_offer_count", None)
         if annotated is not None:
             return annotated
         return obj.company.offers.count()
 
     def get_job_score(self, obj):
-        score = getattr(obj, 'job_score', None)
+        score = getattr(obj, "job_score", None)
         return int(score) if score is not None else None
 
     def get_match_reasons(self, obj):
         reasons = []
-        request = self.context.get('request')
-        search_term = request.query_params.get('search', '').strip().lower() if request else ''
-        location = request.query_params.get('location', '').strip().lower() if request else ''
+        request = self.context.get("request")
+        search_term = (
+            request.query_params.get("search", "").strip().lower() if request else ""
+        )
+        location = (
+            request.query_params.get("location", "").strip().lower() if request else ""
+        )
 
-        if search_term and search_term in (obj.title or '').lower():
-            reasons.append('Title matches your search')
-        if location and location in (obj.location or '').lower():
-            reasons.append('Location matches your filter')
-        if obj.remote_policy == 'remote':
-            reasons.append('Remote-friendly role')
+        if search_term and search_term in (obj.title or "").lower():
+            reasons.append("Title matches your search")
+        if location and location in (obj.location or "").lower():
+            reasons.append("Location matches your filter")
+        if obj.remote_policy == "remote":
+            reasons.append("Remote-friendly role")
         if obj.salary_min or obj.salary_max:
-            reasons.append('Compensation published on the job posting')
+            reasons.append("Compensation published on the job posting")
         elif self.get_company_offer_count(obj) > 0:
-            reasons.append(f'{self.get_company_offer_count(obj)} salary records available for this company')
-        if obj.visa_sponsorship_signal == 'historically_sponsors':
-            reasons.append('Employer has a meaningful historical sponsorship footprint')
-        elif obj.visa_sponsorship_signal == 'likely':
-            reasons.append('Employer shows positive visa-support signals')
+            reasons.append(
+                f"{self.get_company_offer_count(obj)} salary records available for this company"
+            )
+        if obj.visa_sponsorship_signal == "historically_sponsors":
+            reasons.append("Employer has a meaningful historical sponsorship footprint")
+        elif obj.visa_sponsorship_signal == "likely":
+            reasons.append("Employer shows positive visa-support signals")
         if obj.posted_at:
-            reasons.append('Recently refreshed from the source board')
+            reasons.append("Recently refreshed from the source board")
 
         return reasons[:4]
 
     class Meta:
         model = JobPosting
         fields = [
-            'id',
-            'company',
-            'company_name',
-            'company_slug',
-            'company_logo_url',
-            'company_domain',
-            'company_visa_fair_score',
-            'company_h1b_approval_rate',
-            'company_offer_count',
-            'title',
-            'team',
-            'location',
-            'remote_policy',
-            'employment_type',
-            'url',
-            'source',
-            'source_board',
-            'salary_min',
-            'salary_max',
-            'currency',
-            'posted_at',
-            'last_seen_at',
-            'visa_sponsorship_signal',
-            'is_active',
-            'job_score',
-            'match_reasons',
+            "id",
+            "company",
+            "company_name",
+            "company_slug",
+            "company_logo_url",
+            "company_domain",
+            "company_visa_fair_score",
+            "company_h1b_approval_rate",
+            "company_offer_count",
+            "title",
+            "team",
+            "location",
+            "remote_policy",
+            "employment_type",
+            "url",
+            "source",
+            "source_board",
+            "salary_min",
+            "salary_max",
+            "currency",
+            "posted_at",
+            "last_seen_at",
+            "visa_sponsorship_signal",
+            "is_active",
+            "job_score",
+            "match_reasons",
         ]
 
 
 class CompanyBenefitSerializer(serializers.ModelSerializer):
-    category_display = serializers.CharField(source='get_category_display', read_only=True)
-    source_display = serializers.CharField(source='get_source_display', read_only=True)
+    category_display = serializers.CharField(
+        source="get_category_display", read_only=True
+    )
+    source_display = serializers.CharField(source="get_source_display", read_only=True)
 
     class Meta:
         model = CompanyBenefit
         fields = [
-            'id',
-            'company',
-            'title',
-            'description',
-            'category',
-            'category_display',
-            'value',
-            'source',
-            'source_display',
-            'source_url',
-            'confidence',
-            'is_verified',
-            'created_at',
+            "id",
+            "company",
+            "title",
+            "description",
+            "category",
+            "category_display",
+            "value",
+            "source",
+            "source_display",
+            "source_url",
+            "confidence",
+            "is_verified",
+            "created_at",
         ]
 
 
 class CompanyReviewSerializer(serializers.ModelSerializer):
-    company_name = serializers.CharField(source='company.name', read_only=True)
-    
+    company_name = serializers.CharField(source="company.name", read_only=True)
+
     class Meta:
         model = CompanyReview
-        fields = ['id', 'company', 'company_name', 'sponsorship_experience_rating',
-                  'salary_fairness_rating', 'overall_rating', 'review_text',
-                  'visa_type', 'years_at_company', 'is_anonymous', 'is_verified',
-                  'created_at']
-        read_only_fields = ['id', 'is_verified', 'created_at']
+        fields = [
+            "id",
+            "company",
+            "company_name",
+            "sponsorship_experience_rating",
+            "salary_fairness_rating",
+            "overall_rating",
+            "review_text",
+            "visa_type",
+            "years_at_company",
+            "is_anonymous",
+            "is_verified",
+            "created_at",
+        ]
+        read_only_fields = ["id", "is_verified", "created_at"]
 
 
 class ResumeMatchUploadSerializer(serializers.Serializer):
@@ -365,16 +472,20 @@ class ResumeMatchUploadSerializer(serializers.Serializer):
     source = serializers.CharField(required=False, allow_blank=True)
     remote_policy = serializers.CharField(required=False, allow_blank=True)
     visa_sponsorship_signal = serializers.CharField(required=False, allow_blank=True)
-    posted_within_days = serializers.IntegerField(required=False, min_value=1, max_value=365)
+    posted_within_days = serializers.IntegerField(
+        required=False, min_value=1, max_value=365
+    )
     has_salary = serializers.BooleanField(required=False, default=False)
 
     def validate_resume(self, value):
-        file_name = (value.name or '').lower()
-        if not file_name.endswith('.pdf'):
-            raise serializers.ValidationError('Please upload a PDF resume.')
+        file_name = (value.name or "").lower()
+        if not file_name.endswith(".pdf"):
+            raise serializers.ValidationError("Please upload a PDF resume.")
 
-        max_bytes = int(getattr(settings, 'RESUME_MAX_FILE_BYTES', 5 * 1024 * 1024))
+        max_bytes = int(getattr(settings, "RESUME_MAX_FILE_BYTES", 5 * 1024 * 1024))
         if value.size > max_bytes:
-            raise serializers.ValidationError(f'Please upload a PDF smaller than {max_bytes // (1024 * 1024)} MB.')
+            raise serializers.ValidationError(
+                f"Please upload a PDF smaller than {max_bytes // (1024 * 1024)} MB."
+            )
 
         return value

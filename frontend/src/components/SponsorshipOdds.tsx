@@ -5,7 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Award, Briefcase, Clock, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { sponsorshipApi } from '../api/services';
 import { Button, Card, CardBody, Badge, Progress } from '../components/ui';
-import { useToast } from '../components/ui/Toast';
+import { useToast } from '../components/ui/useToast';
 import type { SponsorshipInput } from '../types';
 
 const sponsorshipSchema = z.object({
@@ -28,6 +28,7 @@ function SponsorshipOdds({ companyId, companyName }: SponsorshipOddsProps) {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<SponsorshipFormData>({
     resolver: zodResolver(sponsorshipSchema),
     defaultValues: {
@@ -35,6 +36,8 @@ function SponsorshipOdds({ companyId, companyName }: SponsorshipOddsProps) {
       experience_level: 'mid',
     },
   });
+
+  const watchedCompanyId = watch('company_id');
 
   const mutation = useMutation({
     mutationFn: (data: SponsorshipInput) => sponsorshipApi.calculate(data),
@@ -47,6 +50,10 @@ function SponsorshipOdds({ companyId, companyName }: SponsorshipOddsProps) {
   });
 
   const onSubmit = (data: SponsorshipFormData) => {
+    if (!data.company_id || data.company_id < 1) {
+      toast.error('Please select a valid company to check sponsorship odds.', 'Company Required');
+      return;
+    }
     mutation.mutate(data as SponsorshipInput);
   };
 
@@ -109,6 +116,9 @@ function SponsorshipOdds({ companyId, companyName }: SponsorshipOddsProps) {
             />
             {errors.company_id && (
               <p className="mt-2 text-sm text-danger">{errors.company_id.message}</p>
+            )}
+            {!watchedCompanyId && (
+              <p className="mt-2 text-xs text-muted">Visit a company page to get their ID, or use the salary predictor above.</p>
             )}
           </div>
         )}
