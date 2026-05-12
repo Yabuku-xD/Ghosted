@@ -15,9 +15,9 @@
 
 Visa-aware job intelligence platform with H-1B data, live jobs, salary insights, company comparison, and prediction tools.
 
-Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is now built around five public workflows: company discovery, live jobs, salary intelligence, company comparison, and prediction tools for compensation and sponsorship odds.
+Ghosted combines public H-1B/LCA data with salary records, company enrichment, and live hiring signals in a Dockerized full-stack app. The product is built around six public workflows: company discovery, live jobs, H-1B intelligence, salary insights, company comparison, and prediction tools for compensation and sponsorship odds.
 
-Current tracked release: `v0.6.0`
+Current tracked release: `v0.6.5`
 
 ![Ghosted homepage](assets/home.png)
 
@@ -40,19 +40,21 @@ Ghosted exists to answer a practical question for international candidates: whic
 The stack currently includes:
 
 - Backend: Django, Django REST Framework, Celery, PostgreSQL, Redis
-- Frontend: React, TypeScript, Vite, Tailwind CSS, React Query
+- Frontend: React 19, TypeScript, Vite, Tailwind CSS, React Query
 - Infra: Docker Compose
 
 Core product capabilities:
 
 - Sponsorship-focused company discovery with visa-fair scoring
-- Live jobs browsing with source-linked outbound apply flows
+- Live jobs browsing with 10+ filter dimensions and auto-discovery on zero results
+- H-1B applications table with FY2025 data, lottery statistics, and country-cap status
 - Offer browsing with trust metadata and responsive pagination
 - Domain and logo enrichment with graceful fallback rendering
 - Automated ATS sync and discovery from supported public job boards
 - Temporary resume-to-shortlist matching with a shared tailored PDF output
 - Side-by-side company comparison
 - Salary prediction and sponsorship-odds tools
+- H-1B lottery calculator with country-specific odds
 
 ## Install
 
@@ -99,13 +101,14 @@ npm run dev
 
 ## Usage
 
-Once the app is running, the public product surface centers on five areas:
+Once the app is running, the public product surface centers on six areas:
 
 - `Companies`: browse sponsorship-friendly employers, visa scores, trust signals, and company detail pages
-- `Jobs`: search live ATS roles with visa-aware ranking, freshness, salary evidence signals, and a temporary resume-powered high-match shortlist
+- `Jobs`: search live ATS roles with 10+ filter dimensions (workplace type, employment type, degree level, max experience, ATS source, visa support, date, salary), debounced search, and auto-discovery when no results are found
+- `H1B Data`: explore FY2025 H-1B applications with company/city/state normalization, lottery statistics across 5 fiscal years, and country-cap status with cap-type indicators
 - `Offers`: explore salary records with source metadata, filters, and pagination
 - `Compare`: evaluate two companies side by side on sponsorship strength, salary coverage, and live jobs
-- `Predictions`: estimate salary expectations and sponsorship odds from the currently available market data
+- `Predictions`: estimate salary expectations and sponsorship odds; calculate H-1B lottery chances with country-specific rates and masters cap advantage
 
 Useful local verification commands:
 
@@ -142,7 +145,7 @@ python manage.py sync_job_postings --limit 100
 
 These commands are useful when you want to:
 
-- load multiple DOL disclosure files
+- load multiple DOL disclosure files from a directory
 - enrich company domains and branding metadata
 - discover and refresh jobs from supported Greenhouse, Lever, and Ashby boards
 - let the app infer public job boards from company websites and careers pages
@@ -153,26 +156,35 @@ After deployment, recurring job discovery and refresh are scheduled through Cele
 
 ```text
 ghosted/
-├── backend/                  # Django apps, API, import commands, services
-├── frontend/                 # React application
-├── docs/                     # Plans, status notes, verification assets
-├── CHANGELOG.md              # Release notes
-├── LICENSE                   # MIT license
-└── docker-compose.yml        # Local multi-service setup
+├── backend/
+│   ├── ghosted/           # Django project settings, urls, wsgi
+│   ├── companies/         # Company models, views, job syncing, services
+│   ├── h1b_data/          # H-1B application models, serializers, import commands
+│   ├── offers/            # Salary offer models and views
+│   ├── predictions/       # Salary/lottery prediction models and services
+│   ├── users/             # Custom user model, auth views
+│   └── data/              # Raw CSV import directory (gitignored)
+├── frontend/              # React + TypeScript + Vite application
+│   ├── src/pages/         # 12 page components
+│   ├── src/components/    # Shared UI components
+│   └── src/api/           # Axios client and API hooks
+├── docs/                  # Plans, status notes, verification assets
+├── assets/                # Banner and screenshot images
+├── LICENSE                # MIT license
+└── docker-compose.yml     # Local multi-service setup
 ```
 
 ## Docs
 
-- [Changelog](CHANGELOG.md)
+- [Project Status](docs/status/PROJECT_STATUS.md)
 - [Plans](docs/plans/)
-- [Status Notes](docs/status/)
 - [Verification Assets](docs/verification/)
 
 ## Contributing
 
 Issues and focused pull requests are welcome. When proposing a change:
 
-- keep the README and changelog aligned with the actual code changes
+- keep the README aligned with the actual code changes
 - include the relevant verification steps or results
 - avoid documenting features that are not implemented yet
 
