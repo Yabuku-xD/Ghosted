@@ -218,6 +218,16 @@ def infer_board_from_url(url: str) -> tuple[str, str] | None:
     if not url:
         return None
 
+    # Workday token encodes subdomain + WD cluster + site — requires multi-group match
+    wd_match = re.search(
+        r'([^./]+)\.(wd\d+)\.myworkdayjobs\.com/(?:[a-z]+-[a-z]+/)?([A-Za-z0-9_-]+)',
+        url,
+        flags=re.IGNORECASE,
+    )
+    if wd_match:
+        sub, wdn, site = wd_match.group(1).lower(), wd_match.group(2).lower(), wd_match.group(3).lower()
+        return 'workday', f'{sub}.{wdn}:{site}'
+
     patterns = [
         ('greenhouse', r'(?:job-boards|boards)\.greenhouse\.io/([^/?#]+)'),
         ('greenhouse', r'greenhouse\.io/embed/job_board\?(?:[^#]*&)?for=([^&#]+)'),
@@ -226,6 +236,8 @@ def infer_board_from_url(url: str) -> tuple[str, str] | None:
         ('lever', r'api\.lever\.co/v0/postings/([^/?#]+)'),
         ('ashby', r'jobs\.ashbyhq\.com/([^/?#]+)'),
         ('ashby', r'api\.ashbyhq\.com/posting-api/job-board/([^/?#]+)'),
+        ('workable', r'apply\.workable\.com/([^/?#]+)'),
+        ('bamboohr', r'([A-Za-z0-9-]+)\.bamboohr\.com'),
     ]
 
     for provider, pattern in patterns:
@@ -464,10 +476,173 @@ class AshbyAdapter(BaseAdapter):
         return jobs
 
 
+class WorkdayAdapter(BaseAdapter):
+    provider = 'workday'
+
+    def _parse_token(self, token: str) -> tuple[str, str, str]:
+        # token: "{subdomain}.{wdN}:{site}", e.g. "adobe.wd5:external_experienced"
+        host, site = token.split(':', 1)
+        dot = host.rfind('.')
+        return host[:dot], host[dot + 1:], site
+
+    def jobs_url(self, token: str) -> str:
+        sub, wdn, site = self._parse_token(token)
+        return f'https://{sub}.{wdn}.myworkdayjobs.com/wday/cxs/{sub}/{site}/jobs'
+
+    def board_url(self, token: str) -> str:
+        sub, wdn, site = self._parse_token(token)
+        return f'https://{sub}.{wdn}.myworkdayjobs.com/{site}'
+
+    def fetch_jobs(self, token: str) -> list[NormalizedJob]:
+        sub, wdn, site = self._parse_token(token)
+        list_url = f'https://{sub}.{wdn}.myworkdayjobs.com/wday/cxs/{sub}/{site}/jobs'
+        base_host = f'https://{sub}.{wdn}.myworkdayjobs.com'
+        jobs: list[NormalizedJob] = []
+        offset = 0
+        limit = 20
+        total = None
+
+        while total is None or offset < total:
+            data = json.dumps({
+                'appliedFacets': {}, 'limit': limit, 'offset': offset, 'searchText': '',
+            }).encode()
+            request = Request(
+                list_url,
+                data=data,
+                headers={
+                    'User-Agent': USER_AGENT,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+            )
+            with urlopen(request, timeout=20) as resp:
+                payload = json.loads(resp.read().decode('utf-8'))
+
+            postings = payload.get('jobPostings', [])
+            if total is None:
+                total = payload.get('total', 0)
+
+            for job in postings:
+                external_path = job.get('externalPath', '')
+                last_seg = external_path.rstrip('/').rsplit('/', 1)[-1] if external_path else ''
+                req_id = last_seg.rsplit('_', 1)[-1] if '_' in last_seg else last_seg
+                location = str(job.get('locationsText') or '')[:150]
+                jobs.append(NormalizedJob(
+                    external_job_id=req_id or external_path,
+                    title=str(job.get('title', ''))[:200],
+                    team='',
+                    location=location,
+                    remote_policy=infer_remote_policy(location),
+                    employment_type='',
+                    url=f'{base_host}{external_path}' if external_path else self.board_url(token),
+                    source=self.provider,
+                    source_board=token,
+                    description='',
+                    salary_min=None,
+                    salary_max=None,
+                    currency='USD',
+                    posted_at=None,
+                ))
+
+            offset += len(postings)
+            if not postings:
+                break
+
+        return jobs
+
+
+class WorkableAdapter(BaseAdapter):
+    provider = 'workable'
+
+    def jobs_url(self, token: str) -> str:
+        return f'https://www.workable.com/api/accounts/{token}?details=true'
+
+    def board_url(self, token: str) -> str:
+        return f'https://apply.workable.com/{token}'
+
+    def fetch_jobs(self, token: str) -> list[NormalizedJob]:
+        payload = fetch_json(self.jobs_url(token))
+        jobs = []
+        for job in payload.get('jobs', []):
+            city = str(job.get('city') or '')
+            country = str(job.get('country') or '')
+            location = ', '.join(filter(None, [city, country]))[:150]
+            is_remote = job.get('telecommuting', False)
+            shortcode = str(job.get('shortcode') or job.get('code') or '')
+            jobs.append(NormalizedJob(
+                external_job_id=shortcode[:200],
+                title=str(job.get('title', ''))[:200],
+                team=str(job.get('department') or '')[:120],
+                location=location,
+                remote_policy='remote' if is_remote else infer_remote_policy(location),
+                employment_type=str(job.get('employment_type') or '')[:50],
+                url=job.get('url') or job.get('shortlink') or self.board_url(token),
+                source=self.provider,
+                source_board=token,
+                description=strip_html(job.get('description') or ''),
+                salary_min=None,
+                salary_max=None,
+                currency='USD',
+                posted_at=parse_datetime_value(job.get('created_at') or job.get('published_on')),
+            ))
+        return jobs
+
+
+class BambooHRAdapter(BaseAdapter):
+    provider = 'bamboohr'
+
+    def jobs_url(self, token: str) -> str:
+        return f'https://{token}.bamboohr.com/careers/list'
+
+    def board_url(self, token: str) -> str:
+        return f'https://{token}.bamboohr.com/careers'
+
+    def fetch_jobs(self, token: str) -> list[NormalizedJob]:
+        request = Request(
+            self.jobs_url(token),
+            headers={
+                'User-Agent': USER_AGENT,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        )
+        with urlopen(request, timeout=20) as resp:
+            payload = json.loads(resp.read().decode('utf-8'))
+
+        jobs = []
+        for job in payload.get('result', []):
+            loc = job.get('location') or {}
+            city = str(loc.get('city') or '')
+            state = str(loc.get('state') or '')
+            location = ', '.join(filter(None, [city, state]))[:150]
+            is_remote = job.get('isRemote')
+            job_id = str(job.get('id', ''))
+            jobs.append(NormalizedJob(
+                external_job_id=job_id,
+                title=str(job.get('jobOpeningName', ''))[:200],
+                team=str(job.get('departmentLabel') or '')[:120],
+                location=location,
+                remote_policy='remote' if is_remote else infer_remote_policy(location),
+                employment_type=str(job.get('employmentStatusLabel') or '')[:50],
+                url=f'https://{token}.bamboohr.com/careers/{job_id}' if job_id else self.board_url(token),
+                source=self.provider,
+                source_board=token,
+                description='',
+                salary_min=None,
+                salary_max=None,
+                currency='USD',
+                posted_at=None,
+            ))
+        return jobs
+
+
 ADAPTERS = {
     'greenhouse': GreenhouseAdapter(),
     'lever': LeverAdapter(),
     'ashby': AshbyAdapter(),
+    'workday': WorkdayAdapter(),
+    'workable': WorkableAdapter(),
+    'bamboohr': BambooHRAdapter(),
 }
 
 

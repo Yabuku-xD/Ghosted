@@ -1,0 +1,23 @@
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg5" x1="180" y1="80" x2="1460" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070E14"/>
+      <stop offset="0.56" stop-color="#13233A"/>
+      <stop offset="1" stop-color="#231825"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" rx="48" fill="url(#bg5)"/>
+  <rect x="272" y="178" width="996" height="166" rx="34" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <rect x="332" y="378" width="936" height="166" rx="34" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <rect x="392" y="578" width="876" height="166" rx="34" fill="#0E8D79" fill-opacity="0.18" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <path d="M468 256H1118" stroke="rgba(255,255,255,0.22)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M528 456H1148" stroke="rgba(255,255,255,0.22)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M590 656H1180" stroke="rgba(255,255,255,0.22)" stroke-width="4" stroke-linecap="round"/>
+  <text x="324" y="126" fill="#F8FBF9" font-family="Satoshi, Arial, sans-serif" font-size="112" font-weight="700">Flow stack</text>
+  <text x="336" y="270" fill="#F8FBF9" font-family="Satoshi, Arial, sans-serif" font-size="72" font-weight="700">Parse</text>
+  <text x="396" y="470" fill="#F8FBF9" font-family="Satoshi, Arial, sans-serif" font-size="72" font-weight="700">Rank</text>
+  <text x="458" y="670" fill="#F8FBF9" font-family="Satoshi, Arial, sans-serif" font-size="72" font-weight="700">Deploy</text>
+  <text x="1092" y="270" fill="#7AF4D7" font-family="Geist Mono, monospace" font-size="26" letter-spacing="5">RESUME</text>
+  <text x="1104" y="470" fill="#F59B63" font-family="Geist Mono, monospace" font-size="26" letter-spacing="5">MATCH</text>
+  <text x="1090" y="670" fill="#8FA8FF" font-family="Geist Mono, monospace" font-size="26" letter-spacing="5">APPLY</text>
+</svg>

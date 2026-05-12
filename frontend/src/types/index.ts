@@ -143,6 +143,7 @@ export interface JobPosting {
   currency?: string;
   posted_at?: string | null;
   last_seen_at?: string | null;
+  description?: string;
   visa_sponsorship_signal?: string;
   is_active: boolean;
   job_score?: number | null;
@@ -159,6 +160,9 @@ export interface JobListParams {
   source?: string;
   remote_policy?: string;
   visa_sponsorship_signal?: string;
+  employment_type?: string;
+  degree_level?: string;
+  max_experience?: string;
   has_salary?: boolean;
   posted_within_days?: number;
   ordering?: string;
@@ -376,4 +380,85 @@ export interface SponsorshipResult {
     total_historical_apps: number;
     recommendations: string[];
   };
+}
+
+// H1B Data Types
+export interface H1BApplication {
+  id: number;
+  case_number: string;
+  case_status: string;
+  received_date: string;
+  decision_date: string;
+  employer_name: string;
+  employer_city: string;
+  employer_state: string;
+  job_title: string;
+  soc_code?: string;
+  soc_title?: string;
+  wage_rate_of_pay_from: string;
+  wage_rate_of_pay_to?: string;
+  wage_unit_of_pay: string;
+  prevailing_wage: string;
+  visa_class: string;
+  full_time_position: boolean;
+  fiscal_year: number;
+}
+
+export interface H1BListParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  case_status?: string;
+  fiscal_year?: number;
+  visa_class?: string;
+  employer_state?: string;
+  ordering?: string;
+}
+
+export interface LotteryYear {
+  id: number;
+  fiscal_year: number;
+  total_registrations: number;
+  selected_registrations: number;
+  regular_cap_registrations?: number;
+  regular_cap_selected?: number;
+  masters_cap_registrations?: number;
+  masters_cap_selected?: number;
+  overall_selection_rate: number | string;
+  regular_cap_selection_rate?: number | string;
+  masters_cap_selection_rate?: number | string;
+  country_stats: Record<string, unknown>;
+}
+
+export interface LotteryYearDetail extends LotteryYear {
+  statistics: {
+    total_cases: number;
+    avg_wage?: number | string;
+  };
+  top_employers: Array<{
+    employer_name: string;
+    count: number;
+  }>;
+}
+
+export interface CountryCapStatus {
+  id: number;
+  country: string;
+  fiscal_year: number;
+  total_applications: number;
+  approved: number;
+  denied: number;
+  pending: number;
+  approval_rate: number | string;
+  priority_date_current: boolean;
+  priority_date_notes?: string;
+}
+
+export interface JobDiscoveryResult {
+  companies_checked: number;
+  total_new_jobs: number;
+  discovered: Array<{
+    company: string;
+    jobs: number;
+  }>;
 }

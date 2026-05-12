@@ -1,0 +1,45 @@
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="80" y1="60" x2="1540" y2="920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#08111A"/>
+      <stop offset="0.45" stop-color="#0D2833"/>
+      <stop offset="1" stop-color="#030507"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="312" y1="210" x2="1250" y2="810" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0E8D79"/>
+      <stop offset="1" stop-color="#152B57"/>
+    </linearGradient>
+    <filter id="blur" x="-200" y="-200" width="2000" height="1400" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="80"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="1000" rx="48" fill="url(#bg)"/>
+  <g opacity="0.42" filter="url(#blur)">
+    <circle cx="332" cy="190" r="170" fill="#0EA58A"/>
+    <circle cx="1268" cy="300" r="180" fill="#3958FF"/>
+    <circle cx="906" cy="786" r="210" fill="#FF7E4D"/>
+  </g>
+  <path d="M120 178H1480" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+  <path d="M120 500H1480" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <path d="M120 822H1480" stroke="rgba(255,255,255,0.06)" stroke-width="2"/>
+  <path d="M420 120V880" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <path d="M1024 120V880" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <rect x="230" y="164" width="1120" height="672" rx="42" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.16)" stroke-width="2"/>
+  <rect x="284" y="214" width="520" height="274" rx="30" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <rect x="836" y="214" width="460" height="564" rx="30" fill="url(#panel)" fill-opacity="0.32" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>
+  <rect x="286" y="542" width="228" height="226" rx="30" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.14)" stroke-width="2"/>
+  <rect x="544" y="542" width="258" height="226" rx="30" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.14)" stroke-width="2"/>
+  <path d="M906 650C1014 548 1082 514 1226 430" stroke="white" stroke-opacity="0.62" stroke-width="4" stroke-linecap="round" stroke-dasharray="12 18"/>
+  <circle cx="904" cy="652" r="14" fill="#F4F7F5"/>
+  <circle cx="1228" cy="430" r="16" fill="#F58A52"/>
+  <text x="308" y="288" fill="#F3F8F6" font-family="Satoshi, Arial, sans-serif" font-size="84" font-weight="700">Resume</text>
+  <text x="308" y="370" fill="#7FE4D0" font-family="Satoshi, Arial, sans-serif" font-size="84" font-weight="700">Atlas</text>
+  <text x="308" y="432" fill="rgba(255,255,255,0.68)" font-family="Satoshi, Arial, sans-serif" font-size="26" font-weight="500">Matching signal across portals, roles, and sponsorship pathways.</text>
+  <text x="310" y="634" fill="#F3F8F6" font-family="Geist Mono, monospace" font-size="22" letter-spacing="4">PORTAL DENSITY</text>
+  <text x="566" y="634" fill="#F3F8F6" font-family="Geist Mono, monospace" font-size="22" letter-spacing="4">MATCH CONFIDENCE</text>
+  <text x="316" y="708" fill="#82F6C8" font-family="Satoshi, Arial, sans-serif" font-size="72" font-weight="700">84</text>
+  <text x="568" y="708" fill="#F3F8F6" font-family="Satoshi, Arial, sans-serif" font-size="72" font-weight="700">92%</text>
+  <text x="874" y="288" fill="rgba(255,255,255,0.78)" font-family="Geist Mono, monospace" font-size="24" letter-spacing="6">GHOSTED / SIGNAL MAP</text>
+  <text x="872" y="364" fill="#F3F8F6" font-family="Satoshi, Arial, sans-serif" font-size="138" font-weight="700">Match</text>
+  <text x="872" y="476" fill="#F3F8F6" font-family="Satoshi, Arial, sans-serif" font-size="138" font-weight="700">first.</text>
+</svg>

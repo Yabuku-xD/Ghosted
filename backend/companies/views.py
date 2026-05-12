@@ -1,4 +1,6 @@
-from datetime import timedelta, timezone
+from datetime import timedelta
+
+from django.utils import timezone
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -37,6 +39,7 @@ from .services.resume_matching import (
     process_resume_match_session,
     resume_download_response,
 )
+from .services.jobs import bootstrap_job_source, sync_company_jobs
 from .tasks import process_resume_match_session_task
 from .services.scoring import get_company_score_breakdown, CompanyScorer
 from offers.models import Offer
@@ -467,7 +470,7 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = JobPostingSerializer
     pagination_class = JobPagination
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["source", "remote_policy", "visa_sponsorship_signal", "company"]
+    filterset_fields = ["source", "remote_policy", "visa_sponsorship_signal", "employment_type", "company"]
 
     def get_queryset(self):
         offer_count_subquery = (
@@ -548,7 +551,9 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         if params.get("source"):
-            queryset = queryset.filter(source=params["source"])
+            sources = [s.strip() for s in params["source"].split(",") if s.strip()]
+            if sources:
+                queryset = queryset.filter(source__in=sources)
 
         if params.get("remote_policy"):
             queryset = queryset.filter(remote_policy=params["remote_policy"])
@@ -557,6 +562,34 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(
                 visa_sponsorship_signal=params["visa_sponsorship_signal"]
             )
+
+        if params.get("employment_type"):
+            types = [t.strip() for t in params["employment_type"].split(",") if t.strip()]
+            if types:
+                queryset = queryset.filter(employment_type__in=types)
+
+        if params.get("degree_level"):
+            degree = params["degree_level"].strip()
+            degree_kw = {
+                "bachelors": ["bachelor", "b.s.", "undergraduate"],
+                "masters": ["master", "m.s.", "graduate"],
+                "doctorate": ["ph.d", "phd", "doctorate", "doctoral"],
+            }
+            keywords = degree_kw.get(degree, [])
+            if keywords:
+                q = Q()
+                for kw in keywords:
+                    q |= Q(description__icontains=kw) | Q(title__icontains=kw)
+                queryset = queryset.filter(q)
+
+        if params.get("max_experience") and params["max_experience"].isdigit():
+            max_years = int(params["max_experience"])
+            if max_years > 0:
+                above = [f'{y} year' for y in range(max_years + 1, 21)]
+                exclude_q = Q()
+                for pat in above:
+                    exclude_q |= Q(description__icontains=pat) | Q(title__icontains=pat)
+                queryset = queryset.exclude(exclude_q)
 
         search_score = Value(0, output_field=IntegerField())
         if search_term:
@@ -657,6 +690,63 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
             {
                 **stats,
                 "by_source": by_source,
+            }
+        )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="discover",
+        permission_classes=[AllowAny],
+    )
+    def discover(self, request):
+        """Discover and sync jobs for companies matching a search query."""
+        search = (request.data.get("search") or "").strip()
+        if not search:
+            return Response(
+                {"error": "Search term is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Find companies matching the search term
+        matching_companies = Company.objects.filter(
+            Q(name__icontains=search)
+            | Q(company_domain__icontains=search)
+            | Q(slug__icontains=search)
+        )[:5]
+
+        total_new_jobs = 0
+        discovered = []
+
+        for company in matching_companies:
+            company_jobs = 0
+            try:
+                # Try to bootstrap job source if missing
+                if not (company.jobs_provider and company.jobs_board_token):
+                    bootstrap_job_source(company, probe_network=True)
+                    company.refresh_from_db()
+
+                # Sync jobs if we have a provider
+                if company.jobs_provider and company.jobs_board_token:
+                    company_jobs = sync_company_jobs(company, discover_if_missing=False)
+                    total_new_jobs += company_jobs
+            except Exception:
+                continue
+
+            if company_jobs > 0 or (company.jobs_provider and company.jobs_board_token):
+                discovered.append(
+                    {
+                        "company": company.name,
+                        "jobs": company_jobs,
+                        "provider": company.jobs_provider,
+                    }
+                )
+
+        return Response(
+            {
+                "companies_checked": len(matching_companies),
+                "total_new_jobs": total_new_jobs,
+                "discovered": discovered,
             }
         )
 

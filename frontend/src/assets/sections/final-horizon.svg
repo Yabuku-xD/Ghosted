@@ -1,0 +1,18 @@
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg8" x1="140" y1="100" x2="1460" y2="920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#071119"/>
+      <stop offset="0.55" stop-color="#153042"/>
+      <stop offset="1" stop-color="#05090C"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" rx="48" fill="url(#bg8)"/>
+  <path d="M104 688C294 598 438 560 590 586C772 618 948 758 1496 488V1000H104V688Z" fill="rgba(255,255,255,0.05)"/>
+  <path d="M112 602C308 472 486 448 660 510C870 588 1048 698 1496 370" stroke="rgba(255,255,255,0.2)" stroke-width="4"/>
+  <path d="M112 676C314 558 482 532 640 566C838 608 1012 694 1496 444" stroke="rgba(255,255,255,0.12)" stroke-width="4"/>
+  <rect x="184" y="172" width="1232" height="226" rx="40" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <text x="244" y="290" fill="#F7FAF8" font-family="Satoshi, Arial, sans-serif" font-size="130" font-weight="700">Launch your next move.</text>
+  <text x="246" y="358" fill="rgba(255,255,255,0.7)" font-family="Satoshi, Arial, sans-serif" font-size="30">One resume. Many portals. A cleaner shot at jobs that actually fit.</text>
+  <circle cx="1280" cy="770" r="126" fill="#0E8D79" fill-opacity="0.2"/>
+  <circle cx="1280" cy="770" r="56" fill="#F7FAF8"/>
+</svg>

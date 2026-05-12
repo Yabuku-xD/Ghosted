@@ -18,6 +18,12 @@ import type {
   LotteryResult,
   SponsorshipInput,
   SponsorshipResult,
+  H1BApplication,
+  H1BListParams,
+  LotteryYear,
+  LotteryYearDetail,
+  CountryCapStatus,
+  JobDiscoveryResult,
 } from '../types';
 
 // Paginated response type
@@ -108,4 +114,22 @@ export const lotteryApi = {
 export const sponsorshipApi = {
   calculate: (data: SponsorshipInput) =>
     apiClient.post<SponsorshipResult>('/sponsorship-likelihood/calculate/', data).then(r => r.data),
+};
+
+// H1B Data API
+export const h1bApi = {
+  applications: (params?: H1BListParams) =>
+    apiClient.get<PaginatedResponse<H1BApplication>>('/h1b-applications/', { params }).then(r => r.data),
+  lotteryYears: () =>
+    apiClient.get<LotteryYear[]>('/lottery-years/').then(r => r.data),
+  lotteryYearDetail: (fiscalYear: number) =>
+    apiClient.get<LotteryYearDetail>(`/lottery-years/${fiscalYear}/statistics/`).then(r => r.data),
+  countryCapStatuses: (params?: { country?: string; fiscal_year?: number }) =>
+    apiClient.get<PaginatedResponse<CountryCapStatus>>('/country-cap-status/', { params }).then(r => r.data),
+};
+
+// Job Discovery API
+export const jobDiscoveryApi = {
+  discover: (search: string) =>
+    apiClient.post<JobDiscoveryResult>('/jobs/discover/', { search }).then(r => r.data),
 };

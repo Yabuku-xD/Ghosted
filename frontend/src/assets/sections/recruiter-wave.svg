@@ -1,0 +1,23 @@
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg6" x1="160" y1="100" x2="1440" y2="920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#09131A"/>
+      <stop offset="0.48" stop-color="#112935"/>
+      <stop offset="1" stop-color="#26131F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" rx="48" fill="url(#bg6)"/>
+  <path d="M160 644C314 492 452 456 620 530C824 620 998 706 1440 370" stroke="rgba(255,255,255,0.22)" stroke-width="4"/>
+  <path d="M160 734C366 598 548 570 732 624C948 688 1118 760 1440 478" stroke="rgba(255,255,255,0.16)" stroke-width="4"/>
+  <circle cx="324" cy="606" r="86" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <circle cx="620" cy="530" r="86" fill="#0E8D79" fill-opacity="0.22" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <circle cx="940" cy="650" r="86" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <circle cx="1244" cy="500" r="86" fill="#4960E6" fill-opacity="0.22" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <text x="236" y="622" fill="#F6FBF8" font-family="Satoshi, Arial, sans-serif" font-size="34" font-weight="700">Signal</text>
+  <text x="530" y="546" fill="#F6FBF8" font-family="Satoshi, Arial, sans-serif" font-size="34" font-weight="700">Hiring</text>
+  <text x="862" y="666" fill="#F6FBF8" font-family="Satoshi, Arial, sans-serif" font-size="34" font-weight="700">Fit</text>
+  <text x="1160" y="516" fill="#F6FBF8" font-family="Satoshi, Arial, sans-serif" font-size="34" font-weight="700">Launch</text>
+  <text x="222" y="216" fill="#F6FBF8" font-family="Satoshi, Arial, sans-serif" font-size="118" font-weight="700">Career</text>
+  <text x="222" y="324" fill="#7AF4D7" font-family="Satoshi, Arial, sans-serif" font-size="118" font-weight="700">chorus</text>
+  <text x="224" y="404" fill="rgba(255,255,255,0.7)" font-family="Satoshi, Arial, sans-serif" font-size="30">Multiple company signals move in one wave instead of isolated tabs.</text>
+</svg>

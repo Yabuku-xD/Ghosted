@@ -43,25 +43,17 @@ function CompanyPicker({
   const showSuggestions = isOpen && deferredSearch.length >= 2 && suggestions.length > 0 && !hasExactSelection;
 
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
+    if (!isOpen) return;
     const handlePointerDown = (event: MouseEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) {
         onClose();
       }
     };
-
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
+      if (event.key === 'Escape') onClose();
     };
-
     document.addEventListener('mousedown', handlePointerDown);
     document.addEventListener('keydown', handleEscape);
-
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('keydown', handleEscape);
@@ -69,31 +61,29 @@ function CompanyPicker({
   }, [isOpen, onClose]);
 
   return (
-    <div ref={rootRef} className="card-static p-4 sm:p-6 bg-white">
-      <label htmlFor={inputId} className="font-mono text-xs uppercase tracking-wider text-secondary mb-3 block">
+    <div ref={rootRef} className="card p-4 sm:p-5">
+      <label htmlFor={inputId} className="text-xs uppercase tracking-[0.2em] text-text-muted mb-3 block">
         {label}
       </label>
 
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+      <div className="relative mb-3">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
         <input
           id={inputId}
           type="text"
           value={value}
-          onChange={(event) => {
-            onChange(event.target.value);
-          }}
+          onChange={(event) => onChange(event.target.value)}
           onFocus={onOpen}
           aria-expanded={showSuggestions}
           aria-controls={showSuggestions ? listboxId : undefined}
           aria-autocomplete="list"
           placeholder="Search by company name..."
-          className="input pl-10"
+          className="input pl-11"
         />
       </div>
 
       {selectedCompany ? (
-        <div className="border-2 border-border bg-secondary p-3 flex items-center gap-3">
+        <div className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.02]">
           <CompanyLogo
             companyName={selectedCompany.name}
             logoUrl={selectedCompany.logo_url}
@@ -102,8 +92,8 @@ function CompanyPicker({
             size="sm"
           />
           <div className="min-w-0 flex-1">
-            <div className="font-semibold text-primary truncate">{selectedCompany.name}</div>
-            <div className="text-xs text-secondary truncate">
+            <div className="font-semibold text-text-primary truncate">{selectedCompany.name}</div>
+            <div className="text-xs text-text-muted truncate">
               {selectedCompany.headquarters || 'Location pending'}
             </div>
           </div>
@@ -114,7 +104,7 @@ function CompanyPicker({
         <div
           id={listboxId}
           role="listbox"
-          className="mt-4 border-2 border-border divide-y-2 divide-border-light bg-white max-h-64 overflow-y-auto"
+          className="mt-3 border border-white/5 rounded-xl divide-y divide-white/5 max-h-64 overflow-y-auto"
         >
           {suggestions.slice(0, 6).map((company) => (
             <button
@@ -122,7 +112,7 @@ function CompanyPicker({
               type="button"
               role="option"
               onClick={() => onSelect(company)}
-              className="w-full text-left px-3 py-3 hover:bg-secondary transition-colors flex items-center gap-3"
+              className="w-full text-left px-4 py-3 hover:bg-white/[0.03] transition-colors flex items-center gap-3"
             >
               <CompanyLogo
                 companyName={company.name}
@@ -132,8 +122,8 @@ function CompanyPicker({
                 size="sm"
               />
               <div className="min-w-0">
-                <div className="font-semibold text-primary truncate">{company.name}</div>
-                <div className="text-xs text-secondary truncate">
+                <div className="font-semibold text-text-primary truncate">{company.name}</div>
+                <div className="text-xs text-text-muted truncate">
                   {(company.total_h1b_filings || 0).toLocaleString()} filings
                 </div>
               </div>
@@ -203,9 +193,7 @@ function CompareCompanies() {
       setRightSearch(value);
     }
 
-    if (!selectedCompany) {
-      return;
-    }
+    if (!selectedCompany) return;
 
     if (value.trim().toLowerCase() === selectedCompany.name.trim().toLowerCase()) {
       return;
@@ -218,50 +206,30 @@ function CompareCompanies() {
 
   useEffect(() => {
     if (selectedLeftCompany && !leftSearch.trim()) {
-      startTransition(() => {
-        setLeftSearch(selectedLeftCompany.name);
-      });
+      startTransition(() => setLeftSearch(selectedLeftCompany.name));
     }
   }, [leftSearch, selectedLeftCompany]);
 
   useEffect(() => {
     if (selectedRightCompany && !rightSearch.trim()) {
-      startTransition(() => {
-        setRightSearch(selectedRightCompany.name);
-      });
+      startTransition(() => setRightSearch(selectedRightCompany.name));
     }
   }, [rightSearch, selectedRightCompany]);
 
   useEffect(() => {
-    if (!leftSlug) {
-      startTransition(() => {
-        setLeftPreview(null);
-      });
-    }
+    if (!leftSlug) startTransition(() => setLeftPreview(null));
   }, [leftSlug]);
 
   useEffect(() => {
-    if (!rightSlug) {
-      startTransition(() => {
-        setRightPreview(null);
-      });
-    }
+    if (!rightSlug) startTransition(() => setRightPreview(null));
   }, [rightSlug]);
 
   useEffect(() => {
-    if (leftCompany) {
-      startTransition(() => {
-        setLeftPreview(leftCompany);
-      });
-    }
+    if (leftCompany) startTransition(() => setLeftPreview(leftCompany));
   }, [leftCompany]);
 
   useEffect(() => {
-    if (rightCompany) {
-      startTransition(() => {
-        setRightPreview(rightCompany);
-      });
-    }
+    if (rightCompany) startTransition(() => setRightPreview(rightCompany));
   }, [rightCompany]);
 
   const heroText = leftSlug && rightSlug
@@ -269,18 +237,23 @@ function CompareCompanies() {
     : 'Choose any two companies to compare visa-fairness, salary data, and hiring signals.';
 
   return (
-    <div className="bg-bg-primary min-h-screen">
-      <div className="bg-secondary border-b-3 border-border">
-        <div className="container py-8 sm:py-12">
-          <div className="section-marker mb-3">
-            <span>Decision Support</span>
+    <div className="min-h-screen bg-bg-primary">
+      {/* Header */}
+      <div className="border-b border-white/5">
+        <div className="container-wide px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center gap-2 mb-2">
+            <Scale className="w-4 h-4 text-accent" />
+            <span className="text-xs uppercase tracking-[0.2em] text-text-muted">Decision Support</span>
           </div>
-          <h1 className="headline-lg mb-4">Compare Companies</h1>
-          <p className="text-secondary max-w-2xl">{heroText}</p>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-[-0.04em] text-text-primary mb-3">
+            Compare Companies
+          </h1>
+          <p className="text-text-secondary max-w-2xl text-sm sm:text-base">{heroText}</p>
         </div>
       </div>
 
-      <div className="container py-8 sm:py-12 space-y-6">
+      <div className="container-wide px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Pickers */}
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto_1fr] gap-4 items-start">
           <CompanyPicker
             label="Company A"
@@ -293,9 +266,9 @@ function CompareCompanies() {
             onSelect={(company) => setCompany('left', company)}
           />
 
-          <div className="hidden xl:flex items-center justify-center pt-16">
-            <div className="w-16 h-16 bg-accent text-white border-3 border-border flex items-center justify-center shadow-solid">
-              <ArrowLeftRight className="w-7 h-7" />
+          <div className="hidden xl:flex items-center justify-center pt-14">
+            <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-accent">
+              <ArrowLeftRight className="w-4 h-4" />
             </div>
           </div>
 
@@ -323,9 +296,10 @@ function CompareCompanies() {
           </div>
         ) : comparison ? (
           <>
+            {/* Company cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {[comparison.left, comparison.right].map((company) => (
-                <div key={company.slug} className="card-static p-5 sm:p-6 bg-white">
+                <div key={company.slug} className="card p-5">
                   <div className="flex items-start gap-4">
                     <CompanyLogo
                       companyName={company.name}
@@ -336,22 +310,25 @@ function CompareCompanies() {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <h2 className="headline-sm text-primary truncate">{company.name}</h2>
+                        <h2 className="text-lg font-semibold text-text-primary truncate">{company.name}</h2>
                         <Badge variant="outline" size="sm">
                           {(company.active_job_count || 0).toLocaleString()} live jobs
                         </Badge>
                       </div>
-                      <p className="text-sm text-secondary">
-                        {(company.total_h1b_filings || 0).toLocaleString()} filings • {(company.offer_count || 0).toLocaleString()} salary records
+                      <p className="text-sm text-text-secondary">
+                        {(company.total_h1b_filings || 0).toLocaleString()} filings &middot; {(company.offer_count || 0).toLocaleString()} salary records
                       </p>
                       <div className="flex flex-wrap gap-2 mt-3">
                         {(company.actionable_insights || []).map((insight) => (
                           <Badge key={insight} variant="ghost" size="sm">{insight}</Badge>
                         ))}
                       </div>
-                      <Link to={`/companies/${company.slug}`} className="btn btn-secondary mt-4 inline-flex text-sm">
+                      <Link
+                        to={`/companies/${company.slug}`}
+                        className="inline-flex items-center gap-2 mt-4 text-sm font-medium text-accent hover:underline"
+                      >
                         View Company
-                        <ArrowRight className="w-4 h-4" />
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>
                   </div>
@@ -359,13 +336,14 @@ function CompareCompanies() {
               ))}
             </div>
 
-            <div className="card-static p-4 sm:p-6 bg-white">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-5 h-5 text-accent" />
-                <h2 className="headline-sm">Comparison Summary</h2>
+            {/* Comparison table */}
+            <div className="card p-5">
+              <div className="flex items-center gap-2 mb-5">
+                <Sparkles className="w-4 h-4 text-accent" />
+                <h2 className="text-lg font-semibold text-text-primary">Comparison Summary</h2>
               </div>
 
-              <div className="divide-y-2 divide-border-light">
+              <div className="divide-y divide-white/5">
                 {comparison.comparison.map((metric) => {
                   const winnerLabel = metric.winner === 'tie'
                     ? 'Tie'
@@ -375,10 +353,10 @@ function CompareCompanies() {
 
                   return (
                     <div key={metric.field} className="grid grid-cols-[1.2fr_1fr_1fr] gap-3 py-4 items-center text-sm">
-                      <div className="font-semibold text-primary">{metric.label}</div>
-                      <div className="font-mono text-primary">{metric.left_value.toLocaleString()}</div>
+                      <div className="font-medium text-text-primary">{metric.label}</div>
+                      <div className="font-mono text-text-primary">{metric.left_value.toLocaleString()}</div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="font-mono text-primary">{metric.right_value.toLocaleString()}</span>
+                        <span className="font-mono text-text-primary">{metric.right_value.toLocaleString()}</span>
                         <Badge variant={metric.winner === 'tie' ? 'ghost' : 'accent'} size="sm">
                           {winnerLabel}
                         </Badge>

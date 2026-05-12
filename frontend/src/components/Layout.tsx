@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Compass, Database, Radar, ShieldCheck } from 'lucide-react';
 import Navbar from './Navbar';
 import SkipLink from './ui/SkipLink';
 
@@ -11,17 +13,16 @@ function Layout({ children }: LayoutProps) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Small delay to ensure smooth initial render
     const timer = setTimeout(() => setIsReady(true), 50);
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="theme-surface min-h-screen bg-bg-primary text-text-primary">
       <SkipLink targetId="main-content" />
       <Navbar />
-      
-      <AnimatePresence mode="wait">
+
+      <AnimatePresence mode="wait" initial={false}>
         {isReady && (
           <motion.main
             id="main-content"
@@ -29,86 +30,95 @@ function Layout({ children }: LayoutProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="relative"
+            className="relative z-10 overflow-x-hidden w-full max-w-full pt-16"
           >
             {children}
           </motion.main>
         )}
       </AnimatePresence>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 bg-bg-secondary/30 py-12">
-        <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Brand */}
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-accent to-cyan-500 rounded-xl flex items-center justify-center">
-                  <span className="font-bold text-lg text-white">G</span>
+      <footer className="relative z-10 border-t border-border-light px-4 pb-8 pt-20 sm:px-6 lg:px-8">
+        <div className="container-wide">
+          <div className="grid gap-12 lg:grid-cols-[1.3fr_0.7fr] lg:gap-16">
+            <div className="space-y-8">
+              <span className="site-kicker">Matched signal, not noise</span>
+              <div className="space-y-5">
+                <h2 className="balanced-text max-w-2xl text-3xl font-black tracking-[-0.04em] text-text-primary sm:text-4xl lg:text-5xl">
+                  Ghosted turns ATS sprawl into a clean career operating surface.
+                </h2>
+                <p className="pretty-text max-w-lg text-base text-text-secondary leading-relaxed sm:text-lg">
+                  Explore sponsor companies, ranked jobs, salary evidence, and prediction tools without leaving the same system.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to="/jobs"
+                  className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-text-primary px-6 py-3 text-sm font-semibold text-bg-primary transition-transform duration-300 ease-out active:scale-[0.96]"
+                >
+                  Open live jobs
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/companies"
+                  className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-semibold text-text-primary transition-colors duration-300 hover:bg-glass active:scale-[0.96]"
+                >
+                  Browse companies
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-8 sm:grid-cols-2">
+              {[
+                {
+                  icon: Compass,
+                  title: 'Route quickly',
+                  body: 'Find fit-first jobs instead of tabbing through generic boards.',
+                },
+                {
+                  icon: Database,
+                  title: 'Read real evidence',
+                  body: 'Ground decisions in offers, filings, and live career-site signals.',
+                },
+                {
+                  icon: Radar,
+                  title: 'Track sponsorship',
+                  body: 'See which companies keep showing up with stronger visa intent.',
+                },
+                {
+                  icon: ShieldCheck,
+                  title: 'Stay contextual',
+                  body: 'Compare multiple signals before spending time on an application.',
+                },
+              ].map(({ icon: Icon, title, body }) => (
+                <div
+                  key={title}
+                  className="group"
+                >
+                  <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-muted transition-colors duration-300 group-hover:border-border-accent group-hover:text-accent">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <h3 className="mb-1 text-base font-bold text-text-primary">{title}</h3>
+                  <p className="pretty-text text-sm text-text-secondary leading-relaxed">{body}</p>
                 </div>
-                <span className="font-bold text-xl text-text-primary">Ghosted</span>
-              </div>
-              <p className="text-text-secondary text-sm max-w-sm mb-6">
-                Job intelligence platform for international talent. Make data-driven decisions about your career with evidence-backed insights.
-              </p>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 w-fit">
-                <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                <span className="text-xs font-medium text-accent">Beta</span>
-              </div>
-            </div>
-
-            {/* Links */}
-            <div>
-              <h4 className="font-semibold text-text-primary mb-4">Platform</h4>
-              <ul className="space-y-3">
-                {[
-                  { label: 'Companies', href: '/companies' },
-                  { label: 'Jobs', href: '/jobs' },
-                  { label: 'Compare', href: '/compare' },
-                  { label: 'Offers', href: '/offers' },
-                  { label: 'Predictions', href: '/predictions' },
-                ].map((link) => (
-                  <li key={link.href}>
-                    <a
-                      href={link.href}
-                      className="text-sm text-text-secondary hover:text-accent transition-colors"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div>
-              <h4 className="font-semibold text-text-primary mb-4">Legal</h4>
-              <ul className="space-y-3">
-                {[
-                  { label: 'Privacy Policy', href: '/privacy' },
-                  { label: 'Terms of Service', href: '/terms' },
-                ].map((link) => (
-                  <li key={link.href}>
-                    <a
-                      href={link.href}
-                      className="text-sm text-text-secondary hover:text-accent transition-colors"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              ))}
             </div>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-text-muted">
-              {new Date().getFullYear()} Ghosted. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6 text-sm text-text-muted">
-              <span>Data from Department of Labor</span>
-              <span>•</span>
-              <span>Community submissions</span>
+          <div className="mt-16 flex flex-col gap-4 border-t border-border-light pt-8 text-sm text-text-muted sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-4">
+              <Link to="/" className="transition-colors duration-300 hover:text-text-primary">
+                Ghosted
+              </Link>
+              <Link to="/privacy" className="transition-colors duration-300 hover:text-text-primary">
+                Privacy
+              </Link>
+              <Link to="/terms" className="transition-colors duration-300 hover:text-text-primary">
+                Terms
+              </Link>
+            </div>
+            <div className="flex flex-wrap items-center gap-4">
+              <span>{new Date().getFullYear()} Ghosted</span>
+              <span>Department of Labor + community submissions</span>
             </div>
           </div>
         </div>

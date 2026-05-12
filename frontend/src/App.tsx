@@ -16,6 +16,7 @@ const Jobs = lazy(() => import('./pages/Jobs'))
 const Offers = lazy(() => import('./pages/Offers'))
 const Predictions = lazy(() => import('./pages/Predictions'))
 const LotteryCalculator = lazy(() => import('./pages/LotteryCalculator'))
+const H1BData = lazy(() => import('./pages/H1BData'))
 const Privacy = lazy(() => import('./pages/Privacy'))
 const Terms = lazy(() => import('./pages/Terms'))
 const NotFound = lazy(() => import('./pages/NotFound'))
@@ -65,7 +66,7 @@ function AnimatedRoutes() {
   const location = useLocation()
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait" initial={false}>
       <Routes location={location} key={location.pathname}>
         <Route
           path="/"
@@ -158,6 +159,18 @@ function AnimatedRoutes() {
               <Suspense fallback={<PageLoader />}>
                 <PageTransition>
                   <LotteryCalculator />
+                </PageTransition>
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/h1b-data"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <PageTransition>
+                  <H1BData />
                 </PageTransition>
               </Suspense>
             </Layout>

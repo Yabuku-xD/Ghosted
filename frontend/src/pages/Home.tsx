@@ -1,677 +1,543 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight,
-  BarChart3,
-  Building2,
-  Calculator,
-  Database,
-  Scale,
-  TrendingUp,
-  Users,
-  Sparkles,
-  Target,
-  Globe,
-  Zap,
-  Shield,
-  ChevronRight,
   BriefcaseBusiness,
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  Database,
+  Radar,
+  Sparkles,
 } from 'lucide-react';
-import { companiesApi } from '../api/services';
-import { CompanyLogo, AnimatedNumber, LiveIndicator } from '../components/ui';
-import { useRef } from 'react';
+import { Link } from 'react-router-dom';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 
-// Animated gradient background component
-function AnimatedBackground() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Primary gradient orbs */}
-      <motion.div
-        className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-        }}
-        animate={{
-          x: [0, 50, 0],
-          y: [0, 30, 0],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      />
-      <motion.div
-        className="absolute top-1/3 right-0 w-[500px] h-[500px] rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-        }}
-        animate={{
-          x: [0, -30, 0],
-          y: [0, 50, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      />
-      <motion.div
-        className="absolute bottom-0 left-1/3 w-[400px] h-[400px] rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-        }}
-        animate={{
-          x: [0, 40, 0],
-          y: [0, -40, 0],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 18,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      />
+import { companiesApi, jobsApi } from '../api/services';
+import heroAtlas from '../assets/sections/new/hero-atlas.png';
+import resumeOrbit from '../assets/sections/new/resume-orbit.png';
+import portalRibbon from '../assets/sections/new/portal-ribbon.png';
+import finalHorizon from '../assets/sections/new/final-horizon.png';
+import type { Company } from '../types';
 
-      {/* Grid pattern overlay */}
-      <div 
-        className="absolute inset-0 opacity-[0.02]"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px',
-        }}
-      />
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-      {/* Noise texture */}
-      <div 
-        className="absolute inset-0 opacity-[0.015]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        }}
-      />
-    </div>
-  );
+const fallbackSources = [
+  { source: 'Greenhouse', count: 1480 },
+  { source: 'Lever', count: 1120 },
+  { source: 'Ashby', count: 764 },
+  { source: 'Workday', count: 938 },
+];
+
+function formatCompact(value?: number | null, fallback = '0') {
+  if (!value) {
+    return fallback;
+  }
+
+  return new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value);
 }
 
-// Floating card component
-function FloatingCard({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
-  return (
-    <motion.div
-      className={`relative ${className}`}
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ y: -8, scale: 1.02 }}
-    >
-      <motion.div
-        animate={{ y: [0, -10, 0] }}
-        transition={{ duration: 6, delay: delay * 2, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        {children}
-      </motion.div>
-    </motion.div>
-  );
+function formatSourceLabel(source: string) {
+  return source
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-// Feature card component
-function FeatureCard({ 
-  icon: Icon, 
-  title, 
-  description, 
-  link, 
-  delay = 0,
-  gradient = 'from-accent to-cyan-500'
-}: { 
-  icon: React.ElementType; 
-  title: string; 
-  description: string; 
-  link: string;
-  delay?: number;
-  gradient?: string;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <Link to={link} className="group block h-full">
-        <div className="card h-full relative overflow-hidden">
-          {/* Hover gradient */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-          
-          <div className="relative z-10">
-            <motion.div
-              className={`w-14 h-14 bg-gradient-to-br ${gradient} rounded-2xl flex items-center justify-center mb-5 shadow-lg`}
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ type: 'spring', stiffness: 400 }}
-            >
-              <Icon className="w-7 h-7 text-white" />
-            </motion.div>
-            
-            <h3 className="text-xl font-semibold text-text-primary mb-3 group-hover:text-accent transition-colors">
-              {title}
-            </h3>
-            <p className="text-text-secondary text-sm leading-relaxed mb-5">
-              {description}
-            </p>
-            
-            <div className="flex items-center gap-2 text-accent text-sm font-medium">
-              <span>Explore</span>
-              <motion.div
-                initial={{ x: 0 }}
-                whileHover={{ x: 4 }}
-                className="group-hover:translate-x-1 transition-transform"
-              >
-                <ArrowRight className="w-4 h-4" />
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      </Link>
-    </motion.div>
-  );
-}
+function uniqueCompanies(companies: Company[]) {
+  const seen = new Set<string>();
 
-// Stat card component
-function StatCard({ value, label, detail, icon: Icon, delay = 0 }: { value: number; label: string; detail: string; icon: React.ElementType; delay?: number }) {
-  return (
-    <motion.div
-      className="stat-box group cursor-default"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ scale: 1.02, y: -4 }}
-    >
-      <div className="stat-label">
-        <Icon className="w-4 h-4 text-accent" />
-        {label}
-      </div>
-      <div className="stat-value">
-        <AnimatedNumber value={value} />
-      </div>
-      <div className="text-xs text-text-muted mt-2">{detail}</div>
-    </motion.div>
-  );
+  return companies.filter((company) => {
+    if (seen.has(company.slug)) {
+      return false;
+    }
+
+    seen.add(company.slug);
+    return true;
+  });
 }
 
 function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start start', 'end start'],
-  });
+  const [activeAccordion, setActiveAccordion] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(0);
 
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95]);
-  
-  const springY = useSpring(y, { stiffness: 100, damping: 30 });
-  const springOpacity = useSpring(opacity, { stiffness: 100, damping: 30 });
-  const springScale = useSpring(scale, { stiffness: 100, damping: 30 });
-
-  const { data: insights, isLoading: insightsLoading } = useQuery({
+  const { data: insights } = useQuery({
     queryKey: ['company-insights'],
     queryFn: () => companiesApi.getInsights(),
   });
 
-  const { data: topSponsors, isLoading: topSponsorsLoading } = useQuery({
-    queryKey: ['top-sponsors'],
+  const { data: jobStatistics } = useQuery({
+    queryKey: ['jobs-statistics-home'],
+    queryFn: () => jobsApi.statistics(),
+  });
+
+  const { data: topSponsors } = useQuery({
+    queryKey: ['top-sponsors-home'],
     queryFn: () => companiesApi.topSponsors(),
   });
 
-  const { data: topHiring, isLoading: topHiringLoading } = useQuery({
-    queryKey: ['top-hiring'],
+  const { data: topHiring } = useQuery({
+    queryKey: ['top-hiring-home'],
     queryFn: () => companiesApi.topHiring(),
   });
 
-  const coverageLabel = (() => {
-    if (insightsLoading) return 'Loading...';
-    if (!insights?.coverage_years.last) return 'Coverage pending';
-    if (insights.coverage_years.first === insights.coverage_years.last) {
-      return `FY${insights.coverage_years.last}`;
+  const accordionItems = useMemo(() => {
+    const sourceMap = {
+      greenhouse: 'Structured, searchable, and usually the fastest lane for fit-first filtering.',
+      lever: 'Great for role clustering and understanding active hiring momentum.',
+      ashby: 'Useful when you want cleaner role taxonomy and sharp team signals.',
+      workday: 'The noisy giant. Ghosted helps make it legible before you commit time.',
+    };
+
+    return (jobStatistics?.by_source?.length ? jobStatistics.by_source : fallbackSources)
+      .slice(0, 4)
+      .map((item, index) => {
+        const normalized = item.source.toLowerCase().replace(/\s+/g, '');
+        return {
+          title: formatSourceLabel(item.source),
+          count: item.count,
+          summary:
+            sourceMap[normalized as keyof typeof sourceMap] ||
+            'Ghosted keeps this portal in the same scoring system so you can compare it against the rest of the market.',
+          accent:
+            [
+              'from-[rgba(196,129,58,0.28)] to-transparent',
+              'from-[rgba(180,78,48,0.24)] to-transparent',
+              'from-[rgba(110,145,90,0.22)] to-transparent',
+              'from-[rgba(96,118,140,0.22)] to-transparent',
+            ][index],
+        };
+      });
+  }, [jobStatistics]);
+
+  const carouselSlides = useMemo(() => {
+    const companies = uniqueCompanies([...(topSponsors || []), ...(topHiring || [])]).slice(0, 5);
+
+    if (!companies.length) {
+      return [];
     }
-    return `FY${insights.coverage_years.first}-FY${insights.coverage_years.last}`;
-  })();
 
-  const lastUpdatedLabel = (() => {
-    if (insightsLoading || !insights?.latest_imported_at) return null;
-    const date = new Date(insights.latest_imported_at);
-    const now = new Date();
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return 'Updated today';
-    if (diffDays === 1) return 'Updated yesterday';
-    if (diffDays < 7) return `Updated ${diffDays} days ago`;
-    return `Updated ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-  })();
+    return companies.map((company) => ({
+      name: company.name,
+      label: company.industry_display || company.industry || 'Career pathway',
+      metric:
+        company.active_job_count
+          ? `${formatCompact(company.active_job_count)} live roles`
+          : company.total_h1b_filings
+            ? `${formatCompact(company.total_h1b_filings)} filings`
+            : `${Math.round(Number(company.visa_fair_score || 72))} visa-fit score`,
+      detail:
+        company.actionable_insights?.[0] ||
+        company.description ||
+        'A strong blend of sponsorship history, live roles, and comparable evidence for international candidates.',
+    }));
+  }, [topHiring, topSponsors]);
 
-  const stats = [
+  useEffect(() => {
+    if (carouselSlides.length <= 1) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % carouselSlides.length);
+    }, 4500);
+
+    return () => window.clearInterval(timer);
+  }, [carouselSlides.length]);
+
+  useGSAP(
+    () => {
+      gsap.utils.toArray<HTMLElement>('.js-fade-in').forEach((element) => {
+        gsap.fromTo(
+          element,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.9,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: element,
+              start: 'top 88%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      });
+    },
+    { scope: containerRef }
+  );
+
+  const statCards = [
     {
-      value: insights?.total_companies || 0,
-      label: 'Companies',
-      detail: 'Indexed across the directory',
       icon: Building2,
+      label: 'Sponsor companies',
+      value: formatCompact(insights?.sponsor_companies, '1.2K'),
+      note: 'Companies already grounded in sponsorship history.',
     },
     {
-      value: insights?.total_h1b_records || 0,
-      label: 'H-1B Records',
-      detail: 'Historical filings tracked',
-      icon: Database,
-    },
-    {
-      value: insights?.total_jobs || 0,
-      label: 'Live Jobs',
-      detail: 'Active opportunities',
       icon: BriefcaseBusiness,
-    },
-  ];
-
-  const features = [
-    {
-      icon: Building2,
-      title: 'Company Database',
-      description: 'Search the full directory by sponsor history, salary coverage, and confidence level.',
-      link: '/companies',
-      gradient: 'from-emerald-500 to-teal-500',
+      label: 'Live jobs',
+      value: formatCompact(jobStatistics?.total_jobs || insights?.total_jobs, '4.8K'),
+      note: 'Fresh roles from many ATS portals in one ranked stream.',
     },
     {
-      icon: TrendingUp,
-      title: 'Salary Intelligence',
-      description: 'Compare government-derived salary records with community submissions and trust signals.',
-      link: '/offers',
-      gradient: 'from-blue-500 to-cyan-500',
-    },
-    {
-      icon: Calculator,
-      title: 'Lottery Calculator',
-      description: 'Estimate your H-1B lottery odds using current data and historical patterns.',
-      link: '/predictions',
-      gradient: 'from-violet-500 to-purple-500',
-    },
-    {
-      icon: Scale,
-      title: 'Compare Companies',
-      description: 'See sponsorship strength, salary coverage, and live jobs side by side.',
-      link: '/compare',
-      gradient: 'from-amber-500 to-orange-500',
+      icon: Database,
+      label: 'Salary signals',
+      value: formatCompact(insights?.total_offers, '15K'),
+      note: 'Offer data and market evidence woven into the search layer.',
     },
   ];
 
   return (
-    <div ref={containerRef} className="relative min-h-screen bg-bg-primary">
-      <AnimatedBackground />
+    <div ref={containerRef} className="relative">
+      {/* ============================================
+          HERO — Full bleed, no box
+          ============================================ */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src={heroAtlas}
+            alt=""
+            className="h-full w-full object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-bg-primary via-bg-primary/60 to-bg-primary" />
+        </div>
 
-      {/* Hero Section */}
-      <motion.section 
-        className="relative min-h-screen flex items-center justify-center overflow-hidden"
-        style={{ y: springY, opacity: springOpacity, scale: springScale }}
-      >
-        <div className="container relative z-10 py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Left Content */}
-            <div className="order-2 lg:order-1">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-8"
-              >
-                <Sparkles className="w-4 h-4 text-accent" />
-                <span className="text-sm font-medium text-accent">Job Intelligence for International Talent</span>
-              </motion.div>
-
-              <motion.h1
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-none mb-6"
-              >
-                <span className="text-text-primary">Know your</span>
-                <br />
-                <span className="text-gradient">worth.</span>
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-                className="text-lg text-text-secondary max-w-xl mb-10 leading-relaxed"
-              >
-                Explore sponsor history, salary records, and confidence signals in one place.
-                Make data-driven decisions about your career with evidence-backed insights.
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="flex flex-col sm:flex-row gap-4 mb-12"
-              >
-                <Link to="/companies" className="btn btn-primary btn-glow group">
-                  <span>Explore Companies</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link to="/jobs" className="btn btn-secondary">
-                  Browse Live Jobs
-                </Link>
-              </motion.div>
-
-              {/* Stats */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
-                className="grid grid-cols-3 gap-4"
-              >
-                {stats.map((stat, index) => (
-                  <StatCard key={stat.label} {...stat} delay={0.8 + index * 0.1} />
-                ))}
-              </motion.div>
-
-              {lastUpdatedLabel && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 1.2 }}
-                  className="mt-6"
-                >
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg-glass border border-border text-xs text-text-muted">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                    {lastUpdatedLabel}
-                  </span>
-                </motion.div>
-              )}
-            </div>
-
-            {/* Right Content - Featured Card */}
-            <div className="order-1 lg:order-2">
-              <FloatingCard delay={0.4}>
-                <div className="card-glass p-6 sm:p-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                      <Target className="w-5 h-5 text-accent" />
-                      <span className="text-sm font-medium text-text-secondary">Featured Sponsors</span>
-                    </div>
-                    <span className="badge badge-accent inline-flex items-center gap-1.5">
-                      <LiveIndicator />
-                      Live
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {topSponsorsLoading ? (
-                      <div className="py-8 text-center">
-                        <div className="w-8 h-8 border-2 border-bg-tertiary border-t-accent rounded-full animate-spin mx-auto mb-3" />
-                        <p className="text-sm text-text-muted">Loading sponsors...</p>
-                      </div>
-                    ) : topSponsors?.slice(0, 3).map((company, index) => (
-                      <motion.div
-                        key={company.id}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.6 + index * 0.1 }}
-                      >
-                        <Link
-                          to={`/companies/${company.slug}`}
-                          className="flex items-center justify-between p-4 rounded-xl hover:bg-bg-glass transition-all duration-300 group"
+        <div className="relative px-4 pb-24 pt-32 sm:px-6 sm:pb-32 sm:pt-40 lg:px-8 lg:pb-44 lg:pt-52">
+          <div className="container-wide">
+            <div className="grid items-end gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="space-y-8">
+                <span className="site-kicker">H1B signal across every ATS portal</span>
+                <div className="space-y-6">
+                  <h1 className="max-w-6xl text-[clamp(3.2rem,8vw,7.5rem)] font-display leading-[0.88] tracking-[-0.03em] text-text-primary" style={{ textWrap: 'balance' }}>
+                    {['Find', 'the', 'jobs', 'your', 'resume', 'was', 'actually', 'meant', 'to', 'win.'].map((word, i) => (
+                      <span key={i} className="inline-block overflow-hidden">
+                        <motion.span
+                          className="inline-block"
+                          style={{ marginRight: '0.22em' }}
+                          initial={{ y: '110%' }}
+                          animate={{ y: 0 }}
+                          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.08 + i * 0.055 }}
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <CompanyLogo
-                              companyName={company.name}
-                              logoUrl={company.logo_url}
-                              companyDomain={company.company_domain}
-                              website={company.website}
-                              size="sm"
-                            />
-                            <div className="min-w-0">
-                              <div className="font-medium text-text-primary text-sm truncate group-hover:text-accent transition-colors">
-                                {company.name}
-                              </div>
-                              <div className="text-xs text-text-muted">
-                                {(company.total_h1b_filings || 0).toLocaleString()} filings
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <div className="font-semibold text-accent">
-                              {Number(company.h1b_approval_rate || 0).toFixed(1)}%
-                            </div>
-                            <div className="text-xs text-text-muted">Approval</div>
-                          </div>
-                        </Link>
-                      </motion.div>
+                          {word}
+                        </motion.span>
+                      </span>
                     ))}
-                  </div>
+                  </h1>
+                  <p className="pretty-text max-w-xl text-lg text-text-secondary sm:text-xl lg:text-2xl leading-relaxed">
+                    Ghosted maps your resume against live jobs, sponsor history, salary evidence, and multi-portal ATS signals so the search feels directed instead of chaotic.
+                  </p>
+                </div>
 
-                  <Link to="/companies" className="btn btn-secondary btn-full mt-6 group">
-                    View All Companies
-                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    to="/jobs"
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-text-primary px-7 py-3.5 text-sm font-semibold text-bg-primary transition-transform duration-300 ease-out hover:translate-y-[-1px] active:scale-[0.96]"
+                  >
+                    Start with matched jobs
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    to="/companies"
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-border px-7 py-3.5 text-sm font-semibold text-text-primary transition-colors duration-300 hover:bg-glass active:scale-[0.96]"
+                  >
+                    Explore sponsor companies
                   </Link>
                 </div>
-              </FloatingCard>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 32 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                className="relative"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden rounded-2xl lg:aspect-auto lg:h-[480px]">
+                  <img
+                    src={heroAtlas}
+                    alt="Abstract resume atlas visual showing job-match pathways across portal layers."
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/50 via-transparent to-transparent" />
+                </div>
+                <div className="absolute -bottom-4 left-4 right-4 lg:left-6 lg:right-6">
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.26em] text-text-muted">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Live signal composition
+                  </div>
+                </div>
+              </motion.div>
             </div>
-          </div>
-        </div>
 
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-6 h-10 rounded-full border-2 border-text-muted/30 flex items-start justify-center p-2"
-          >
-            <motion.div
-              animate={{ opacity: [0.5, 1, 0.5], y: [0, 8, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              className="w-1.5 h-1.5 rounded-full bg-text-muted"
-            />
-          </motion.div>
-        </motion.div>
-      </motion.section>
-
-      {/* Features Section */}
-      <section className="relative py-24 sm:py-32">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-100px' }}
-            transition={{ duration: 0.6 }}
-            className="text-center max-w-3xl mx-auto mb-16"
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-bg-glass border border-border mb-6">
-              <Zap className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium text-text-secondary">Features</span>
+            <div className="mt-16 flex flex-wrap gap-6 border-t border-border-light pt-8">
+              {[
+                'Resume-first ranking',
+                'Multi-portal ATS coverage',
+                'Salary + sponsorship context',
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center gap-3 text-sm text-text-secondary"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  {item}
+                </div>
+              ))}
             </div>
-            <h2 className="headline-lg mb-6">
-              Everything you need to navigate the{' '}
-              <span className="text-gradient">U.S. job market</span>
-            </h2>
-            <p className="text-text-secondary text-lg">
-              Powerful tools and insights to help international talent make informed career decisions.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {features.map((feature, index) => (
-              <FeatureCard key={feature.title} {...feature} delay={index * 0.1} />
-            ))}
           </div>
         </div>
       </section>
 
-      {/* Hiring & Stats Section */}
-      <section className="relative py-24 sm:py-32 bg-bg-secondary/30">
-        <div className="container">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Hiring Now */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="card-glass"
-            >
-              <div className="flex items-center gap-2 mb-6">
-                <BriefcaseBusiness className="w-5 h-5 text-accent" />
-                <span className="text-sm font-medium text-text-secondary">Hiring Now</span>
-              </div>
-              <h3 className="text-2xl font-bold text-text-primary mb-2">Companies actively hiring</h3>
-              <p className="text-text-secondary mb-6">Top employers with live job openings</p>
+      {/* ============================================
+          VALUE PROP — Editorial split, no boxes
+          ============================================ */}
+      <section className="px-4 py-24 sm:px-6 lg:px-8 lg:py-36">
+        <div className="container-wide">
+          <div className="js-fade-in grid gap-16 lg:grid-cols-2 lg:gap-24">
+            <div className="space-y-8">
+              <span className="site-kicker">Resume orbit</span>
+              <h2 className="balanced-text font-display text-4xl tracking-[-0.03em] text-text-primary sm:text-5xl lg:text-6xl leading-[0.95]">
+                A resume should behave like an instrument panel, not a dead attachment.
+              </h2>
+              <p className="pretty-text max-w-lg text-lg text-text-secondary leading-relaxed">
+                Upload once, then let Ghosted carry skill clusters, location intent, seniority, and sponsorship context across the entire search surface.
+              </p>
 
-              <div className="space-y-3">
-                {topHiring?.slice(0, 4).map((company, index) => (
-                  <motion.div
-                    key={company.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
+              <div className="space-y-6 pt-4">
+                {statCards.map(({ icon: Icon, label, value, note }) => (
+                  <div key={label} className="group flex items-start gap-5">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-text-muted transition-colors duration-300 group-hover:border-border-accent group-hover:text-accent">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-text-muted">{label}</div>
+                      <div className="mt-1 text-3xl font-black tracking-[-0.05em] text-text-primary">{value}</div>
+                      <p className="pretty-text mt-1 max-w-xs text-sm text-text-secondary">{note}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-4">
+                {[
+                  { to: '/jobs', label: 'Jobs surface' },
+                  { to: '/companies', label: 'Sponsor directory' },
+                  { to: '/offers', label: 'Salary evidence' },
+                  { to: '/predictions', label: 'Prediction tools' },
+                ].map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className="inline-flex min-h-[44px] items-center rounded-full border border-border px-5 py-2.5 text-sm font-medium text-text-primary transition-colors duration-300 hover:bg-glass active:scale-[0.96]"
                   >
-                    <Link
-                      to={`/jobs?company_slug=${company.slug}`}
-                      className="flex items-center justify-between p-3 rounded-xl hover:bg-bg-glass transition-all duration-300 group"
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="aspect-[3/4] overflow-hidden rounded-2xl lg:aspect-auto lg:h-full lg:min-h-[560px]">
+                <img
+                  src={resumeOrbit}
+                  alt="Orbiting resume visualization showing layered job-match signals around a central profile."
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================
+          PORTAL RIBBON — Horizontal accordions
+          ============================================ */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src={portalRibbon}
+            alt=""
+            className="h-full w-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-bg-primary via-bg-primary/90 to-bg-primary/80" />
+        </div>
+
+        <div className="relative px-4 py-24 sm:px-6 lg:px-8 lg:py-36">
+          <div className="container-wide">
+            <div className="js-fade-in mb-12 max-w-4xl">
+              <span className="site-kicker">Horizontal accords</span>
+              <h2 className="balanced-text mt-6 text-4xl font-black tracking-[-0.05em] text-text-primary sm:text-5xl">
+                Different ATS portals should feel like distinct pathways, not the same recycled list.
+              </h2>
+            </div>
+
+            <div className="overflow-x-auto pb-2">
+              <div className="flex min-w-max gap-3">
+                {accordionItems.map((item, index) => {
+                  const isActive = activeAccordion === index;
+
+                  return (
+                    <motion.button
+                      key={item.title}
+                      type="button"
+                      onClick={() => setActiveAccordion(index)}
+                      animate={{ width: isActive ? 360 : 188 }}
+                      transition={{ duration: 0.45, ease: [0.2, 0, 0, 1] }}
+                      className={`relative min-h-[260px] overflow-hidden rounded-2xl border p-6 text-left transition-colors duration-300 ${
+                        isActive ? 'border-border bg-glass' : 'border-border-light bg-transparent'
+                      }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <CompanyLogo
-                          companyName={company.name}
-                          logoUrl={company.logo_url}
-                          companyDomain={company.company_domain}
-                          website={company.website}
-                          size="sm"
-                        />
-                        <div className="min-w-0">
-                          <div className="font-medium text-text-primary truncate group-hover:text-accent transition-colors">
-                            {company.name}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${item.accent} opacity-60`} />
+                      <div className="relative flex h-full flex-col justify-between">
+                        <div>
+                          <div className="mb-4 text-xs uppercase tracking-[0.24em] text-text-muted">ATS lane</div>
+                          <h3 className="text-2xl font-black tracking-[-0.04em] text-text-primary">{item.title}</h3>
+                        </div>
+                        <div>
+                          <div className="tabular-nums text-4xl font-black tracking-[-0.05em] text-text-primary">
+                            {formatCompact(item.count)}
                           </div>
-                          <div className="text-xs text-text-muted">
-                            {(company.active_job_count || 0).toLocaleString()} open positions
-                          </div>
+                          {isActive && (
+                            <p className="pretty-text mt-3 text-sm text-text-secondary leading-relaxed">{item.summary}</p>
+                          )}
                         </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-accent group-hover:translate-x-1 transition-all" />
-                    </Link>
-                  </motion.div>
-                ))}
+                    </motion.button>
+                  );
+                })}
               </div>
-
-              <Link to="/jobs" className="btn btn-secondary btn-full mt-6 group">
-                Browse All Jobs
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </motion.div>
-
-            {/* Coverage Stats */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="card-glass"
-            >
-              <div className="flex items-center gap-2 mb-6">
-                <Shield className="w-5 h-5 text-accent" />
-                <span className="text-sm font-medium text-text-secondary">Data Coverage</span>
-              </div>
-              <h3 className="text-2xl font-bold text-text-primary mb-2">Platform metrics</h3>
-              <p className="text-text-secondary mb-6">Current database statistics and coverage</p>
-
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: 'Coverage Period', value: coverageLabel },
-                  { label: 'Total Records', value: insights?.total_h1b_records?.toLocaleString() || '0' },
-                  { label: 'Salary Records', value: insights?.total_offers?.toLocaleString() || '0' },
-                  { label: 'Companies', value: insights?.total_companies?.toLocaleString() || '0' },
-                ].map((item, index) => (
-                  <motion.div
-                    key={item.label}
-                    className="p-4 rounded-xl bg-bg-glass border border-border hover:border-border-accent transition-all duration-300"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ y: -2 }}
-                  >
-                    <div className="text-xs text-text-muted uppercase tracking-wider mb-1">{item.label}</div>
-                    <div className="text-xl font-bold text-text-primary">{item.value}</div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="relative py-24 sm:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/5 to-transparent" />
-        
-        <div className="container relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="card-featured text-center max-w-3xl mx-auto p-12"
-          >
-            <motion.div
-              className="w-20 h-20 mx-auto mb-8 rounded-3xl bg-gradient-to-br from-accent to-cyan-500 flex items-center justify-center shadow-lg"
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ type: 'spring', stiffness: 400 }}
-            >
-              <Globe className="w-10 h-10 text-white" />
-            </motion.div>
-
-            <h2 className="headline-md mb-4">
-              Ready to find your next opportunity?
-            </h2>
-            <p className="text-text-secondary text-lg mb-8 max-w-xl mx-auto">
-              Use company data, salary history, and compare views together to shortlist better targets faster.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/companies" className="btn btn-primary btn-glow">
-                <Building2 className="w-5 h-5" />
-                Browse Companies
-              </Link>
-              <Link to="/jobs" className="btn btn-secondary">
-                <BriefcaseBusiness className="w-5 h-5" />
-                Browse Jobs
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Footer Data Sources */}
-      <section className="border-t border-white/5 py-12">
-        <div className="container">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-text-muted">
-            <span className="text-xs font-medium uppercase tracking-widest">Data sources:</span>
-            <div className="flex flex-wrap items-center justify-center gap-8">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-accent" />
-                <span className="font-medium text-text-primary">Department of Labor</span>
+      {/* ============================================
+          COMPANY PATHWAYS — Minimal carousel
+          ============================================ */}
+      {carouselSlides.length > 0 && (
+        <section className="px-4 py-24 sm:px-6 lg:px-8 lg:py-36">
+          <div className="container-wide">
+            <div className="js-fade-in mb-12 flex items-end justify-between gap-4">
+              <div className="max-w-2xl">
+                <span className="site-kicker">Live pathways</span>
+                <h2 className="balanced-text mt-4 text-3xl font-black tracking-[-0.05em] text-text-primary sm:text-4xl">
+                  Company pathways with actual signal behind them.
+                </h2>
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-accent" />
-                <span className="font-medium text-text-primary">Community submissions</span>
+              <div className="hidden items-center gap-2 sm:flex">
+                <button
+                  type="button"
+                  onClick={() => setActiveSlide((current) => (current - 1 + carouselSlides.length) % carouselSlides.length)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-muted transition-colors duration-300 hover:border-border-accent hover:text-text-primary active:scale-[0.96]"
+                  aria-label="Previous company pathway"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSlide((current) => (current + 1) % carouselSlides.length)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-muted transition-colors duration-300 hover:border-border-accent hover:text-text-primary active:scale-[0.96]"
+                  aria-label="Next company pathway"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="relative min-h-[240px]">
+              <AnimatePresence initial={false} mode="wait">
+                <motion.div
+                  key={`${carouselSlides[activeSlide]?.name}-${activeSlide}`}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  className="grid gap-8 lg:grid-cols-[1fr_0.6fr]"
+                >
+                  <div className="space-y-4">
+                    <div className="text-xs uppercase tracking-[0.24em] text-text-muted">
+                      {carouselSlides[activeSlide]?.label}
+                    </div>
+                    <h3 className="text-3xl font-black tracking-[-0.05em] text-text-primary sm:text-4xl lg:text-5xl">
+                      {carouselSlides[activeSlide]?.name}
+                    </h3>
+                    <p className="pretty-text max-w-lg text-base text-text-secondary leading-relaxed sm:text-lg">
+                      {carouselSlides[activeSlide]?.detail}
+                    </p>
+                  </div>
+                  <div className="flex items-end justify-end">
+                    <div className="text-right">
+                      <div className="text-xs uppercase tracking-[0.2em] text-text-muted">Signal</div>
+                      <div className="mt-1 text-2xl font-black tracking-[-0.04em] text-text-primary">
+                        {carouselSlides[activeSlide]?.metric}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ============================================
+          FINAL HORIZON — Full-bleed CTA
+          ============================================ */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src={finalHorizon}
+            alt=""
+            className="h-full w-full object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/70 to-bg-primary/40" />
+        </div>
+
+        <div className="relative px-4 py-24 sm:px-6 lg:px-8 lg:py-36">
+          <div className="container-wide">
+            <div className="js-fade-in grid gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
+              <div className="space-y-6">
+                <span className="site-kicker">Action chapter</span>
+                <h2 className="balanced-text max-w-3xl text-4xl font-black tracking-[-0.05em] text-text-primary sm:text-5xl lg:text-6xl">
+                  Stop searching like every portal deserves equal attention.
+                </h2>
+                <p className="pretty-text max-w-xl text-base text-text-secondary leading-relaxed sm:text-lg">
+                  Ghosted now looks and moves like a high-intent product surface, while the routed data pages remain connected to the backend contracts already powering jobs, companies, offers, and predictions.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="mb-6 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-text-muted">
+                  <Radar className="h-4 w-4" />
+                  Choose your entry point
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { to: '/jobs', label: 'Jobs', body: 'Open the ranked job stream and start filtering immediately.' },
+                    { to: '/companies', label: 'Companies', body: 'Browse sponsorship-first employers with richer context.' },
+                    { to: '/offers', label: 'Offers', body: 'Check compensation evidence before you decide to apply.' },
+                    { to: '/predictions', label: 'Predictions', body: 'Use the calculators and models for the harder calls.' },
+                  ].map((item) => (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      className="group flex items-center justify-between gap-4 border-b border-border-light py-5 transition-colors duration-300 hover:border-border"
+                    >
+                      <div>
+                        <h3 className="text-lg font-bold text-text-primary transition-colors duration-300 group-hover:text-accent">{item.label}</h3>
+                        <p className="pretty-text mt-1 text-sm text-text-secondary">{item.body}</p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-text-muted transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:text-accent" />
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

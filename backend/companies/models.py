@@ -5,6 +5,9 @@ JOB_PROVIDER_CHOICES = [
     ("greenhouse", "Greenhouse"),
     ("lever", "Lever"),
     ("ashby", "Ashby"),
+    ("workday", "Workday"),
+    ("workable", "Workable"),
+    ("bamboohr", "BambooHR"),
     ("manual", "Manual"),
 ]
 

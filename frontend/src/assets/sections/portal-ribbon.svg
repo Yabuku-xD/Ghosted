@@ -1,0 +1,31 @@
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg3" x1="120" y1="100" x2="1500" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0C1218"/>
+      <stop offset="0.5" stop-color="#12334A"/>
+      <stop offset="1" stop-color="#260F1B"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" rx="48" fill="url(#bg3)"/>
+  <rect x="142" y="180" width="1316" height="640" rx="40" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.16)" stroke-width="2"/>
+  <path d="M216 302H1380" stroke="rgba(255,255,255,0.14)" stroke-width="2"/>
+  <path d="M216 500H1380" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  <path d="M216 698H1380" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <rect x="244" y="248" width="238" height="506" rx="34" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <rect x="518" y="248" width="238" height="506" rx="34" fill="#0E8D79" fill-opacity="0.22" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <rect x="792" y="248" width="238" height="506" rx="34" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <rect x="1066" y="248" width="238" height="506" rx="34" fill="#4E62E8" fill-opacity="0.22" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <text x="284" y="332" fill="#F6FBF8" font-family="Satoshi, Arial, sans-serif" font-size="56" font-weight="700">Greenhouse</text>
+  <text x="556" y="332" fill="#F6FBF8" font-family="Satoshi, Arial, sans-serif" font-size="56" font-weight="700">Lever</text>
+  <text x="830" y="332" fill="#F6FBF8" font-family="Satoshi, Arial, sans-serif" font-size="56" font-weight="700">Ashby</text>
+  <text x="1104" y="332" fill="#F6FBF8" font-family="Satoshi, Arial, sans-serif" font-size="56" font-weight="700">Workday</text>
+  <text x="282" y="404" fill="rgba(255,255,255,0.68)" font-family="Geist Mono, monospace" font-size="24" letter-spacing="4">ATS PORTAL</text>
+  <text x="556" y="404" fill="rgba(255,255,255,0.68)" font-family="Geist Mono, monospace" font-size="24" letter-spacing="4">ATS PORTAL</text>
+  <text x="830" y="404" fill="rgba(255,255,255,0.68)" font-family="Geist Mono, monospace" font-size="24" letter-spacing="4">ATS PORTAL</text>
+  <text x="1104" y="404" fill="rgba(255,255,255,0.68)" font-family="Geist Mono, monospace" font-size="24" letter-spacing="4">ATS PORTAL</text>
+  <path d="M290 592H424" stroke="#7AF4D7" stroke-width="8" stroke-linecap="round"/>
+  <path d="M564 538H714" stroke="#F5A25F" stroke-width="8" stroke-linecap="round"/>
+  <path d="M838 620H970" stroke="#7AF4D7" stroke-width="8" stroke-linecap="round"/>
+  <path d="M1112 478H1250" stroke="#8AB0FF" stroke-width="8" stroke-linecap="round"/>
+  <text x="240" y="130" fill="#F6FBF8" font-family="Satoshi, Arial, sans-serif" font-size="112" font-weight="700">Portal ribbon</text>
+</svg>

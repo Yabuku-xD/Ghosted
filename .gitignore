@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 *.env
+.claude
+.code-review-graph
+.playwright-mcp
 
 # Python
 __pycache__/

@@ -48,7 +48,7 @@ export function CompanyLogo({
       <img
         src={imageUrl}
         alt={`${companyName} logo`}
-        className={`${sizeClasses[size]} object-contain bg-white border-2 border-[#1a1a1a] flex-shrink-0 ${className}`}
+        className={`${sizeClasses[size]} object-contain bg-white img-outline flex-shrink-0 ${className}`}
         loading="lazy"
         onError={() => setFallbackIndex((current) => current + 1)}
       />
@@ -57,7 +57,7 @@ export function CompanyLogo({
 
   return (
     <div
-      className={`${sizeClasses[size]} flex items-center justify-center bg-[#f5f5f0] border-2 border-[#1a1a1a] font-display font-bold text-[#1a1a1a] flex-shrink-0 ${className}`}
+      className={`${sizeClasses[size]} flex items-center justify-center bg-[#f5f5f0] img-outline font-display font-bold text-[#1a1a1a] flex-shrink-0 ${className}`}
       aria-label={`${companyName} logo`}
     >
       {companyName.charAt(0).toUpperCase()}

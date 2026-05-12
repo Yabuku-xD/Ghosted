@@ -8,7 +8,6 @@ import {
   Building2,
   CheckCircle,
   Clock3,
-  Database,
   DollarSign,
   ExternalLink,
   Globe,
@@ -20,7 +19,6 @@ import {
   Target,
   Sparkles,
   ChevronRight,
-  Star,
   BarChart3,
   BriefcaseBusiness,
   Shield,
@@ -29,23 +27,14 @@ import {
   Link as LinkIcon,
 } from 'lucide-react';
 import { companiesApi, offersApi } from '../api/services';
-import { Badge, Progress, CompanyLogo } from '../components/ui';
+import { Badge, CompanyLogo } from '../components/ui';
 import type { CompanyBenefit, JobPosting, Offer } from '../types';
 
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 0.3 },
   },
 };
 
@@ -54,7 +43,7 @@ const bentoItemVariants = {
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 0.4 },
   },
 };
 
@@ -307,7 +296,7 @@ function CompanyDetail() {
                   {score.toFixed(1)}
                 </div>
                 <div>
-                  <Badge variant={badge.variant} size="lg" className="mb-2">
+                  <Badge variant={badge.variant} className="mb-2">
                     {badge.label}
                   </Badge>
                   <p className="text-sm text-text-muted">
@@ -429,7 +418,7 @@ function CompanyDetail() {
               </div>
 
               <div className="mt-6 pt-4 border-t border-white/5">
-                <Badge variant={confidenceBadge.variant} size="lg" className="w-full justify-center">
+                <Badge variant={confidenceBadge.variant} className="w-full justify-center">
                   {confidenceBadge.label}
                 </Badge>
               </div>

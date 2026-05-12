@@ -1,0 +1,23 @@
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg7" x1="150" y1="90" x2="1450" y2="940" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#081118"/>
+      <stop offset="0.58" stop-color="#132838"/>
+      <stop offset="1" stop-color="#07151B"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" rx="48" fill="url(#bg7)"/>
+  <circle cx="808" cy="508" r="238" fill="rgba(14,141,121,0.18)"/>
+  <circle cx="808" cy="508" r="186" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.16)" stroke-width="2"/>
+  <circle cx="808" cy="508" r="130" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <circle cx="808" cy="508" r="64" fill="#F7FAF8"/>
+  <path d="M810 102L810 904" stroke="rgba(255,255,255,0.16)" stroke-width="2" stroke-dasharray="10 18"/>
+  <path d="M132 510H1468" stroke="rgba(255,255,255,0.16)" stroke-width="2" stroke-dasharray="10 18"/>
+  <text x="226" y="210" fill="#F7FAF8" font-family="Satoshi, Arial, sans-serif" font-size="116" font-weight="700">Beacon</text>
+  <text x="226" y="306" fill="#8AB0FF" font-family="Satoshi, Arial, sans-serif" font-size="116" font-weight="700">logic</text>
+  <text x="226" y="378" fill="rgba(255,255,255,0.68)" font-family="Satoshi, Arial, sans-serif" font-size="28">The product turns noisy market inputs into one clear next move.</text>
+  <text x="1046" y="300" fill="#F7FAF8" font-family="Geist Mono, monospace" font-size="24" letter-spacing="5">FIND / FILTER / FOCUS</text>
+  <rect x="1044" y="356" width="274" height="106" rx="24" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.16)" stroke-width="2"/>
+  <rect x="1044" y="498" width="274" height="106" rx="24" fill="#4E62E8" fill-opacity="0.18" stroke="rgba(255,255,255,0.16)" stroke-width="2"/>
+  <rect x="1044" y="640" width="274" height="106" rx="24" fill="#F57E4D" fill-opacity="0.18" stroke="rgba(255,255,255,0.16)" stroke-width="2"/>
+</svg>

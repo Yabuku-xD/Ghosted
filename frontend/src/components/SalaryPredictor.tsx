@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Calculator, MapPin, Briefcase, GraduationCap, TrendingUp } from 'lucide-react';
+import { MapPin, Briefcase, GraduationCap, TrendingUp } from 'lucide-react';
 import { predictionsApi } from '../api/services';
-import { Button, Card, CardBody, Progress } from '../components/ui';
+import { Button, Progress } from '../components/ui';
 import { useToast } from '../components/ui/useToast';
 import type { PredictionResult, SalaryPredictionInput } from '../types';
 
@@ -104,28 +104,19 @@ function SalaryPredictor() {
   ].filter(Boolean) as string[];
 
   return (
-    <Card static>
-      <CardBody className="p-4 sm:p-6 border-b-2 border-border-light">
-        <h2 className="headline-sm flex items-center gap-2">
-          <Calculator className="w-5 h-5 text-accent" />
-          Salary Predictor
-        </h2>
-        <p className="text-secondary text-sm mt-2">
-          Get salary estimates based on real H-1B data
-        </p>
-      </CardBody>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="p-4 sm:p-6 space-y-5">
+    <div>
+      {/* Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div>
           <label htmlFor="position_title" className="label">Job Title</label>
           <div className="relative">
-            <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+            <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
             <input
               {...register('position_title')}
               id="position_title"
               type="text"
               placeholder="e.g. Software Engineer"
-              className="input pl-12"
+              className="input pl-11"
             />
           </div>
           {errors.position_title && (
@@ -136,13 +127,13 @@ function SalaryPredictor() {
         <div>
           <label htmlFor="location" className="label">Location</label>
           <div className="relative">
-            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
             <input
               {...register('location')}
               id="location"
               type="text"
               placeholder="e.g. San Francisco, CA"
-              className="input pl-12"
+              className="input pl-11"
             />
           </div>
           {errors.location && (
@@ -166,11 +157,11 @@ function SalaryPredictor() {
           <div>
             <label htmlFor="experience_level" className="label">Experience Level</label>
             <div className="relative">
-              <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+              <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
               <select
                 {...register('experience_level')}
                 id="experience_level"
-                className="select pl-12"
+                className="select pl-11"
               >
                 {experienceOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -195,28 +186,29 @@ function SalaryPredictor() {
         </Button>
       </form>
 
+      {/* Results */}
       {predictionDetails && (
-        <div className="p-4 sm:p-6 border-t-2 border-border bg-secondary">
-          <h3 className="font-mono text-sm uppercase text-secondary mb-4">
+        <div className="mt-8 border-t border-white/5 pt-8">
+          <h3 className="font-mono text-xs uppercase tracking-widest text-text-muted mb-6">
             Predicted Salary Range
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="card-bento text-center p-4">
-              <div className="font-mono text-xs uppercase text-secondary mb-1">Min</div>
-              <div className="font-mono font-bold text-accent">
+            <div className="text-center p-4 border border-white/5 rounded-2xl">
+              <div className="text-xs uppercase tracking-wider text-text-muted mb-1">Min</div>
+              <div className="text-xl font-black tracking-[-0.04em] text-text-primary">
                 {formatCurrency(predictionDetails.salary_range_low)}
               </div>
             </div>
-            <div className="card-accent text-center p-4">
-              <div className="font-mono text-xs uppercase text-white/80 mb-1">Expected</div>
-              <div className="font-mono font-bold">
+            <div className="text-center p-4 border border-accent/20 rounded-2xl bg-accent/5">
+              <div className="text-xs uppercase tracking-wider text-accent mb-1">Expected</div>
+              <div className="text-xl font-black tracking-[-0.04em] text-accent">
                 {formatCurrency(predictionDetails.predicted_base_salary)}
               </div>
             </div>
-            <div className="card-bento text-center p-4">
-              <div className="font-mono text-xs uppercase text-secondary mb-1">Max</div>
-              <div className="font-mono font-bold text-accent">
+            <div className="text-center p-4 border border-white/5 rounded-2xl">
+              <div className="text-xs uppercase tracking-wider text-text-muted mb-1">Max</div>
+              <div className="text-xl font-black tracking-[-0.04em] text-text-primary">
                 {formatCurrency(predictionDetails.salary_range_high)}
               </div>
             </div>
@@ -226,20 +218,20 @@ function SalaryPredictor() {
             <Progress value={confidenceScore * 100} showLabel />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="card-bento p-4">
-                <div className="font-mono text-xs uppercase text-secondary mb-1">Matching Offers</div>
-                <div className="font-mono font-bold text-accent">{similarOffersCount}</div>
+              <div className="p-4 border border-white/5 rounded-2xl">
+                <div className="text-xs uppercase tracking-wider text-text-muted mb-1">Matching Offers</div>
+                <div className="text-lg font-black tracking-[-0.04em] text-text-primary">{similarOffersCount}</div>
               </div>
               {averageTotalComp ? (
-                <div className="card-bento p-4">
-                  <div className="font-mono text-xs uppercase text-secondary mb-1">Avg Total Comp</div>
-                  <div className="font-mono font-bold text-accent">{formatCurrency(averageTotalComp)}</div>
+                <div className="p-4 border border-white/5 rounded-2xl">
+                  <div className="text-xs uppercase tracking-wider text-text-muted mb-1">Avg Total Comp</div>
+                  <div className="text-lg font-black tracking-[-0.04em] text-text-primary">{formatCurrency(averageTotalComp)}</div>
                 </div>
               ) : null}
             </div>
 
             {typeof percentile === 'number' ? (
-              <div className="flex items-center gap-2 text-sm text-primary">
+              <div className="flex items-center gap-2 text-sm text-text-primary">
                 <TrendingUp className="w-4 h-4 text-accent" />
                 <span>About the {formatOrdinal(percentile)} percentile for similar roles</span>
               </div>
@@ -247,8 +239,8 @@ function SalaryPredictor() {
           </div>
 
           {keyFactors.length > 0 && (
-            <div className="mt-6 pt-6 border-t-2 border-border">
-              <h4 className="font-mono text-sm uppercase text-secondary mb-3">
+            <div className="mt-6 pt-6 border-t border-white/5">
+              <h4 className="font-mono text-xs uppercase tracking-widest text-text-muted mb-3">
                 Key Factors
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -262,7 +254,7 @@ function SalaryPredictor() {
           )}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
 

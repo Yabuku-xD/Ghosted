@@ -7,71 +7,65 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Premium Accent - Emerald with cyan gradient base
+        // Warm cognac/amber accent — RGB channels for opacity modifier support
         accent: {
-          DEFAULT: '#10b981',
-          hover: '#059669',
-          light: 'rgba(16, 185, 129, 0.1)',
-          lighter: 'rgba(16, 185, 129, 0.05)',
-          glow: 'rgba(16, 185, 129, 0.3)',
+          DEFAULT: 'rgb(var(--rgb-accent) / <alpha-value>)',
+          hover: '#a5652a',
+          light: 'var(--color-accent-light)',
+          lighter: 'var(--color-accent-lighter)',
+          glow: 'var(--color-accent-glow)',
         },
-        // Premium Dark Theme Backgrounds
+        // Backgrounds — RGB channels so /85, /95, from-*, via-* work in both themes
         bg: {
-          primary: '#0a0a0f',
-          secondary: '#12121a',
-          tertiary: '#1a1a25',
-          elevated: '#1e1e2e',
-          glass: 'rgba(255, 255, 255, 0.03)',
+          primary: 'rgb(var(--rgb-bg-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--rgb-bg-secondary) / <alpha-value>)',
+          tertiary: 'rgb(var(--rgb-bg-tertiary) / <alpha-value>)',
+          elevated: 'rgb(var(--rgb-bg-elevated) / <alpha-value>)',
+          glass: 'var(--color-bg-glass)',
         },
-        // Text colors for dark theme
+        // Text — RGB channels for opacity modifier support
         text: {
-          primary: '#fafafa',
-          secondary: '#a1a1aa',
-          muted: '#71717a',
+          primary: 'rgb(var(--rgb-text-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--rgb-text-secondary) / <alpha-value>)',
+          muted: 'rgb(var(--rgb-text-muted) / <alpha-value>)',
         },
-        // Semantic colors - vibrant for dark theme
+        // Semantic colors
         success: {
-          DEFAULT: '#22c55e',
-          light: 'rgba(34, 197, 94, 0.1)',
-          glow: 'rgba(34, 197, 94, 0.3)',
+          DEFAULT: '#4a9e6e',
+          light: 'rgba(74, 158, 110, 0.10)',
+          glow: 'rgba(74, 158, 110, 0.25)',
         },
         warning: {
-          DEFAULT: '#f59e0b',
-          light: 'rgba(245, 158, 11, 0.1)',
-          glow: 'rgba(245, 158, 11, 0.3)',
+          DEFAULT: '#d4882e',
+          light: 'rgba(212, 136, 46, 0.10)',
+          glow: 'rgba(212, 136, 46, 0.25)',
         },
         danger: {
-          DEFAULT: '#ef4444',
-          light: 'rgba(239, 68, 68, 0.1)',
-          glow: 'rgba(239, 68, 68, 0.3)',
+          DEFAULT: '#c44a40',
+          light: 'rgba(196, 74, 64, 0.10)',
+          glow: 'rgba(196, 74, 64, 0.25)',
         },
         info: {
-          DEFAULT: '#3b82f6',
-          light: 'rgba(59, 130, 246, 0.1)',
-          glow: 'rgba(59, 130, 246, 0.3)',
+          DEFAULT: '#4878c4',
+          light: 'rgba(72, 120, 196, 0.10)',
+          glow: 'rgba(72, 120, 196, 0.25)',
         },
-        // Border colors for glassmorphism
+        // Border colors via CSS variables so they adapt in light mode
         border: {
-          DEFAULT: 'rgba(255, 255, 255, 0.08)',
-          light: 'rgba(255, 255, 255, 0.04)',
-          accent: 'rgba(16, 185, 129, 0.3)',
-        },
-        // Cyan for gradient accents
-        cyan: {
-          400: '#22d3ee',
-          500: '#06b6d4',
-        },
-        // Violet for gradient accents
-        violet: {
-          400: '#a78bfa',
-          500: '#8b5cf6',
+          DEFAULT: 'var(--color-border)',
+          light: 'var(--color-border-light)',
+          accent: 'var(--color-border-accent)',
         },
       },
       fontFamily: {
-        // Premium font stack - Geist for UI
-        display: ['Geist', 'system-ui', '-apple-system', 'sans-serif'],
-        sans: ['Geist', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['Geist Mono', 'SF Mono', 'Monaco', 'monospace'],
+        // Sailors Slant — hero display only
+        display: ['"Sailors Slant"', 'Georgia', 'serif'],
+        // Open Sauce Sans — UI workhorse
+        sans: ['"Open Sauce Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        // Peace Sans — kicker labels and stat markers
+        kicker: ['"Peace Sans"', 'system-ui', 'sans-serif'],
+        // Geist Mono — code and data
+        mono: ['"Geist Mono"', 'SF Mono', 'Monaco', 'monospace'],
       },
       borderRadius: {
         '2xl': '1rem',
@@ -80,19 +74,17 @@ export default {
         '4xl': '2rem',
       },
       boxShadow: {
-        // Premium shadows for dark theme
-        'glow': '0 0 40px rgba(16, 185, 129, 0.15)',
-        'glow-lg': '0 0 60px rgba(16, 185, 129, 0.2)',
-        'elevated': '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-        'floating': '0 20px 40px -10px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.1)',
-        'inner-glow': 'inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
-        // Legacy shadows for compatibility
-        'diffusion': '0 20px 40px -15px rgba(0, 0, 0, 0.3)',
-        'diffusion-sm': '0 10px 25px -10px rgba(0, 0, 0, 0.2)',
-        'diffusion-lg': '0 30px 60px -20px rgba(0, 0, 0, 0.4)',
+        'glow': '0 0 40px rgba(196, 129, 58, 0.14)',
+        'glow-lg': '0 0 60px rgba(196, 129, 58, 0.20)',
+        'elevated': '0 25px 50px -12px rgba(0, 0, 0, 0.55)',
+        'floating': '0 20px 40px -10px rgba(0, 0, 0, 0.45), 0 0 20px rgba(196, 129, 58, 0.10)',
+        'inner-glow': 'inset 0 1px 0 rgba(255, 248, 238, 0.10), inset 0 -1px 0 rgba(0, 0, 0, 0.20)',
+        'diffusion': '0 20px 40px -15px rgba(0, 0, 0, 0.35)',
+        'diffusion-sm': '0 10px 25px -10px rgba(0, 0, 0, 0.25)',
+        'diffusion-lg': '0 30px 60px -20px rgba(0, 0, 0, 0.45)',
       },
       backgroundImage: {
-        'gradient-accent': 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
+        'gradient-accent': 'linear-gradient(135deg, #c4813a 0%, #a5652a 100%)',
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
       },
       animation: {
@@ -152,29 +144,12 @@ export default {
   plugins: [
     function({ addUtilities }) {
       addUtilities({
-        '.text-gradient': {
-          'background': 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
-          '-webkit-background-clip': 'text',
-          '-webkit-text-fill-color': 'transparent',
-          'background-clip': 'text',
-        },
         '.no-scrollbar': {
           '-ms-overflow-style': 'none',
           'scrollbar-width': 'none',
           '&::-webkit-scrollbar': {
             display: 'none',
           },
-        },
-        '.glass': {
-          'background': 'rgba(255, 255, 255, 0.03)',
-          'backdrop-filter': 'blur(20px)',
-          '-webkit-backdrop-filter': 'blur(20px)',
-        },
-        '.glass-nav': {
-          'background': 'rgba(10, 10, 15, 0.7)',
-          'backdrop-filter': 'blur(20px)',
-          '-webkit-backdrop-filter': 'blur(20px)',
-          'border-bottom': '1px solid rgba(255, 255, 255, 0.05)',
         },
       })
     },
